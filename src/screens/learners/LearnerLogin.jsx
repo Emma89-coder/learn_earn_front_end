@@ -65,167 +65,174 @@ const LearnerLogin = ({ serverStatus }) => {
   };
 
   const SchoolBranding = () => (
-    <div className="w-full flex flex-col items-center text-center mb-3">
-      <div className="relative transform transition-transform hover:scale-[1.01] duration-300 ease-out -mb-8 sm:-mb-10">
+    <div className="w-full flex flex-col items-center text-center mb-5">
+      <div className="relative transform transition-all duration-500 hover:scale-105">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#00B0FF]/20 to-[#008080]/20 rounded-full blur-3xl"></div>
         <img 
           src="logo.png" 
           alt="Learn & Earn Logo" 
-          className="w-56 h-56 sm:w-64 sm:h-64 object-contain image-render-crisp"
+          className="relative w-48 h-48 object-contain drop-shadow-2xl"
           loading="eager"
         />
       </div>
       
-      <p className="text-slate-500 text-xs font-bold tracking-widest uppercase relative z-10 -mt-1">
-        Empower. Grow. Prosper.
-      </p>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-[#1A237E] to-[#008080] bg-clip-text text-transparent -mt-2">
+        Learn & Earn
+      </h1>
       
-      <div className="w-10 h-0.5 bg-gradient-to-r from-[#1A237E] via-[#00B0FF] to-[#1A237E] my-1.5"></div>
-      
-      <p className="text-[#1A237E] text-xs font-extrabold tracking-wider uppercase">
-        Learner Portal
-      </p>
+      <div className="flex items-center gap-2 mt-1">
+        <div className="w-8 h-0.5 bg-gradient-to-r from-[#1A237E] to-[#00B0FF] rounded-full"></div>
+        <span className="text-xs font-medium text-slate-500 tracking-wider">LEARNER PORTAL</span>
+        <div className="w-8 h-0.5 bg-gradient-to-r from-[#00B0FF] to-[#1A237E] rounded-full"></div>
+      </div>
     </div>
   );
 
   return (
-    <div className="relative h-screen w-full flex items-center justify-center p-4 bg-[#F4F7FA] overflow-hidden select-none">
+    <div className="fixed inset-0 w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-[#F0F4F8] via-[#E8F4F8] to-[#F0F8FF] overflow-hidden">
       
-      {/* Background Blur Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[#1A237E]/6 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] bg-[#00B0FF]/12 rounded-full blur-[150px] pointer-events-none"></div>
-      <div className="absolute top-[30%] right-[10%] w-[25vw] h-[25vw] bg-[#00B0FF]/6 rounded-full blur-[100px] pointer-events-none"></div>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#00B0FF]/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#008080]/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-[#1A237E]/5 to-[#00B0FF]/5 rounded-full blur-3xl"></div>
+      </div>
 
-      <div className="max-w-md w-full z-10">
+      <div className="relative w-full max-w-sm mx-auto">
         
         <SchoolBranding />
 
-        {/* Card with grey border, ultra-rounded top and bottom corners */}
-        <div className="w-full bg-white rounded-3xl shadow-[0_25px_55px_rgba(26,35,126,0.05)] overflow-hidden border border-gray-300">
-          
-          <div className="p-5">
-            <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-3.5">
-              
-              {/* Username Field */}
-              <div>
-                <label className="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  Username
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-[#00B0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    disabled={loading}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-slate-800 text-base placeholder-slate-400 focus:outline-none focus:border-[#00B0FF] focus:bg-white transition-all duration-200"
-                    placeholder="Enter your username"
-                  />
+        {/* Modern Form Card */}
+        <div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-[#00B0FF]/20 p-5">
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-3.5">
+            
+            {/* Username Field */}
+            <div className="space-y-1">
+              <label className="block text-slate-700 text-xs font-semibold ml-1">
+                Username
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all group-focus-within:scale-110">
+                  <svg className="w-4 h-4 text-slate-400 group-focus-within:text-[#00B0FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
                 </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={loading}
+                  className="w-full pl-9 pr-3 py-1.5 bg-white border-2 border-[#00B0FF]/20 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all duration-200 shadow-sm"
+                  placeholder="Enter your username"
+                />
               </div>
+            </div>
 
-              {/* Registration Number Field */}
-              <div>
-                <label className="block text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  Registration Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-4 h-4 text-[#00B0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20h10M7 4h10M7 8h10M7 12h10M7 16h10" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    value={registrationNumber}
-                    onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
-                    disabled={loading}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-none text-slate-800 font-mono text-base uppercase placeholder-slate-400 focus:outline-none focus:border-[#00B0FF] focus:bg-white transition-all duration-200"
-                    placeholder="e.g., 24-0123"
-                  />
+            {/* Registration Number Field */}
+            <div className="space-y-1">
+              <label className="block text-slate-700 text-xs font-semibold ml-1">
+                Registration Number
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all group-focus-within:scale-110">
+                  <svg className="w-4 h-4 text-slate-400 group-focus-within:text-[#00B0FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 20h10M7 4h10M7 8h10M7 12h10M7 16h10" />
+                  </svg>
                 </div>
+                <input
+                  type="text"
+                  value={registrationNumber}
+                  onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
+                  disabled={loading}
+                  className="w-full pl-9 pr-3 py-1.5 bg-white border-2 border-[#00B0FF]/20 rounded-2xl text-slate-800 font-mono text-sm uppercase placeholder-slate-400 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all duration-200 shadow-sm"
+                  placeholder="e.g., 24-0123"
+                />
               </div>
+            </div>
 
-              {/* Remember Me Checkbox */}
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer group">
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center justify-between pt-1 px-1">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="relative">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 text-[#00B0FF] border-slate-300 rounded focus:ring-0 focus:ring-offset-0 accent-[#00B0FF] cursor-pointer transition-all"
+                    className="w-3.5 h-3.5 text-[#00B0FF] border-2 border-slate-300 rounded focus:ring-0 focus:ring-offset-0 accent-[#00B0FF] cursor-pointer transition-all"
                   />
-                  <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">Keep me signed in</span>
-                </label>
-              </div>
-
-              {/* Login Button - Darkblue-Azure-Darkblue Gradient */}
-              <button
-                type="submit"
-                disabled={loading || serverStatus?.status === 'offline'}
-                className="w-full mt-2 py-2.5 bg-gradient-to-r from-[#1A237E] via-[#00B0FF] to-[#1A237E] text-white font-bold rounded-xl shadow-md hover:shadow-[#00B0FF]/20 transform hover:scale-[1.01] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                    <span>Sign In →</span>
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Error Message */}
-            {error && (
-              <div className="mt-3.5 p-2.5 bg-red-50 border border-red-200 rounded-lg">
-                <div className="flex items-center gap-2 text-red-700 text-xs">
-                  <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{error}</span>
                 </div>
-              </div>
-            )}
-
-            {/* Server Offline Alert */}
-            {serverStatus?.status === 'offline' && (
-              <div className="mt-3.5 p-2.5 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center gap-2 text-yellow-700 text-xs">
-                  <span className="text-sm">⚠️</span>
-                  <span>Server is offline. Please check your connection.</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Footer - Light Grey Background, No Shadow */}
-          <div className="bg-gray-200 px-5 py-3">
-            <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-slate-600">
-              <span className="flex items-center gap-1 font-medium">
-                <svg className="w-3 h-3 text-[#1A237E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6-4h12a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Secure Portal
-              </span>
-              <span className="text-slate-400">•</span>
-              <span className="hover:text-slate-800 transition-colors">Earn Points</span>
-              <span className="text-slate-400">•</span>
-              <span className="hover:text-slate-800 transition-colors">Get Rewards</span>
+                <span className="text-xs text-slate-600 group-hover:text-slate-800 transition-colors font-medium">Keep me signed in</span>
+              </label>
             </div>
+
+            {/* Login Button - Gradient Azure to Teal */}
+            <button
+              type="submit"
+              disabled={loading || serverStatus?.status === 'offline'}
+              className="w-full mt-2 py-2 bg-gradient-to-r from-[#00B0FF] to-[#008080] text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm group"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In</span>
+                  <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Error Message */}
+          {error && (
+            <div className="mt-4 p-2.5 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl">
+              <div className="flex items-center gap-2 text-red-700 text-xs">
+                <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="font-medium">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Server Offline Alert */}
+          {serverStatus?.status === 'offline' && (
+            <div className="mt-4 p-2.5 bg-amber-50/80 backdrop-blur-sm border border-amber-200 rounded-2xl">
+              <div className="flex items-center gap-2 text-amber-700 text-xs">
+                <span className="text-base">⚠️</span>
+                <span className="font-medium">Server is offline. Please check your connection.</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer - Visible */}
+        <div className="mt-5 pt-3">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
+            <span className="flex items-center gap-1.5 font-medium text-slate-500 hover:text-[#1A237E] transition-colors cursor-pointer">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6-4h12a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Secure Portal
+            </span>
+            <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+            <span className="text-slate-500 hover:text-[#00B0FF] transition-colors cursor-pointer font-medium">Earn Points</span>
+            <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
+            <span className="text-slate-500 hover:text-[#008080] transition-colors cursor-pointer font-medium">Get Rewards</span>
           </div>
         </div>
+
+        {/* Help Text */}
+        <p className="text-center text-xs text-slate-400 mt-3">
+          Need help? Contact your instructor
+        </p>
       </div>
     </div>
   );

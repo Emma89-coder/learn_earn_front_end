@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
+// Import all images
+import mapImage from '../../assets/images/map.png';
+import learnerImage from '../../assets/images/learner.png';
+import scienceImage from '../../assets/images/science.png';
+import basketImage from '../../assets/images/basket.png';
+import mathsImage from '../../assets/images/maths.png';
+import chichewaImage from '../../assets/images/chichewa.png';
 
 const QuizPage = () => {
   const navigate = useNavigate();
@@ -22,14 +29,13 @@ const QuizPage = () => {
     return savedSoundSetting ? savedSoundSetting === 'true' : true;
   });
 
-  // All subjects - Social Studies and Bible Knowledge combined
   const subjects = [
-    { id: 'social-studies', name: 'Social Studies & Bible', icon: '🌍📖', combined: true },
-    { id: 'english', name: 'English', icon: '📚' },
-    { id: 'primary-science', name: 'Primary Science', icon: '🔬' },
-    { id: 'arts-life-skills', name: 'Arts & Life Skills', icon: '🎨' },
-    { id: 'mathematics', name: 'Mathematics', icon: '🔢' },
-    { id: 'chichewa', name: 'Chichewa', icon: '🇲🇼' }
+    { id: 'social-studies', name: 'SOCIAL STUDIES', icon: '🌍📖', iconBg: 'from-emerald-500 to-teal-500', combined: true },
+    { id: 'english', name: 'ENGLISH', icon: '📚', iconBg: 'from-blue-500 to-cyan-500' },
+    { id: 'primary-science', name: 'PRIMARY SCIENCE', icon: '🔬', iconBg: 'from-purple-500 to-pink-500' },
+    { id: 'arts-life-skills', name: 'ARTS & LIFE SKILLS', icon: '🎨', iconBg: 'from-orange-500 to-red-500' },
+    { id: 'mathematics', name: 'MATHEMATICS', icon: '🔢', iconBg: 'from-indigo-500 to-blue-500' },
+    { id: 'chichewa', name: 'CHICHEWA', icon: '🇲🇼', iconBg: 'from-green-500 to-emerald-500' }
   ];
 
   useEffect(() => {
@@ -56,7 +62,6 @@ const QuizPage = () => {
   };
 
   const getQuizzesBySubject = (subjectId) => {
-    // For combined Social Studies & Bible, get quizzes from both topics
     if (subjectId === 'social-studies') {
       const socialQuizzes = quizzes.filter(quiz => quiz.topic === 'social-studies');
       const bibleQuizzes = quizzes.filter(quiz => quiz.topic === 'bible-knowledge');
@@ -139,11 +144,7 @@ const QuizPage = () => {
     }`}>
       
       {/* Header */}
-      <header className={`flex-shrink-0 z-50 backdrop-blur-xl transition-all duration-300 ${
-        isDarkMode 
-          ? 'bg-darkblue-950/80 border-b border-darkblue-800' 
-          : 'bg-white/80 border-b border-ice-200'
-      }`}>
+      <header className="flex-shrink-0 z-50 shadow-md transition-all duration-300" style={{ backgroundColor: '#daf2f5' }}>
         <div className="max-w-5xl mx-auto px-3 py-2">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/learner-dashboard')}>
@@ -151,10 +152,10 @@ const QuizPage = () => {
                 <span className="text-lg">📚</span>
               </div>
               <div>
-                <h1 className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-darkblue-900'}`}>
+                <h1 className="text-base font-bold text-darkblue-900">
                   Quiz <span className="text-teal-500">Hub</span>
                 </h1>
-                <p className={`text-[11px] ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
+                <p className="text-[11px] text-darkblue-600">
                   Choose your subject
                 </p>
               </div>
@@ -165,7 +166,7 @@ const QuizPage = () => {
                 className={`p-1.5 rounded-lg transition ${
                   isSoundEnabled 
                     ? 'bg-teal-500 text-white' 
-                    : 'bg-slate-500/20 text-slate-400'
+                    : 'bg-slate-500/20 text-slate-600'
                 }`}
               >
                 {isSoundEnabled ? '🔊' : '🔇'}
@@ -175,7 +176,7 @@ const QuizPage = () => {
                 className={`p-1.5 rounded-lg transition ${
                   isDarkMode 
                     ? 'bg-darkblue-800 text-yellow-400' 
-                    : 'bg-ice-100 text-darkblue-600'
+                    : 'bg-teal-100 text-darkblue-600'
                 }`}
               >
                 {isDarkMode ? '☀️' : '🌙'}
@@ -203,7 +204,7 @@ const QuizPage = () => {
           </p>
         </div>
 
-        {/* Grid - Increased font sizes */}
+        {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 flex-1 overflow-hidden">
           {subjects.map((subject) => {
             const subjectQuizzes = getQuizzesBySubject(subject.id);
@@ -227,40 +228,169 @@ const QuizPage = () => {
               >
                 <div className={`w-full h-full preserve-3d transition-all duration-700 relative ${isFlipped ? 'rotate-y-180' : ''}`}>
                   
-                  {/* Front Side - Teal Card */}
-                  <div className="absolute inset-0 backface-hidden rounded-lg bg-teal-500 p-3 flex flex-col justify-between border border-teal-400/50 shadow-md">
-                    {/* Top Section */}
-                    <div className="flex justify-between items-start">
-                      <span className="text-3xl">{subject.icon}</span>
-                      <div className="bg-white/20 rounded-full px-2 py-0.5">
-                        <span className="text-white text-[11px] font-semibold">{subjectQuizzes.length} quizzes</span>
-                      </div>
-                    </div>
+                  {/* Front Side */}
+                  <div className="absolute inset-0 backface-hidden rounded-lg bg-teal-500 p-3 flex flex-col border border-teal-400/50 shadow-md overflow-hidden">
                     
-                    {/* Middle Section */}
-                    <div className="flex-1 flex flex-col justify-center text-center">
-                      <h3 className="text-white font-bold text-base tracking-tight mb-1 leading-tight">
-                        {subject.name}
-                      </h3>
-                      {subject.combined && (
-                        <div className="text-white/70 text-[10px]">
-                          Social Studies + Bible
+                    {subject.id === 'social-studies' ? (
+                      <>
+                        <div className="flex-1 flex items-center justify-center min-h-0 py-0">
+                          <img 
+                            src={mapImage}
+                            alt="Malawi Map"
+                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                          />
                         </div>
-                      )}
-                      <div className="mt-2 text-yellow-300 text-sm font-semibold">
-                        +{totalReward} pts
-                      </div>
-                    </div>
-                    
-                    {/* Bottom Section */}
-                    <div className="text-center h-2"></div>
+                        <div className="flex justify-between items-center mt-0 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                          <div className="text-white font-black text-sm tracking-wider">
+                            SOCIAL STUDIES
+                          </div>
+                          <div className="text-yellow-300 font-bold text-xs">
+                            50 points
+                          </div>
+                        </div>
+                      </>
+                    ) : subject.id === 'english' ? (
+                      <>
+                        <div className="flex-1 flex items-center justify-center min-h-0 py-0">
+                          <img 
+                            src={learnerImage}
+                            alt="English Learning"
+                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-0 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                          <div className="text-white font-black text-sm tracking-wider">
+                            ENGLISH
+                          </div>
+                          <div className="text-yellow-300 font-bold text-xs">
+                            {totalReward} pts
+                          </div>
+                        </div>
+                      </>
+                    ) : subject.id === 'primary-science' ? (
+                      <>
+                        <div className="flex-1 flex items-center justify-center min-h-0 py-0">
+                          <img 
+                            src={scienceImage}
+                            alt="Primary Science"
+                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-0 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                          <div className="text-white font-black text-sm tracking-wider">
+                            PRIMARY SCIENCE
+                          </div>
+                          <div className="text-yellow-300 font-bold text-xs">
+                            {totalReward} pts
+                          </div>
+                        </div>
+                      </>
+                    ) : subject.id === 'arts-life-skills' ? (
+                      <>
+                        <div className="flex-1 flex items-center justify-center min-h-0 py-0">
+                          <img 
+                            src={basketImage}
+                            alt="Arts & Life Skills"
+                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-0 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                          <div className="text-white font-black text-sm tracking-wider">
+                            ARTS & LIFE SKILLS
+                          </div>
+                          <div className="text-yellow-300 font-bold text-xs">
+                            {totalReward} pts
+                          </div>
+                        </div>
+                      </>
+                    ) : subject.id === 'mathematics' ? (
+                      <>
+                        <div className="flex-1 flex items-center justify-center min-h-0 py-0">
+                          <img 
+                            src={mathsImage}
+                            alt="Mathematics"
+                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-0 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                          <div className="text-white font-black text-sm tracking-wider">
+                            MATHEMATICS
+                          </div>
+                          <div className="text-yellow-300 font-bold text-xs">
+                            {totalReward} pts
+                          </div>
+                        </div>
+                      </>
+                    ) : subject.id === 'chichewa' ? (
+                      <>
+                        <div className="flex-1 flex items-center justify-center min-h-0 py-0">
+                          <img 
+                            src={chichewaImage}
+                            alt="Chichewa"
+                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center mt-0 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                          <div className="text-white font-black text-sm tracking-wider">
+                            CHICHEWA
+                          </div>
+                          <div className="text-yellow-300 font-bold text-xs">
+                            {totalReward} pts
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-center mb-2 flex-shrink-0">
+                          <span className="text-5xl transform hover:scale-110 transition-transform duration-300 drop-shadow-lg">
+                            {subject.icon}
+                          </span>
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center text-center min-h-0">
+                          <h3 className="text-white font-bold text-base tracking-tight mb-1 leading-tight">
+                            {subject.name}
+                          </h3>
+                          {subject.combined && (
+                            <div className="text-white/70 text-[10px]">
+                              Social Studies + Bible
+                            </div>
+                          )}
+                          <div className="mt-2 text-yellow-300 text-sm font-semibold">
+                            +{totalReward} pts
+                          </div>
+                        </div>
+                        <div className="text-center mt-1 flex-shrink-0">
+                          <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
+                            <span className="text-white text-[11px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   
-                  {/* Back Side - Teal Card (Darker) */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-teal-600 p-3 flex flex-col rounded-lg border border-teal-500/50 shadow-md">
-                    <h3 className="text-white font-bold text-sm mb-2 text-center">Available Quizzes</h3>
+                  {/* Back Side */}
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-teal-600 p-3 flex flex-col rounded-lg border border-teal-500/50 shadow-md overflow-hidden">
+                    <h3 className="text-white font-bold text-sm mb-2 text-center flex-shrink-0">Available Quizzes</h3>
                     
-                    <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-1">
+                    <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-1 min-h-0">
                       {subjectQuizzes.slice(0, 3).map((quiz) => (
                         <div 
                           key={quiz.id} 
@@ -289,7 +419,7 @@ const QuizPage = () => {
                         </p>
                       )}
                     </div>
-                    <p className="text-white/40 text-[10px] text-center mt-2">Click to browse →</p>
+                    <p className="text-white/40 text-[10px] text-center mt-2 flex-shrink-0">Click to browse →</p>
                   </div>
 
                 </div>
@@ -299,55 +429,70 @@ const QuizPage = () => {
         </div>
       </main>
 
-      {/* Quiz Modal */}
+      {/* Cleaner, Smaller Quiz Modal with Solid Teal Header */}
       {activeSubject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-darkblue-950/80 backdrop-blur-sm animate-fadeIn" onClick={closeDialog}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={closeDialog}>
           <div 
             className={`transition-all duration-300 ${
               isMaximized 
                 ? 'w-full h-full max-w-none max-h-none rounded-none' 
-                : 'w-full max-w-2xl rounded-xl'
-            } ${isDarkMode ? 'bg-darkblue-900 border border-darkblue-700' : 'bg-white shadow-2xl'} flex flex-col ${isClosing ? 'animate-scaleDown' : 'animate-scaleUp'}`}
+                : 'w-full max-w-2xl rounded-2xl'
+            } ${isDarkMode ? 'bg-gray-900' : 'bg-white'} shadow-2xl flex flex-col ${isClosing ? 'animate-scaleDown' : 'animate-scaleUp'}`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-darkblue-700' : 'border-ice-200'}`}>
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{activeSubject.icon}</span>
-                <div>
-                  <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-darkblue-900'}`}>
-                    {activeSubject.name} Quizzes
-                  </h3>
-                  <p className={`text-xs ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
-                    {currentSubjectQuizzes.length} quizzes available
-                  </p>
-                  {activeSubject.combined && (
-                    <p className={`text-[10px] mt-0.5 ${isDarkMode ? 'text-ice-500' : 'text-darkblue-400'}`}>
-                      Includes Social Studies & Bible Knowledge
-                    </p>
-                  )}
+            {/* Modal Header - Solid Teal */}
+            <div className="bg-teal-500 rounded-t-2xl">
+              <div className="px-5 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-lg">
+                      {activeSubject.id === 'social-studies' ? (
+                        <img src={mapImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
+                      ) : activeSubject.id === 'english' ? (
+                        <img src={learnerImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
+                      ) : activeSubject.id === 'primary-science' ? (
+                        <img src={scienceImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
+                      ) : activeSubject.id === 'arts-life-skills' ? (
+                        <img src={basketImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
+                      ) : activeSubject.id === 'mathematics' ? (
+                        <img src={mathsImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
+                      ) : activeSubject.id === 'chichewa' ? (
+                        <img src={chichewaImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
+                      ) : (
+                        <span>{activeSubject.icon}</span>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg">
+                        {activeSubject.name}
+                      </h3>
+                      <p className="text-white/80 text-xs mt-0.5">
+                        {currentSubjectQuizzes.length} quizzes available
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button 
+                      onClick={toggleMaximize} 
+                      className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-all"
+                    >
+                      {isMaximized ? '📐' : '🗖'}
+                    </button>
+                    <button 
+                      onClick={closeDialog} 
+                      className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-all"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={toggleMaximize} 
-                  className={`p-1.5 rounded-lg transition ${isDarkMode ? 'hover:bg-darkblue-800' : 'hover:bg-ice-100'}`}
-                >
-                  {isMaximized ? '📐' : '🗖'}
-                </button>
-                <button 
-                  onClick={closeDialog} 
-                  className={`p-1.5 rounded-lg transition ${isDarkMode ? 'hover:bg-darkblue-800' : 'hover:bg-ice-100'}`}
-                >
-                  ✕
-                </button>
               </div>
             </div>
 
-            {/* Quiz List */}
-            <div className={`flex-1 overflow-y-auto p-4 custom-scrollbar ${isMaximized ? 'max-h-none' : 'max-h-[60vh]'}`}>
+            {/* Quiz List - Clean and Compact */}
+            <div className={`flex-1 overflow-y-auto p-4 custom-scrollbar ${isMaximized ? 'max-h-none' : 'max-h-[50vh]'}`}>
               {currentSubjectQuizzes.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {currentSubjectQuizzes.map((quiz, idx) => {
                     let questions = quiz.questions;
                     if (typeof questions === 'string') {
@@ -359,69 +504,91 @@ const QuizPage = () => {
                     return (
                       <div 
                         key={quiz.id} 
-                        className={`rounded-lg overflow-hidden border transition-all ${
-                          isDarkMode ? 'border-darkblue-700' : 'border-ice-200'
-                        }`}
+                        className={`rounded-xl overflow-hidden transition-all duration-200 ${
+                          isDarkMode 
+                            ? 'bg-gray-800/50 border border-gray-700' 
+                            : 'bg-gray-50 border border-gray-200'
+                        } ${expandedQuiz === quiz.id ? 'ring-1 ring-teal-500' : ''}`}
                       >
+                        {/* Quiz Header */}
                         <button
                           onClick={() => toggleQuizExpand(quiz.id)}
-                          className="w-full p-3 text-left transition-all hover:bg-teal-50 dark:hover:bg-darkblue-800"
+                          className="w-full p-3 text-left transition-all hover:bg-teal-50 dark:hover:bg-gray-700/50"
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                                  isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-600'
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
+                                  isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-500 text-white'
                                 }`}>
                                   {idx + 1}
-                                </span>
-                                <h4 className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-darkblue-800'}`}>
+                                </div>
+                                <h4 className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                                   {quiz.title}
                                 </h4>
                               </div>
-                              <div className="flex items-center gap-3 mt-1 text-xs">
-                                <span className={isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}>
-                                  📝 {questionCount} questions
-                                </span>
-                                <span className={isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}>
-                                  ⏱️ {timeEstimate} min
-                                </span>
-                                <span className="text-teal-500 font-semibold">
-                                  +{quiz.points_reward || 50} pts
-                                </span>
+                              
+                              {/* Stats Row */}
+                              <div className="flex flex-wrap items-center gap-2 ml-8">
+                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${
+                                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
+                                }`}>
+                                  <span>📝</span>
+                                  <span>{questionCount}</span>
+                                </div>
+                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${
+                                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
+                                }`}>
+                                  <span>⏱️</span>
+                                  <span>{timeEstimate}m</span>
+                                </div>
+                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                  isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-700'
+                                }`}>
+                                  <span>💎</span>
+                                  <span>+{quiz.points_reward || 50}</span>
+                                </div>
                               </div>
                             </div>
-                            <svg className={`w-4 h-4 transition-transform ${expandedQuiz === quiz.id ? 'rotate-180' : ''} ${isDarkMode ? 'text-ice-400' : 'text-darkblue-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            
+                            {/* Expand Icon */}
+                            <div className={`transition-transform duration-200 ${expandedQuiz === quiz.id ? 'rotate-180' : ''}`}>
+                              <svg className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
                           </div>
                         </button>
                         
+                        {/* Expanded Content */}
                         {expandedQuiz === quiz.id && (
-                          <div className={`p-3 border-t ${isDarkMode ? 'border-darkblue-700 bg-darkblue-800/50' : 'border-ice-100 bg-ice-50'}`}>
+                          <div className={`p-3 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-100'}`}>
                             {quiz.image_url && (
-                              <div className="mb-2 rounded-md overflow-hidden">
+                              <div className="mb-2 rounded-lg overflow-hidden">
                                 <img src={quiz.image_url} alt={quiz.title} className="w-full h-24 object-cover" />
                               </div>
                             )}
-                            <p className={`text-xs mb-2 ${isDarkMode ? 'text-ice-300' : 'text-darkblue-600'}`}>
+                            
+                            <p className={`text-xs mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                               {quiz.description || 'Test your knowledge with this quiz!'}
                             </p>
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                                isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-600'
+                            
+                            <div className="flex gap-2 mb-3">
+                              <div className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                isDarkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'
                               }`}>
-                                🎯 Passing: 60%
-                              </span>
-                              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                                isDarkMode ? 'bg-azure-500/20 text-azure-400' : 'bg-azure-100 text-azure-600'
+                                🎯 Pass: 60%
+                              </div>
+                              <div className={`text-[10px] px-2 py-0.5 rounded-full ${
+                                isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-700'
                               }`}>
-                                ⚡ {quiz.difficulty || 'Medium'} difficulty
-                              </span>
+                                ⚡ {quiz.difficulty || 'Medium'}
+                              </div>
                             </div>
+                            
                             <button
                               onClick={() => navigate(`/quiz/${quiz.id}`)}
-                              className="w-full py-2 rounded-lg font-semibold text-sm bg-teal-500 text-white hover:bg-teal-600 transition"
+                              className="w-full py-2 rounded-lg font-semibold text-sm bg-teal-500 text-white hover:bg-teal-600 transition-all transform hover:scale-[1.02]"
                             >
                               Start Quiz →
                             </button>
@@ -434,21 +601,37 @@ const QuizPage = () => {
               ) : (
                 <div className="text-center py-8">
                   <div className="text-5xl mb-2">📭</div>
-                  <p className={`text-sm ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
+                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     No quizzes available
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className={`p-3 border-t ${isDarkMode ? 'border-darkblue-700' : 'border-ice-200'}`}>
-              <button
-                onClick={closeDialog}
-                className="w-full py-2 rounded-lg text-sm font-medium bg-teal-500 text-white hover:bg-teal-600 transition"
-              >
-                Close
-              </button>
+            {/* Footer */}
+            <div className={`p-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} rounded-b-2xl`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">📚</span>
+                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {currentSubjectQuizzes.length} quizzes
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs">💎</span>
+                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {currentSubjectQuizzes.reduce((sum, q) => sum + (q.points_reward || 50), 0)} pts
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={closeDialog}
+                  className="px-4 py-1.5 rounded-lg text-xs font-medium bg-teal-500 text-white hover:bg-teal-600 transition"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -522,8 +705,11 @@ const QuizPage = () => {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,176,255,0.3)'};
+          background: ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(20,184,166,0.3)'};
           border-radius: 10px;
+        }
+        .ml-8 {
+          margin-left: 2rem;
         }
       `}</style>
     </div>

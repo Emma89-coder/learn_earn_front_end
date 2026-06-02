@@ -4,61 +4,12 @@ import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
-
-const Card = ({ title, description, icon, onClick, backIcon, backText, path }) => {
-  const [flipped, setFlipped] = useState(false);
-  
-  const handleFlip = (e) => {
-    e.stopPropagation();
-    setFlipped(!flipped);
-    setTimeout(() => {
-      setFlipped(false);
-    }, 1500);
-  };
-
-  return (
-    <div 
-      className="group relative w-64 h-72 transition-all duration-500 hover:-translate-y-2 cursor-pointer"
-      onClick={handleFlip}
-    >
-      {/* Front Side */}
-      <div className={`absolute inset-0 transition-all duration-500 backface-hidden ${
-        flipped ? 'opacity-0 rotate-y-180' : 'opacity-100 rotate-y-0'
-      }`}>
-        <div className="absolute inset-0 rounded-2xl shadow-xl group-hover:shadow-2xl border-2 bg-gradient-to-br from-teal-600 to-teal-800 border-teal-400/30" />
-        <div className="relative z-10 flex flex-col items-center justify-center h-full p-6 text-white text-center">
-          <div className="text-5xl mb-3">{icon}</div>
-          <h2 className="text-xl font-bold tracking-wide">{title}</h2>
-          <p className="text-xs font-light mt-1 text-teal-100">{description}</p>
-          <div className="mt-4 text-[10px] uppercase tracking-widest font-bold opacity-80 border-t border-white/20 pt-2">
-            Tap to flip →
-          </div>
-        </div>
-      </div>
-
-      {/* Back Side */}
-      <div className={`absolute inset-0 transition-all duration-500 backface-hidden ${
-        flipped ? 'opacity-100 rotate-y-0' : 'opacity-0 rotate-y-180'
-      }`}>
-        <div className="absolute inset-0 rounded-2xl shadow-xl border-2 bg-gradient-to-br from-teal-700 to-teal-900 border-teal-400/30" />
-        <div className="relative z-10 flex flex-col items-center justify-center h-full p-6 text-white text-center">
-          <div className="text-5xl mb-3">{backIcon || '🎯'}</div>
-          <h2 className="text-xl font-bold tracking-wide">{title}</h2>
-          <p className="text-xs font-light mt-1 text-teal-100">{backText || 'Click to start!'}</p>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onClick) onClick();
-            }}
-            className="mt-3 px-4 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-white font-semibold transition transform hover:scale-105 text-sm"
-          >
-            Go Now →
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { 
+  Trophy, BookOpen, Flag, Gift, WifiOff, LayoutGrid, Map, User, 
+  ChevronRight, Award, Crown, TrendingUp, Medal, Home, 
+  Compass, ShoppingBag, BarChart3, Shield, Brain, Target,
+  Zap, Star, Sparkles, Sun, Moon, Activity, LogOut
+} from 'lucide-react';
 
 const LearnerDashboard = () => {
   const { user, logout } = useAuth();
@@ -67,9 +18,9 @@ const LearnerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [dailyRewardClaimed, setDailyRewardClaimed] = useState(false);
   const [streak, setStreak] = useState(0);
+  const [activeTab, setActiveTab] = useState('home');
 
   const avatars = [
     'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix',
@@ -78,6 +29,14 @@ const LearnerDashboard = () => {
     'https://api.dicebear.com/7.x/adventurer/svg?seed=Bella',
     'https://api.dicebear.com/7.x/adventurer/svg?seed=Charlie',
     'https://api.dicebear.com/7.x/adventurer/svg?seed=Daisy'
+  ];
+
+  const navItems = [
+    { id: 'home', label: 'Home', icon: <Home size={22} />, path: '/dashboard', color: 'text-teal-600' },
+    { id: 'quiz', label: 'Quiz', icon: <Compass size={22} />, path: '/quizzes', color: 'text-teal-600' },
+    { id: 'store', label: 'Store', icon: <ShoppingBag size={22} />, path: '/rewards', color: 'text-teal-600' },
+    { id: 'stats', label: 'Stats', icon: <BarChart3 size={22} />, path: '/leaderboard', color: 'text-teal-600' },
+    { id: 'profile', label: 'Profile', icon: <User size={22} />, path: '/profile', color: 'text-teal-600' }
   ];
 
   useEffect(() => {
@@ -138,11 +97,6 @@ const LearnerDashboard = () => {
     toast.success('Logged out successfully');
   };
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem('portal-theme', !isDarkMode ? 'dark' : 'light');
-  };
-
   const getRankTitle = () => {
     if (points.lifetime < 100) return '🌱 Seedling';
     if (points.lifetime < 500) return '🌊 Explorer';
@@ -167,214 +121,311 @@ const LearnerDashboard = () => {
     return 100;
   };
 
-  const handleCardClick = (path) => {
+  const handleCardClick = (path, params = {}) => {
+    if (path) {
+      // If there are query parameters, pass them
+      const queryString = new URLSearchParams(params).toString();
+      const fullPath = queryString ? `${path}?${queryString}` : path;
+      navigate(fullPath);
+    }
+  };
+
+  const handleNavClick = (id, path) => {
+    setActiveTab(id);
     navigate(path);
   };
 
-  const cards = [
-    { id: 'quiz', title: 'Play Quiz', description: 'Test your knowledge', icon: '📚', path: '/quizzes', backIcon: '🎯', backText: 'Start Learning!' },
-    { id: 'leaderboard', title: 'Leaderboard', description: 'View Rankings', icon: '🏆', path: '/leaderboard', backIcon: '📊', backText: 'View Rankings!' },
-    { id: 'rewards', title: 'Reward Store', description: 'Redeem Points', icon: '🎁', path: '/rewards', backIcon: '🛒', backText: 'Shop Now!' },
-    { id: 'badges', title: 'My Badges', description: 'Achievements', icon: '🏅', path: '/badges', backIcon: '✨', backText: 'Show Off!' },
-    { id: 'community', title: 'Community', description: 'Engage & Learn', icon: '👥', path: '/community', backIcon: '🤝', backText: 'Join Now!' }
+  const mainActions = [
+    { id: 'daily-quiz', icon: <BookOpen size={24} />, title: 'Daily Quiz', color: 'bg-gradient-to-r from-teal-500 to-teal-600', path: '/quizzes', params: { type: 'daily' } },
+    { id: 'flags-quiz', icon: <Flag size={24} />, title: 'Flags Quiz', color: 'bg-gradient-to-r from-teal-600 to-teal-700', path: '/quizzes', params: { type: 'flags' } }
+  ];
+
+  const secondaryActions = [
+    { id: 'offline', icon: <WifiOff size={20} />, title: 'Offline Quiz', path: '/offline-quiz' },
+    { id: 'categories', icon: <LayoutGrid size={20} />, title: 'Categories', path: '/quizzes', params: { view: 'categories' } },
+    { id: 'malawi', icon: <Map size={20} />, title: 'District of Malawi', path: '/quizzes', params: { category: 'malawi-districts' } },
+    { id: 'hangman', icon: <Brain size={20} />, title: 'Hangman', path: '/hangman' }
   ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 font-sans flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600 font-medium">Loading your adventure...</p>
+          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${
-      isDarkMode ? 'bg-slate-900' : 'bg-slate-50'
-    }`}>
-      
-      {/* Header */}
-      <header className={`sticky top-0 z-50 backdrop-blur-md ${
-        isDarkMode ? 'bg-slate-900/80 border-b border-slate-700' : 'bg-white/80 border-b border-slate-200'
-      }`}>
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div className="bg-teal-600 text-white p-2 rounded-xl shadow-lg">
-                <span className="text-xl">🎮</span>
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 font-sans pb-20">
+      {/* Beautiful Header with Gradient and Pattern */}
+      <header className="relative overflow-hidden bg-gradient-to-r from-teal-600 via-teal-500 to-cyan-600 text-white sticky top-0 z-40 shadow-xl">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-white rounded-full mix-blend-overlay animate-pulse"></div>
+          <div className="absolute bottom-0 -right-4 w-96 h-96 bg-white rounded-full mix-blend-overlay animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-300 rounded-full mix-blend-overlay animate-pulse delay-700"></div>
+        </div>
+
+        {/* Decorative Grid Pattern */}
+        <div className="absolute inset-0 opacity-5" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '30px 30px'
+        }}></div>
+
+        <div className="relative max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* User Info Section with Enhanced Design */}
+            <div className="flex items-center gap-4">
+              <div 
+                className="relative cursor-pointer group"
+                onClick={() => setShowAvatarModal(true)}
+              >
+                <div className="absolute inset-0 bg-white rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                <img 
+                  src={selectedAvatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.username || 'player'}`} 
+                  alt="Profile" 
+                  className="w-12 h-12 rounded-full border-3 border-white shadow-lg object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full p-1 shadow-md">
+                  <span className="text-xs">✏️</span>
+                </div>
               </div>
-              <h1 className="text-xl font-bold tracking-tight">Quiz Arena</h1>
+              <div>
+                <div className="flex items-center gap-2">
+                  <Sun size={14} className="text-yellow-300" />
+                  <p className="text-xs font-medium opacity-90">Welcome Back</p>
+                </div>
+                <h2 className="text-lg font-bold mt-0.5">{user?.fullName || user?.username || 'Player'}</h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Activity size={12} className="text-teal-200" />
+                  <p className="text-xs opacity-90">{getRankTitle()}</p>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-lg transition ${
-                  isDarkMode 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-yellow-400' 
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+
+            {/* Stats Section with Glass Effect */}
+            <div className="flex items-center gap-8">
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2">
+                <p className="text-2xl font-bold text-yellow-300">{points.current}</p>
+                <p className="text-[10px] uppercase tracking-wider opacity-90">Points</p>
+              </div>
+              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2">
+                <p className="text-2xl font-bold text-cyan-300">{points.lifetime}</p>
+                <p className="text-[10px] uppercase tracking-wider opacity-90">Lifetime</p>
+              </div>
+              {streak > 0 && (
+                <div className="flex items-center gap-2 bg-orange-500/30 backdrop-blur-sm px-3 py-2 rounded-full">
+                  <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center animate-pulse">
+                    <span className="text-sm">🔥</span>
+                  </div>
+                  <span className="font-bold text-sm">{streak}</span>
+                  <span className="text-[10px] uppercase">Day Streak</span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons with Enhanced Design */}
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={claimDailyReward}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg ${
+                  dailyRewardClaimed 
+                    ? 'bg-white/20 backdrop-blur-sm cursor-default'
+                    : 'bg-gradient-to-r from-yellow-400 to-orange-500 hover:shadow-yellow-500/50 text-white hover:scale-105'
                 }`}
               >
-                {isDarkMode ? '☀️' : '🌙'}
+                <Gift size={16} />
+                {!dailyRewardClaimed && 'Claim Reward'}
               </button>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 bg-white border border-slate-200 hover:bg-red-50 text-slate-600 hover:text-red-600 rounded-lg transition-colors font-medium text-sm shadow-sm"
+                className="px-4 py-2 bg-white/10 backdrop-blur-sm hover:bg-white/20 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2"
               >
+                <LogOut size={16} />
                 Exit
               </button>
+            </div>
+          </div>
+
+          {/* Enhanced Progress Bar Section */}
+          <div className="mt-4">
+            <div className="flex justify-between text-xs mb-2 text-white/90">
+              <div className="flex items-center gap-2">
+                <Trophy size={14} className="text-yellow-300" />
+                <span>Progress to Next Rank</span>
+              </div>
+              <span className="font-bold">{Math.round(getProgressPercent())}%</span>
+            </div>
+            <div className="relative">
+              <div className="w-full h-2 rounded-full overflow-hidden bg-white/20 backdrop-blur-sm">
+                <div 
+                  className="h-full bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full transition-all duration-700 relative"
+                  style={{ width: `${getProgressPercent()}%` }}
+                >
+                  <div className="absolute inset-0 bg-white opacity-30 animate-pulse"></div>
+                </div>
+              </div>
+              {getNextRankPoints() > 0 && (
+                <p className="text-xs text-white/80 mt-2 flex items-center gap-1">
+                  <Zap size={12} />
+                  {getNextRankPoints()} points needed for next rank
+                </p>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        
-        {/* Profile Summary Card */}
-        <div className={`rounded-2xl p-5 mb-6 ${
-          isDarkMode 
-            ? 'bg-slate-800/50 backdrop-blur-md border border-slate-700' 
-            : 'bg-white shadow-lg border border-slate-100'
-        }`}>
-          <div className="flex flex-col md:flex-row items-center gap-5">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full bg-teal-500 p-1 cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowAvatarModal(true)}>
-                <img 
-                  src={selectedAvatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user?.username || 'player'}`} 
-                  alt="Avatar"
-                  className="w-full h-full rounded-full object-cover bg-slate-800"
-                />
-              </div>
-              <button 
-                onClick={() => setShowAvatarModal(true)}
-                className={`absolute bottom-0 right-0 rounded-full p-1 shadow-lg ${
-                  isDarkMode ? 'bg-slate-700' : 'bg-white'
-                }`}
-              >
-                <span className="text-xs">✏️</span>
-              </button>
+      {/* Main Content */}
+      <main className="max-w-6xl mx-auto px-6 py-6">
+        {/* Main Actions Grid */}
+        <div className="grid grid-cols-2 gap-5 mb-6">
+          {mainActions.map((action) => (
+            <div
+              key={action.id}
+              onClick={() => handleCardClick(action.path, action.params)}
+              className={`${action.color} text-white p-5 rounded-xl h-32 flex flex-col justify-end shadow-lg cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl relative overflow-hidden group`}
+            >
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+              <div className="mb-2 relative z-10">{action.icon}</div>
+              <h3 className="text-lg font-bold relative z-10">{action.title}</h3>
             </div>
-
-            {/* User Info */}
-            <div className="flex-1 text-center md:text-left">
-              <h2 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                {user?.fullName || user?.username || 'Player'}
-              </h2>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                <span className={`px-3 py-1 rounded-full text-xs ${
-                  isDarkMode 
-                    ? 'bg-slate-700 text-slate-300' 
-                    : 'bg-slate-100 text-slate-600'
-                }`}>
-                  📚 {user?.classLevel || 'Adventurer'}
-                </span>
-                <span className="px-3 py-1 rounded-full bg-teal-100 text-teal-700 text-xs">
-                  🏆 {getRankTitle()}
-                </span>
-              </div>
-            </div>
-
-            {/* Points */}
-            <div className="flex gap-3">
-              <div className="text-center px-4 py-2 bg-teal-500 rounded-xl">
-                <div className="text-white text-[10px]">Available</div>
-                <div className="text-white font-bold text-xl">{points.current}</div>
-              </div>
-              <div className={`text-center px-4 py-2 rounded-xl ${
-                isDarkMode ? 'bg-slate-700' : 'bg-slate-100'
-              }`}>
-                <div className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Lifetime</div>
-                <div className={`font-bold text-xl ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>{points.lifetime}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mt-4">
-            <div className={`flex justify-between text-xs mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              <span>📈 Progress to Next Rank</span>
-              <span>{Math.round(getProgressPercent())}%</span>
-            </div>
-            <div className={`w-full h-2 rounded-full overflow-hidden ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}>
-              <div 
-                className="h-full bg-teal-500 rounded-full transition-all duration-700"
-                style={{ width: `${getProgressPercent()}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Daily Reward */}
-        <div 
-          onClick={claimDailyReward}
-          className={`mb-8 rounded-xl p-3 transition-all cursor-pointer ${
-            dailyRewardClaimed 
-              ? isDarkMode ? 'bg-slate-800/50' : 'bg-slate-100'
-              : 'bg-teal-500 animate-pulse'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-2xl">🎁</div>
-              <div>
-                <h3 className="text-white font-semibold text-sm">Daily Reward</h3>
-                <p className="text-white/80 text-xs">
-                  {dailyRewardClaimed ? "Come back tomorrow!" : "Tap to claim your bonus!"}
-                </p>
-              </div>
-            </div>
-            {streak > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-teal-500 rounded-full">
-                <span className="text-xs">🔥</span>
-                <span className="text-white font-bold text-xs">{streak}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Square Grid Layout - 3x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 justify-items-center">
-          {cards.map((card) => (
-            <Card 
-              key={card.id}
-              title={card.title}
-              description={card.description}
-              icon={card.icon}
-              onClick={() => handleCardClick(card.path)}
-              backIcon={card.backIcon}
-              backText={card.backText}
-              path={card.path}
-            />
           ))}
         </div>
 
+        {/* More Games Section - Outline style */}
+        <div>
+          <h3 className="text-lg font-bold text-teal-800 mb-3 flex items-center gap-2">
+            <Sparkles size={20} className="text-teal-500" />
+            More Games
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            {secondaryActions.map((action) => (
+              <div
+                key={action.id}
+                onClick={() => handleCardClick(action.path, action.params || {})}
+                className="bg-white border-2 border-teal-100 hover:border-teal-400 text-gray-700 p-3 rounded-lg shadow-sm flex items-center gap-3 cursor-pointer transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+              >
+                <div className="text-teal-500">{action.icon}</div>
+                <span className="text-sm font-medium">{action.title}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Stats Cards */}
+        <div className="grid grid-cols-3 gap-3 mt-6">
+          <div className="bg-gradient-to-br from-teal-500 to-teal-600 text-white p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+            <TrendingUp size={16} className="mb-1 opacity-80" />
+            <p className="text-xs opacity-90">Global Rank</p>
+            <p className="text-sm font-bold">#{points.lifetime > 1000 ? '124' : '1,247'}</p>
+          </div>
+          <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white p-3 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+            <Medal size={16} className="mb-1 opacity-80" />
+            <p className="text-xs opacity-90">Badges Earned</p>
+            <p className="text-sm font-bold">{Math.floor(points.lifetime / 100)}</p>
+          </div>
+          <div 
+            onClick={() => navigate('/leaderboard')}
+            className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-3 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-all hover:scale-105"
+          >
+            <Trophy size={16} className="mb-1 opacity-80" />
+            <p className="text-xs opacity-90">Leaderboard</p>
+            <p className="text-sm font-bold">View →</p>
+          </div>
+        </div>
+
+        {/* Achievement Banner */}
+        <div className="mt-6 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-lg p-4 border border-teal-200 shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-full flex items-center justify-center shadow-md">
+                <Zap size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-teal-800">Weekly Challenge</p>
+                <p className="text-xs text-gray-600">Complete 5 quizzes this week for bonus points!</p>
+              </div>
+            </div>
+            <Target size={20} className="text-teal-500" />
+          </div>
+        </div>
+
         {/* Footer Quote */}
-        <div className="mt-10 text-center">
-          <div className={`inline-block px-4 py-2 rounded-full text-xs ${
-            isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'
-          }`}>
+        <div className="mt-6 text-center">
+          <div className="inline-block px-6 py-2 rounded-full text-xs bg-white text-gray-600 shadow-md border border-teal-100">
             💡 "Knowledge is power! Keep learning every day!"
           </div>
         </div>
       </main>
 
+      {/* Redesigned Bottom Navigation Bar */}
+      <div className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-teal-100 shadow-lg">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-around items-center py-2">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleNavClick(item.id, item.path)}
+                className={`flex flex-col items-center p-2 rounded-lg transition-all duration-300 group relative ${
+                  activeTab === item.id 
+                    ? 'transform -translate-y-1' 
+                    : 'hover:transform hover:-translate-y-0.5'
+                }`}
+              >
+                {/* Active Indicator */}
+                {activeTab === item.id && (
+                  <div className="absolute -top-2 w-8 h-1 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full"></div>
+                )}
+                
+                {/* Icon Container */}
+                <div className={`
+                  relative transition-all duration-300
+                  ${activeTab === item.id 
+                    ? 'text-teal-600 scale-110' 
+                    : 'text-gray-400 group-hover:text-teal-500'
+                  }
+                `}>
+                  {item.icon}
+                </div>
+                
+                {/* Label */}
+                <span className={`
+                  text-[10px] mt-1 font-medium transition-all duration-300
+                  ${activeTab === item.id 
+                    ? 'text-teal-600' 
+                    : 'text-gray-500 group-hover:text-teal-500'
+                  }
+                `}>
+                  {item.label}
+                </span>
+
+                {/* Ripple Effect on Click */}
+                <div className="absolute inset-0 rounded-lg bg-teal-500 opacity-0 group-active:opacity-20 transition-opacity duration-300"></div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Avatar Modal */}
       {showAvatarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowAvatarModal(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-teal-500/30" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-xl max-w-md w-full p-6 animate-fadeIn shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-slate-800 font-bold text-xl">Choose Your Avatar</h3>
-              <button onClick={() => setShowAvatarModal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              <h3 className="text-gray-800 font-bold text-lg">Choose Your Avatar</h3>
+              <button onClick={() => setShowAvatarModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
             <div className="grid grid-cols-3 gap-3">
               {avatars.map((avatar, idx) => (
                 <button
                   key={idx}
                   onClick={() => updateAvatar(avatar)}
-                  className={`p-1 rounded-xl transition-all hover:scale-105 ${
-                    selectedAvatar === avatar ? 'ring-2 ring-teal-500 bg-teal-50' : 'hover:bg-slate-50'
+                  className={`p-1.5 rounded-lg transition-all hover:scale-105 ${
+                    selectedAvatar === avatar ? 'ring-2 ring-teal-500 bg-teal-50' : 'hover:bg-gray-50'
                   }`}
                 >
                   <img src={avatar} alt={`Avatar ${idx + 1}`} className="w-full rounded-lg" />
@@ -385,45 +436,43 @@ const LearnerDashboard = () => {
         </div>
       )}
 
-      {/* Bottom Mobile Nav */}
-      <div className={`fixed bottom-0 inset-x-0 lg:hidden backdrop-blur-md border-t ${
-        isDarkMode 
-          ? 'bg-slate-900/80 border-slate-700' 
-          : 'bg-white/80 border-slate-200'
-      }`}>
-        <div className="flex justify-around items-center py-2">
-          <button onClick={() => navigate('/quizzes')} className="flex flex-col items-center p-2">
-            <span className="text-xl">📚</span>
-            <span className="text-[10px]">Quiz</span>
-          </button>
-          <button onClick={() => navigate('/rewards')} className="flex flex-col items-center p-2">
-            <span className="text-xl">🎁</span>
-            <span className="text-[10px]">Store</span>
-          </button>
-          <button onClick={() => navigate('/leaderboard')} className="flex flex-col items-center p-2">
-            <span className="text-xl">🏆</span>
-            <span className="text-[10px]">Rank</span>
-          </button>
-          <button onClick={() => navigate('/badges')} className="flex flex-col items-center p-2">
-            <span className="text-xl">🏅</span>
-            <span className="text-[10px]">Badges</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="h-16 lg:h-0"></div>
-
       <style jsx>{`
-        .backface-hidden {
-          backface-visibility: hidden;
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
         
-        .rotate-y-180 {
-          transform: rotateY(180deg);
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.6;
+            transform: scale(1.05);
+          }
         }
         
-        .rotate-y-0 {
-          transform: rotateY(0deg);
+        .animate-pulse {
+          animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .delay-1000 {
+          animation-delay: 1s;
+        }
+        
+        .delay-700 {
+          animation-delay: 0.7s;
         }
       `}</style>
     </div>
