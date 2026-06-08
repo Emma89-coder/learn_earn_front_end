@@ -5,15 +5,15 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
 
-// List of subjects with updated colors
+// List of subjects with updated colors (removed gradients)
 const SUBJECTS = [
-  { id: 'social-studies', name: 'Social Studies', icon: '🌍', color: 'from-[#1A237E] to-[#00B0FF]', bgLight: 'bg-[#1A237E]/10', textLight: 'text-[#1A237E]' },
-  { id: 'bible-knowledge', name: 'Bible Knowledge', icon: '📖', color: 'from-[#00B0FF] to-[#008080]', bgLight: 'bg-[#00B0FF]/10', textLight: 'text-[#00B0FF]' },
-  { id: 'english', name: 'English', icon: '📚', color: 'from-[#008080] to-[#1A237E]', bgLight: 'bg-[#008080]/10', textLight: 'text-[#008080]' },
-  { id: 'primary-science', name: 'Primary Science', icon: '🔬', color: 'from-[#00B0FF] to-[#1A237E]', bgLight: 'bg-[#00B0FF]/10', textLight: 'text-[#00B0FF]' },
-  { id: 'arts-life-skills', name: 'Arts & Life Skills', icon: '🎨', color: 'from-[#008080] to-[#00B0FF]', bgLight: 'bg-[#008080]/10', textLight: 'text-[#008080]' },
-  { id: 'mathematics', name: 'Mathematics', icon: '🔢', color: 'from-[#1A237E] to-[#008080]', bgLight: 'bg-[#1A237E]/10', textLight: 'text-[#1A237E]' },
-  { id: 'chichewa', name: 'Chichewa', icon: '🇲🇼', color: 'from-[#00B0FF] to-[#008080]', bgLight: 'bg-[#00B0FF]/10', textLight: 'text-[#00B0FF]' }
+  { id: 'social-studies', name: 'Social Studies', icon: '🌍', color: '#1A237E', bgLight: '#1A237E/10', textLight: '#1A237E' },
+  { id: 'bible-knowledge', name: 'Bible Knowledge', icon: '📖', color: '#00B0FF', bgLight: '#00B0FF/10', textLight: '#00B0FF' },
+  { id: 'english', name: 'English', icon: '📚', color: '#008080', bgLight: '#008080/10', textLight: '#008080' },
+  { id: 'primary-science', name: 'Primary Science', icon: '🔬', color: '#00B0FF', bgLight: '#00B0FF/10', textLight: '#00B0FF' },
+  { id: 'arts-life-skills', name: 'Arts & Life Skills', icon: '🎨', color: '#008080', bgLight: '#008080/10', textLight: '#008080' },
+  { id: 'mathematics', name: 'Mathematics', icon: '🔢', color: '#1A237E', bgLight: '#1A237E/10', textLight: '#1A237E' },
+  { id: 'chichewa', name: 'Chichewa', icon: '🇲🇼', color: '#00B0FF', bgLight: '#00B0FF/10', textLight: '#00B0FF' }
 ];
 
 // Class Levels
@@ -42,6 +42,19 @@ const QUESTION_LAYOUTS = [
   { id: 'image-first', name: 'Image → Text', icon: '🖼️', desc: 'Picture first, then question' }
 ];
 
+// Helper function to convert text with markdown to HTML
+const renderFormattedText = (text) => {
+  if (!text) return '';
+  
+  let formatted = text
+    .replace(/__(.*?)__/g, '<u class="underline decoration-2 decoration-teal-500">$1</u>')
+    .replace(/<u>(.*?)<\/u>/g, '<u class="underline decoration-2 decoration-teal-500">$1</u>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+  
+  return formatted;
+};
+
 const getEmptyQuestion = () => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   question: '',
@@ -50,6 +63,326 @@ const getEmptyQuestion = () => ({
   correctAnswer: '',
   layout: 'text-first'
 });
+
+// Quiz Preview Modal Component
+const QuizPreviewModal = ({ isOpen, onClose, quizData, questions, onPublish }) => {
+  const [previewQuestionIndex, setPreviewQuestionIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [showAnswers, setShowAnswers] = useState(false);
+
+  if (!isOpen) return null;
+
+  const currentQuestion = questions[previewQuestionIndex];
+  const totalQuestions = questions.length;
+
+  const handleNext = () => {
+    if (previewQuestionIndex + 1 < totalQuestions) {
+      setPreviewQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (previewQuestionIndex > 0) {
+      setPreviewQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const handleSelectAnswer = (questionId, answer) => {
+    setSelectedAnswers(prev => ({ ...prev, [questionId]: answer }));
+  };
+
+  const getCorrectCount = () => {
+    let correct = 0;
+    questions.forEach(q => {
+      if (selectedAnswers[q.id] === q.correctAnswer) {
+        correct++;
+      }
+    });
+    return correct;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" onClick={onClose}></div>
+
+        <div className="inline-block w-full max-w-4xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-2xl shadow-xl">
+          {/* Modal Header */}
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Quiz Preview</h3>
+                <p className="text-xs text-gray-500 mt-1">Review your quiz before publishing</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Content */}
+          <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
+            {/* Quiz Info Banner */}
+            <div className="mb-6 p-4 rounded-xl bg-teal-50 border border-teal-200">
+              <div className="flex items-center gap-4 flex-wrap">
+                {quizData.quizImage && (
+                  <img src={quizData.quizImage} alt="Quiz" className="w-16 h-16 rounded-lg object-cover" />
+                )}
+                <div className="flex-1">
+                  <h2 className="text-xl font-bold text-gray-800">{quizData.title || 'Untitled Quiz'}</h2>
+                  <p className="text-sm text-gray-600 mt-1">{quizData.description || 'No description provided'}</p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-1 rounded-full bg-teal-100 text-teal-700">
+                      {quizData.topic || 'No subject'}
+                    </span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">
+                      {quizData.difficulty || 'intermediate'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">{totalQuestions} questions</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Question Navigation */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Question {previewQuestionIndex + 1} of {totalQuestions}
+                </span>
+                <button
+                  onClick={() => setShowAnswers(!showAnswers)}
+                  className="text-xs px-2 py-1 rounded bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+                >
+                  {showAnswers ? 'Hide Answers' : 'Show Answers'}
+                </button>
+              </div>
+              <div className="flex gap-1">
+                {questions.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setPreviewQuestionIndex(idx)}
+                    className={`flex-1 h-2 rounded-full transition-all ${
+                      idx === previewQuestionIndex
+                        ? 'bg-teal-500'
+                        : selectedAnswers[questions[idx].id]
+                        ? 'bg-green-300'
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Current Question */}
+            <div className="mb-6">
+              <div className="bg-gray-50 rounded-xl p-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-teal-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    {previewQuestionIndex + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div 
+                      className="text-gray-800 font-medium mb-4 prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: renderFormattedText(currentQuestion.question) 
+                      }}
+                    />
+                    
+                    {currentQuestion.questionImage && (
+                      <div className="mt-3 mb-4">
+                        <img 
+                          src={currentQuestion.questionImage} 
+                          alt="Question" 
+                          className="max-h-40 rounded-lg object-contain"
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-3 mt-4">
+                      {currentQuestion.options.map((option, optIdx) => {
+                        const isSelected = selectedAnswers[currentQuestion.id] === option;
+                        const isCorrect = showAnswers && option === currentQuestion.correctAnswer;
+                        
+                        return (
+                          <button
+                            key={optIdx}
+                            onClick={() => handleSelectAnswer(currentQuestion.id, option)}
+                            className={`w-full p-3 rounded-xl text-left transition-all border ${
+                              isSelected
+                                ? 'bg-teal-600 border-teal-600 text-white shadow-md'
+                                : isCorrect
+                                ? 'bg-green-100 border-green-300 text-green-800'
+                                : 'border-gray-200 hover:border-teal-300 hover:bg-teal-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
+                                isSelected
+                                  ? 'bg-white text-teal-600'
+                                  : isCorrect
+                                  ? 'bg-green-500 text-white'
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {String.fromCharCode(65 + optIdx)}
+                              </div>
+                              <span className="flex-1">{option}</span>
+                              {isCorrect && showAnswers && (
+                                <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">✓ Correct</span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between gap-3">
+              <button
+                onClick={handlePrevious}
+                disabled={previewQuestionIndex === 0}
+                className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                ← Previous
+              </button>
+              <div className="flex gap-2">
+                {showAnswers && (
+                  <div className="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-medium">
+                    Score: {getCorrectCount()}/{totalQuestions} ({Math.round((getCorrectCount()/totalQuestions)*100)}%)
+                  </div>
+                )}
+                <button
+                  onClick={handleNext}
+                  disabled={previewQuestionIndex === totalQuestions - 1}
+                  className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+            >
+              Close Preview
+            </button>
+            <button
+              onClick={onPublish}
+              className="px-6 py-2 rounded-lg text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition shadow-md"
+            >
+              Publish Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Class Assignment Modal Component
+const ClassAssignmentModal = ({ isOpen, onClose, onAssign, quizzes }) => {
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [selectedClasses, setSelectedClasses] = useState([]);
+
+  if (!isOpen) return null;
+
+  const handleAssign = () => {
+    if (selectedQuiz && selectedClasses.length > 0) {
+      onAssign(selectedQuiz, selectedClasses);
+      onClose();
+    }
+  };
+
+  const toggleClass = (classId) => {
+    setSelectedClasses(prev =>
+      prev.includes(classId)
+        ? prev.filter(c => c !== classId)
+        : [...prev, classId]
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75" onClick={onClose}></div>
+
+        <div className="inline-block w-full max-w-md my-8 overflow-hidden text-left align-middle transition-all transform bg-white rounded-2xl shadow-xl">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 className="text-lg font-semibold text-gray-900">Assign to Classes</h3>
+            <p className="text-xs text-gray-500 mt-1">Select classes that can access this quiz</p>
+          </div>
+
+          <div className="px-6 py-4">
+            {/* Quiz Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Quiz</label>
+              <select
+                value={selectedQuiz?.id || ''}
+                onChange={(e) => setSelectedQuiz(quizzes.find(q => q.id === parseInt(e.target.value)))}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-teal-500"
+              >
+                <option value="">Choose a quiz...</option>
+                {quizzes.map(quiz => (
+                  <option key={quiz.id} value={quiz.id}>{quiz.title}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Class Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Classes</label>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {CLASS_LEVELS.map(classLevel => (
+                  <label key={classLevel.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedClasses.includes(classLevel.id)}
+                      onChange={() => toggleClass(classLevel.id)}
+                      className="w-4 h-4 text-teal-500 rounded border-gray-300 focus:ring-teal-500"
+                    />
+                    <span className="text-2xl">{classLevel.icon}</span>
+                    <span className="flex-1 text-sm font-medium text-gray-700">{classLevel.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAssign}
+              disabled={!selectedQuiz || selectedClasses.length === 0}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              Assign to Classes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Question Card Component
 const QuestionCard = memo(({ 
@@ -68,6 +401,7 @@ const QuestionCard = memo(({
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [localQuestion, setLocalQuestion] = useState(question.question);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     setLocalQuestion(question.question);
@@ -79,11 +413,118 @@ const QuestionCard = memo(({
     onQuestionChange(index, newValue);
   };
 
+  const applyFormatting = (formatType) => {
+    const textarea = document.getElementById(`question-text-${question.id}`);
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = localQuestion.substring(start, end);
+    
+    let formattedText = '';
+    
+    switch(formatType) {
+      case 'underline':
+        formattedText = `__${selectedText}__`;
+        break;
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        break;
+      default:
+        return;
+    }
+    
+    const newText = localQuestion.substring(0, start) + formattedText + localQuestion.substring(end);
+    setLocalQuestion(newText);
+    onQuestionChange(index, newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = start + formattedText.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 10);
+  };
+  
+  const insertSpecialTemplate = (templateType) => {
+    let template = '';
+    switch(templateType) {
+      case 'correct-answer':
+        template = ' __[correct answer]__ ';
+        break;
+      case 'keyword':
+        template = ' __[keyword]__ ';
+        break;
+      case 'important':
+        template = ' **__[IMPORTANT]__** ';
+        break;
+      default:
+        return;
+    }
+    
+    const newText = localQuestion + template;
+    setLocalQuestion(newText);
+    onQuestionChange(index, newText);
+  };
+
+  const RichTextToolbar = () => (
+    <div className="flex flex-wrap gap-1 mb-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+      <button
+        type="button"
+        onClick={() => applyFormatting('underline')}
+        className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+        title="Underline text (__text__)"
+      >
+        <u className="text-sm">U</u>
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('bold')}
+        className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+        title="Bold text (**text**)"
+      >
+        <strong>B</strong>
+      </button>
+      <button
+        type="button"
+        onClick={() => applyFormatting('italic')}
+        className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+        title="Italic text (*text*)"
+      >
+        <em>I</em>
+      </button>
+      <div className="w-px h-6 bg-gray-300 mx-1"></div>
+      <button
+        type="button"
+        onClick={() => insertSpecialTemplate('correct-answer')}
+        className="px-2 py-1 rounded text-xs bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+      >
+        ✓ Correct Answer
+      </button>
+      <button
+        type="button"
+        onClick={() => insertSpecialTemplate('keyword')}
+        className="px-2 py-1 rounded text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+      >
+        🔑 Keyword
+      </button>
+      <button
+        type="button"
+        onClick={() => insertSpecialTemplate('important')}
+        className="px-2 py-1 rounded text-xs bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+      >
+        ⚠ Important
+      </button>
+    </div>
+  );
+
   return (
     <div className="question-card bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200">
-      <div className="px-5 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center justify-between">
+      <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-[#00B0FF] to-[#008080] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+          <div className="w-8 h-8 rounded-lg bg-[#00B0FF] flex items-center justify-center text-white text-xs font-bold shadow-sm">
             {index + 1}
           </div>
           <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
@@ -105,6 +546,17 @@ const QuestionCard = memo(({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="p-1.5 rounded-lg hover:bg-purple-50 transition text-gray-400 hover:text-purple-600"
+            title={showPreview ? 'Edit mode' : 'Preview mode'}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          </button>
           <button
             type="button"
             onClick={() => onDuplicate(index)}
@@ -143,15 +595,39 @@ const QuestionCard = memo(({
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-2">
               Question Text <span className="text-red-500">*</span>
+              <span className="text-gray-400 text-[10px] font-normal ml-2">
+                (Use __text__ to underline, **text** for bold, *text* for italic)
+              </span>
             </label>
-            <textarea
-              value={localQuestion}
-              onChange={handleQuestionChange}
-              placeholder="Enter your question here..."
-              rows={2}
-              className="w-full text-sm px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all resize-none"
-              required
-            />
+            
+            <RichTextToolbar />
+            
+            {!showPreview ? (
+              <textarea
+                id={`question-text-${question.id}`}
+                value={localQuestion}
+                onChange={handleQuestionChange}
+                placeholder="Enter your question here... Use __text__ to underline important words"
+                rows={3}
+                className="w-full text-sm px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all resize-none font-mono"
+                required
+              />
+            ) : (
+              <div className="w-full min-h-[100px] p-4 rounded-lg border border-gray-200 bg-gray-50">
+                <div 
+                  className="prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ 
+                    __html: renderFormattedText(localQuestion) || '<span class="text-gray-400">Preview will appear here...</span>' 
+                  }}
+                />
+              </div>
+            )}
+            
+            <div className="mt-2 text-[10px] text-gray-400 flex gap-3">
+              <span>📝 <u>Underline</u>: <code className="bg-gray-100 px-1 rounded">__text__</code></span>
+              <span>🔲 <strong>Bold</strong>: <code className="bg-gray-100 px-1 rounded">**text**</code></span>
+              <span>📖 <em>Italic</em>: <code className="bg-gray-100 px-1 rounded">*text*</code></span>
+            </div>
           </div>
 
           <div>
@@ -252,6 +728,27 @@ const AdminQuizzes = () => {
   const [filterSubject, setFilterSubject] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [importedQuestions, setImportedQuestions] = useState([]);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  
+  // Preview and Assignment Modal States
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showAssignmentModal, setShowAssignmentModal] = useState(false);
+  const [previewData, setPreviewData] = useState({ title: '', description: '', quizImage: '', topic: '', difficulty: '' });
+  const [previewQuestions, setPreviewQuestions] = useState([]);
+  const [pendingQuizData, setPendingQuizData] = useState(null);
+  
+  // Save to Question Bank option
+  const [saveToBank, setSaveToBank] = useState(false);
+  const [selectedClassLevel, setSelectedClassLevel] = useState('standard-5');
+  
+  // Random Question Selection State
+  const [randomSelection, setRandomSelection] = useState(false);
+  const [questionsPerAttempt, setQuestionsPerAttempt] = useState(20);
+  
+  // Quiz Class Level State - CRITICAL FOR LEVEL FILTERING
+  const [quizClassLevel, setQuizClassLevel] = useState('');
 
   const [form, setForm] = useState({
     title: '',
@@ -261,7 +758,6 @@ const AdminQuizzes = () => {
     endDate: '',
     isActive: true,
     quizImage: '',
-    assignedClasses: [],
     difficulty: 'intermediate'
   });
   
@@ -298,31 +794,20 @@ const AdminQuizzes = () => {
       endDate: '',
       isActive: true,
       quizImage: '',
-      assignedClasses: [],
       difficulty: 'intermediate'
     });
     setQuestions([getEmptyQuestion()]);
+    setSaveToBank(false);
+    setSelectedClassLevel('standard-5');
+    setRandomSelection(false);
+    setQuestionsPerAttempt(20);
+    setQuizClassLevel('');
+    setImportedQuestions([]);
+    setImportError('');
   };
 
   const changeForm = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const toggleClassAssignment = (classId) => {
-    setForm(prev => ({
-      ...prev,
-      assignedClasses: prev.assignedClasses.includes(classId)
-        ? prev.assignedClasses.filter(id => id !== classId)
-        : [...prev.assignedClasses, classId]
-    }));
-  };
-
-  const toggleAllClasses = () => {
-    if (form.assignedClasses.length === CLASS_LEVELS.length) {
-      setForm(prev => ({ ...prev, assignedClasses: [] }));
-    } else {
-      setForm(prev => ({ ...prev, assignedClasses: CLASS_LEVELS.map(c => c.id) }));
-    }
   };
 
   const changeQuestionLayout = useCallback((index, layout) => {
@@ -455,91 +940,85 @@ const AdminQuizzes = () => {
     toast.success('Image removed');
   };
 
-  const addQuestion = () => {
-    setQuestions((prev) => [...prev, getEmptyQuestion()]);
+  const saveQuestionsToBank = async (questionsToSave) => {
+    let savedCount = 0;
+    let failedCount = 0;
+    const failedQuestions = [];
+    
+    for (let i = 0; i < questionsToSave.length; i++) {
+      const q = questionsToSave[i];
+      try {
+        const token = localStorage.getItem('token');
+        
+        const questionData = {
+          subject_id: form.topic,
+          difficulty_level: form.difficulty,
+          class_level: selectedClassLevel,
+          question: q.question,
+          question_image: q.questionImage || null,
+          options: q.options,
+          correct_answer: q.correctAnswer,
+          explanation: '',
+          points: DIFFICULTY_LEVELS.find(d => d.id === form.difficulty)?.points || 2,
+          time_limit: DIFFICULTY_LEVELS.find(d => d.id === form.difficulty)?.timeLimit || 30,
+          tags: []
+        };
+        
+        const response = await axios.post(`${API_URL}/api/admin/question-bank`, questionData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data.success) {
+          savedCount++;
+        } else {
+          failedCount++;
+          failedQuestions.push(i + 1);
+        }
+      } catch (error) {
+        console.error(`Error saving question ${i + 1} to bank:`, error);
+        failedCount++;
+        failedQuestions.push(i + 1);
+      }
+    }
+    
+    return { savedCount, failedCount, failedQuestions };
   };
 
-  const removeQuestion = (index) => {
-    if (questions.length === 1) {
-      toast.error('You need at least one question.');
+  const handlePreviewQuiz = () => {
+    if (!form.title.trim()) {
+      toast.error('Please enter a quiz title before previewing');
       return;
     }
-    setQuestions((prev) => prev.filter((_, idx) => idx !== index));
-  };
-
-  const duplicateQuestion = (index) => {
-    const questionToDuplicate = questions[index];
-    const duplicatedQuestion = {
-      ...questionToDuplicate,
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      question: `${questionToDuplicate.question} (Copy)`
-    };
-    setQuestions((prev) => {
-      const newQuestions = [...prev];
-      newQuestions.splice(index + 1, 0, duplicatedQuestion);
-      return newQuestions;
-    });
-    toast.success('Question duplicated!');
-  };
-
-  const editQuiz = (quiz) => {
-    setSelectedQuiz(quiz);
-    setSelectedQuizId(quiz.id);
-    setActiveTab('create');
-    const normalizedTopic = SUBJECTS.find(s => s.id === quiz.topic || s.name === quiz.topic)?.id || quiz.topic || '';
-
-    setForm({
-      title: quiz.title || '',
-      topic: normalizedTopic,
-      description: quiz.description || '',
-      startDate: quiz.start_time ? new Date(quiz.start_time).toISOString().slice(0, 16) : '',
-      endDate: quiz.end_time ? new Date(quiz.end_time).toISOString().slice(0, 16) : '',
-      isActive: quiz.is_active ?? true,
-      quizImage: quiz.image_url || '',
-      assignedClasses: quiz.assigned_classes || [],
-      difficulty: quiz.difficulty || 'intermediate'
-    });
-
-    setQuestions(
-      (quiz.questions || []).map((q) => ({
-        id: q.id || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        question: q.question || '',
-        questionImage: q.questionImage || '',
-        options: q.options || ['', '', '', ''],
-        correctAnswer: q.correctAnswer || '',
-        layout: q.layout || 'text-first'
-      }))
-    );
-  };
-
-  const deleteQuiz = async (quizId) => {
-    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/api/admin/quizzes/${quizId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Quiz deleted successfully.');
-      setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
-      if (selectedQuizId === quizId) clearForm();
-    } catch (error) {
-      console.error(error);
-      toast.error('Could not delete quiz.');
+    
+    const validQuestions = questions.filter(q => q.question.trim() && q.options.some(opt => opt.trim()));
+    if (validQuestions.length === 0) {
+      toast.error('Please add at least one valid question before previewing');
+      return;
     }
+    
+    setPreviewData({
+      title: form.title,
+      description: form.description,
+      quizImage: form.quizImage,
+      topic: SUBJECTS.find(s => s.id === form.topic)?.name || form.topic || 'No subject',
+      difficulty: DIFFICULTY_LEVELS.find(d => d.id === form.difficulty)?.name || form.difficulty
+    });
+    setPreviewQuestions(questions);
+    setShowPreviewModal(true);
   };
 
-  const saveQuiz = async (event) => {
-    event.preventDefault();
+  const handlePublishFromPreview = () => {
+    setShowPreviewModal(false);
+    saveQuizDirect();
+  };
 
-    // Validate title
+  const saveQuizDirect = async () => {
     const cleanTitle = form.title.trim();
     if (!cleanTitle) {
       toast.error('Please enter a quiz title');
       return;
     }
 
-    // Validate topic/subject
     const cleanTopic = form.topic.trim();
     const isValidTopic = SUBJECTS.some(sub => sub.id === cleanTopic);
     if (!isValidTopic) {
@@ -547,13 +1026,6 @@ const AdminQuizzes = () => {
       return;
     }
 
-    // Validate assigned classes
-    if (form.assignedClasses.length === 0) {
-      toast.error('Please assign this quiz to at least one class level');
-      return;
-    }
-
-    // Validate all questions
     let hasError = false;
     const goodQuestions = [];
 
@@ -610,7 +1082,6 @@ const AdminQuizzes = () => {
         return;
       }
 
-      // Prepare payload
       const payload = {
         title: cleanTitle,
         topic: cleanTopic,
@@ -620,34 +1091,52 @@ const AdminQuizzes = () => {
         end_time: form.endDate ? new Date(form.endDate).toISOString() : null,
         is_active: Boolean(form.isActive),
         image_url: form.quizImage.trim() || null,
-        assigned_classes: form.assignedClasses,
-        difficulty: form.difficulty
+        difficulty: form.difficulty,
+        random_selection: randomSelection,
+        questions_per_attempt: questionsPerAttempt,
+        class_level: quizClassLevel || null
       };
 
-      console.log('Sending payload:', JSON.stringify(payload, null, 2));
-
-      let response;
+      let quizResponse;
       if (selectedQuiz) {
-        response = await axios.put(`${API_URL}/api/admin/quizzes/${selectedQuiz.id}`, payload, {
+        await axios.put(`${API_URL}/api/admin/quizzes/${selectedQuiz.id}`, payload, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
         toast.success('Quiz updated successfully!');
+        quizResponse = { data: { quiz: selectedQuiz } };
       } else {
-        response = await axios.post(`${API_URL}/api/admin/quizzes`, payload, {
+        quizResponse = await axios.post(`${API_URL}/api/admin/quizzes`, payload, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
         toast.success('Quiz created successfully!');
+        
+        setPendingQuizData(quizResponse.data.quiz);
+        setShowAssignmentModal(true);
       }
 
-      console.log('Response:', response.data);
+      if (saveToBank && goodQuestions.length > 0) {
+        toast.loading(`Saving ${goodQuestions.length} question(s) to Question Bank...`, { id: 'bank-save' });
+        
+        const { savedCount, failedCount, failedQuestions } = await saveQuestionsToBank(goodQuestions);
+        
+        if (savedCount > 0) {
+          toast.success(`✅ ${savedCount} question${savedCount > 1 ? 's' : ''} saved to Question Bank!`, { id: 'bank-save' });
+          if (failedCount > 0) {
+            toast.error(`⚠️ ${failedCount} question${failedCount > 1 ? 's' : ''} failed to save (Questions: ${failedQuestions.join(', ')})`);
+          }
+        } else if (failedCount > 0 && savedCount === 0) {
+          toast.error(`❌ Failed to save all ${failedCount} question${failedCount > 1 ? 's' : ''} to Question Bank`, { id: 'bank-save' });
+        } else {
+          toast.dismiss('bank-save');
+        }
+      }
 
-      // Clear form and refresh
       clearForm();
       await loadQuizzes();
       setActiveTab('manage');
@@ -655,27 +1144,19 @@ const AdminQuizzes = () => {
     } catch (error) {
       console.error('Save quiz error:', error);
       
-      // Detailed error handling
       if (error.response) {
-        console.error('Error response data:', error.response.data);
-        console.error('Error status:', error.response.status);
-        
         if (error.response.status === 401) {
           toast.error('Session expired. Please login again.');
           logout();
         } else if (error.response.status === 400) {
           const message = error.response.data?.message || error.response.data?.error || 'Invalid data provided';
           toast.error(`Validation error: ${message}`);
-        } else if (error.response.status === 500) {
-          toast.error('Server error. Please check if the server is running.');
         } else {
           toast.error(error.response.data?.message || 'Failed to save quiz. Please try again.');
         }
       } else if (error.request) {
-        console.error('No response received:', error.request);
         toast.error('Network error. Please check your connection and server status.');
       } else {
-        console.error('Error:', error.message);
         toast.error(`Error: ${error.message}`);
       }
     } finally {
@@ -683,9 +1164,206 @@ const AdminQuizzes = () => {
     }
   };
 
+  const handleAssignToClasses = async (quiz, selectedClasses) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/admin/assign-quiz`, {
+        quizId: quiz.id,
+        classIds: selectedClasses
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`Quiz assigned to ${selectedClasses.length} class(es) successfully!`);
+    } catch (error) {
+      console.error('Assignment error:', error);
+      toast.error('Failed to assign quiz to classes');
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const isPDF = file.type === 'application/pdf';
+    const isCSV = file.type === 'text/csv' || file.name.endsWith('.csv');
+
+    if (!isPDF && !isCSV) {
+      toast.error('Please upload a PDF or CSV file');
+      setImportError('Invalid file type. Please upload a PDF or CSV file.');
+      return;
+    }
+
+    setIsImporting(true);
+    setImportError('');
+    const formData = new FormData();
+    formData.append(isPDF ? 'pdf' : 'file', file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = isPDF ? '/api/admin/extract-questions' : '/api/admin/import-questions';
+      
+      const response = await axios.post(`${API_URL}${endpoint}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        },
+        timeout: 60000
+      });
+
+      if (response.data.success && response.data.questions && response.data.questions.length > 0) {
+        const questionsData = response.data.questions.map((q, index) => ({
+          id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 9)}`,
+          question: q.question || q.text || '',
+          questionImage: q.questionImage || q.image_url || '',
+          options: q.options || ['', '', '', ''],
+          correctAnswer: q.correctAnswer || q.correct_answer || '',
+          layout: q.layout || 'text-first'
+        }));
+        
+        setImportedQuestions(questionsData);
+        
+        const fileName = file.name.replace(/\.(pdf|csv)$/i, '');
+        if (!form.title) {
+          changeForm('title', fileName.replace(/[-_]/g, ' '));
+        }
+        
+        toast.success(`✅ Successfully imported ${questionsData.length} questions! Review and publish.`);
+      } else {
+        const errorMsg = response.data.message || response.data.error || 'No questions found in the file';
+        setImportError(errorMsg);
+        toast.error(errorMsg);
+      }
+    } catch (error) {
+      console.error('Import error details:', error);
+      
+      let errorMsg = 'Failed to import questions. ';
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMsg = 'Import timed out. The PDF file might be too large or complex.';
+      } else if (error.response) {
+        if (error.response.status === 401) {
+          errorMsg = 'Authentication failed. Please log in again.';
+          logout();
+        } else if (error.response.status === 413) {
+          errorMsg = 'File too large. Please upload a file smaller than 10MB.';
+        } else {
+          errorMsg += error.response.data?.message || 'Unknown server error.';
+        }
+      } else if (error.request) {
+        errorMsg = 'Network error. Unable to reach the server.';
+      } else {
+        errorMsg += error.message;
+      }
+      
+      setImportError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsImporting(false);
+      e.target.value = '';
+    }
+  };
+
+  const addImportedQuestionsToQuiz = () => {
+    if (importedQuestions.length === 0) {
+      toast.error('No questions to add');
+      return;
+    }
+    
+    setQuestions(prev => [...prev, ...importedQuestions]);
+    setImportedQuestions([]);
+    setImportError('');
+    toast.success(`✅ Added ${importedQuestions.length} questions to your quiz!`);
+    setActiveTab('create');
+  };
+
+  const clearImportedQuestions = () => {
+    setImportedQuestions([]);
+    setImportError('');
+    toast.info('Import cleared');
+  };
+
+  const addQuestion = () => {
+    setQuestions((prev) => [...prev, getEmptyQuestion()]);
+  };
+
+  const removeQuestion = (index) => {
+    if (questions.length === 1) {
+      toast.error('You need at least one question.');
+      return;
+    }
+    setQuestions((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const duplicateQuestion = (index) => {
+    const questionToDuplicate = questions[index];
+    const duplicatedQuestion = {
+      ...questionToDuplicate,
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      question: `${questionToDuplicate.question} (Copy)`
+    };
+    setQuestions((prev) => {
+      const newQuestions = [...prev];
+      newQuestions.splice(index + 1, 0, duplicatedQuestion);
+      return newQuestions;
+    });
+    toast.success('Question duplicated!');
+  };
+
+  const editQuiz = (quiz) => {
+    setSelectedQuiz(quiz);
+    setSelectedQuizId(quiz.id);
+    setActiveTab('create');
+    const normalizedTopic = SUBJECTS.find(s => s.id === quiz.topic || s.name === quiz.topic)?.id || quiz.topic || '';
+
+    setForm({
+      title: quiz.title || '',
+      topic: normalizedTopic,
+      description: quiz.description || '',
+      startDate: quiz.start_time ? new Date(quiz.start_time).toISOString().slice(0, 16) : '',
+      endDate: quiz.end_time ? new Date(quiz.end_time).toISOString().slice(0, 16) : '',
+      isActive: quiz.is_active ?? true,
+      quizImage: quiz.image_url || '',
+      difficulty: quiz.difficulty || 'intermediate'
+    });
+
+    setQuestions(
+      (quiz.questions || []).map((q) => ({
+        id: q.id || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        question: q.question || '',
+        questionImage: q.questionImage || '',
+        options: q.options || ['', '', '', ''],
+        correctAnswer: q.correctAnswer || '',
+        layout: q.layout || 'text-first'
+      }))
+    );
+    setSaveToBank(false);
+    setRandomSelection(quiz.random_selection || false);
+    setQuestionsPerAttempt(quiz.questions_per_attempt || 20);
+    setQuizClassLevel(quiz.class_level || '');
+    setImportedQuestions([]);
+    setImportError('');
+  };
+
+  const deleteQuiz = async (quizId) => {
+    if (!window.confirm('Are you sure you want to delete this quiz? This action cannot be undone.')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/admin/quizzes/${quizId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Quiz deleted successfully.');
+      setQuizzes((prev) => prev.filter((q) => q.id !== quizId));
+      if (selectedQuizId === quizId) clearForm();
+    } catch (error) {
+      console.error(error);
+      toast.error('Could not delete quiz.');
+    }
+  };
+
   const getSubjectColor = (topicId) => {
     const subject = SUBJECTS.find(s => s.id === topicId);
-    return subject ? subject.color : 'from-[#1A237E] to-[#008080]';
+    return subject ? subject.color : '#1A237E';
   };
 
   const getSubjectName = (topicId) => {
@@ -697,6 +1375,12 @@ const AdminQuizzes = () => {
     return DIFFICULTY_LEVELS.find(d => d.id === difficultyId) || DIFFICULTY_LEVELS[1];
   };
 
+  const getLevelDisplayName = (level) => {
+    if (!level) return null;
+    const found = CLASS_LEVELS.find(l => l.id === level);
+    return found ? found.name : level.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+  };
+
   const filteredQuizzes = quizzes.filter(quiz => {
     const matchesSearch = quiz.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSubject = !filterSubject || quiz.topic === filterSubject;
@@ -705,9 +1389,13 @@ const AdminQuizzes = () => {
     return matchesSearch && matchesSubject && matchesDifficulty && matchesStatus;
   });
 
+  // QuizCard Component with class level badge
   const QuizCard = ({ quiz }) => {
     const difficulty = getDifficultyInfo(quiz.difficulty);
     const [isExpanded, setIsExpanded] = useState(false);
+    const totalQuestions = quiz.questions?.length || 0;
+    const isRandom = quiz.random_selection && totalQuestions > (quiz.questions_per_attempt || 20);
+    const displayQuestions = isRandom ? `${quiz.questions_per_attempt || 20}/${totalQuestions}` : totalQuestions;
 
     return (
       <div
@@ -721,7 +1409,7 @@ const AdminQuizzes = () => {
                 <img src={quiz.image_url} alt={quiz.title} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className={`w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${getSubjectColor(quiz.topic)} shadow-sm`}>
+              <div className={`w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm`} style={{ backgroundColor: getSubjectColor(quiz.topic) }}>
                 <span className="text-3xl">
                   {SUBJECTS.find(s => s.id === quiz.topic)?.icon || '📚'}
                 </span>
@@ -733,12 +1421,22 @@ const AdminQuizzes = () => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-800 truncate pr-4">{quiz.title}</h3>
                   <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-gradient-to-r ${getSubjectColor(quiz.topic)} text-white shadow-sm`}>
+                    <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full text-white shadow-sm`} style={{ backgroundColor: getSubjectColor(quiz.topic) }}>
                       {SUBJECTS.find(s => s.id === quiz.topic)?.icon} {getSubjectName(quiz.topic)}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-[#008080]/10 text-[#008080]">
                       {difficulty.icon} {difficulty.name}
                     </span>
+                    {quiz.class_level && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-purple-100 text-purple-700">
+                        📚 {getLevelDisplayName(quiz.class_level)}
+                      </span>
+                    )}
+                    {isRandom && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                        🎲 Random {quiz.questions_per_attempt || 20}
+                      </span>
+                    )}
                     <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded-full ${
                       quiz.is_active 
                         ? 'bg-green-100 text-green-700' 
@@ -776,7 +1474,7 @@ const AdminQuizzes = () => {
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {quiz.questions?.length || 0} questions
+                  {displayQuestions} questions
                 </span>
                 <span className="flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -791,6 +1489,16 @@ const AdminQuizzes = () => {
                   <p className="text-xs text-gray-600">
                     {quiz.description || 'No description provided'}
                   </p>
+                  {quiz.class_level && (
+                    <p className="text-xs text-purple-600 mt-2">
+                      📚 This quiz is exclusively for {getLevelDisplayName(quiz.class_level)} learners.
+                    </p>
+                  )}
+                  {isRandom && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      🎲 This quiz randomly selects {quiz.questions_per_attempt || 20} questions from {totalQuestions} total questions each attempt.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -801,24 +1509,38 @@ const AdminQuizzes = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-[#F0F4F8] to-[#E8F4F8]">
+    <div className="min-h-screen bg-gray-50">
+      {/* Modals */}
+      <QuizPreviewModal 
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        quizData={previewData}
+        questions={previewQuestions}
+        onPublish={handlePublishFromPreview}
+      />
+      
+      <ClassAssignmentModal 
+        isOpen={showAssignmentModal}
+        onClose={() => setShowAssignmentModal(false)}
+        onAssign={handleAssignToClasses}
+        quizzes={quizzes}
+      />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#00B0FF] to-[#008080] rounded-xl blur opacity-60"></div>
-                <div className="relative w-10 h-10 bg-gradient-to-br from-[#00B0FF] to-[#008080] rounded-xl flex items-center justify-center shadow-lg">
+                <div className="absolute inset-0 bg-[#00B0FF] rounded-xl blur opacity-20"></div>
+                <div className="relative w-10 h-10 bg-[#008080] rounded-xl flex items-center justify-center shadow-lg">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                   </svg>
                 </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-[#1A237E] to-[#00B0FF] bg-clip-text text-transparent">
-                  Quiz Manager
-                </h1>
+                <h1 className="text-xl font-bold text-gray-800">Quiz Manager</h1>
                 <p className="text-xs text-gray-500">Create and manage engaging quizzes</p>
               </div>
             </div>
@@ -841,7 +1563,7 @@ const AdminQuizzes = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all bg-white border border-gray-200 hover:bg-gray-50 shadow-sm"
                 >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#00B0FF] to-[#008080] flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-full bg-[#008080] flex items-center justify-center">
                     <span className="text-sm text-white font-medium">AD</span>
                   </div>
                   <span className="hidden sm:inline text-sm font-medium text-gray-700">Admin</span>
@@ -898,7 +1620,7 @@ const AdminQuizzes = () => {
                   Create Quiz
                 </div>
                 {activeTab === 'create' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#00B0FF] to-[#008080] rounded-full"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00B0FF] rounded-full"></div>
                 )}
               </button>
               <button
@@ -919,7 +1641,25 @@ const AdminQuizzes = () => {
                   {quizzes.length}
                 </span>
                 {activeTab === 'manage' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#00B0FF] to-[#008080] rounded-full"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00B0FF] rounded-full"></div>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('import')}
+                className={`px-1 py-3 text-sm font-medium transition-all relative ${
+                  activeTab === 'import'
+                    ? 'text-[#00B0FF]'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                  Bulk Import
+                </div>
+                {activeTab === 'import' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00B0FF] rounded-full"></div>
                 )}
               </button>
             </nav>
@@ -933,7 +1673,7 @@ const AdminQuizzes = () => {
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                  <div className="p-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+                  <div className="p-5 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center gap-2">
                       <svg className="w-5 h-5 text-[#00B0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -955,7 +1695,7 @@ const AdminQuizzes = () => {
                         Cover Image
                       </label>
                       {!form.quizImage ? (
-                        <div className="border-2 border-dashed rounded-lg p-6 text-center border-gray-200 hover:border-[#00B0FF] transition-all bg-gray-50/30">
+                        <div className="border-2 border-dashed rounded-lg p-6 text-center border-gray-200 hover:border-[#00B0FF] transition-all bg-gray-50">
                           <input type="file" id="quizImageUpload" accept="image/*" onChange={handleQuizImageSelect} className="hidden" />
                           <label htmlFor="quizImageUpload" className="cursor-pointer flex flex-col items-center gap-2">
                             <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
@@ -1058,47 +1798,68 @@ const AdminQuizzes = () => {
                       </div>
                     </div>
 
-                    {/* Target Classes */}
+                    {/* CRITICAL: Class Level for Quiz */}
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-semibold text-gray-700">
-                          Target Classes <span className="text-red-500">*</span>
+                      <label className="block text-xs font-semibold text-gray-700 mb-2">
+                        Target Class Level <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={quizClassLevel}
+                        onChange={(e) => setQuizClassLevel(e.target.value)}
+                        className="w-full text-sm px-4 py-2.5 rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all cursor-pointer"
+                        required
+                      >
+                        <option value="">Select a class level</option>
+                        {CLASS_LEVELS.map(level => (
+                          <option key={level.id} value={level.id}>
+                            {level.icon} {level.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-purple-600 mt-1 font-medium">
+                        ⚠️ Only learners at this exact class level will see this quiz.
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Example: If you select "Standard 8", only Standard 8 learners can view and take this quiz.
+                      </p>
+                    </div>
+
+                    {/* Random Question Selection Section */}
+                    <div className="border-t border-gray-200 pt-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-blue-50 border border-blue-200">
+                        <div>
+                          <div className="text-sm font-semibold text-gray-800">🎲 Random Question Selection</div>
+                          <div className="text-xs text-gray-500">Select random questions from the question bank</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={randomSelection}
+                            onChange={(e) => setRandomSelection(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
-                        <button
-                          type="button"
-                          onClick={toggleAllClasses}
-                          className="text-[10px] font-medium text-[#00B0FF] hover:underline"
-                        >
-                          {form.assignedClasses.length === CLASS_LEVELS.length ? 'Deselect All' : 'Select All'}
-                        </button>
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {CLASS_LEVELS.map((cls) => {
-                          const isSelected = form.assignedClasses.includes(cls.id);
-                          return (
-                            <button
-                              type="button"
-                              key={cls.id}
-                              onClick={() => toggleClassAssignment(cls.id)}
-                              className={`flex items-center gap-2 p-2.5 rounded-lg border transition-all ${
-                                isSelected
-                                  ? 'border-[#008080] bg-[#008080]/5 shadow-sm'
-                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              <span className="text-base">{cls.icon}</span>
-                              <span className={`text-sm ${isSelected ? 'font-medium text-gray-800' : 'text-gray-600'}`}>
-                                {cls.name}
-                              </span>
-                              {isSelected && (
-                                <svg className="w-3.5 h-3.5 ml-auto text-[#008080]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      
+                      {randomSelection && (
+                        <div className="mt-3">
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                            Questions Per Attempt
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={questions.length}
+                            value={questionsPerAttempt}
+                            onChange={(e) => setQuestionsPerAttempt(Math.min(parseInt(e.target.value) || 1, questions.length))}
+                            className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                          />
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            {questions.length} questions available. Each attempt will randomly select {questionsPerAttempt} questions.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Schedule */}
@@ -1133,7 +1894,7 @@ const AdminQuizzes = () => {
                     </div>
 
                     {/* Active Status Toggle */}
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-gray-50 to-white border border-gray-100">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-100">
                       <div>
                         <div className="text-sm font-semibold text-gray-800">Publish Immediately</div>
                         <div className="text-xs text-gray-500">Make quiz available to students right away</div>
@@ -1148,6 +1909,45 @@ const AdminQuizzes = () => {
                         <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#008080]"></div>
                       </label>
                     </div>
+
+                    {/* Save to Question Bank Section */}
+                    <div className="border-t border-gray-200 pt-4 mt-2">
+                      <div className="flex items-center justify-between p-4 rounded-lg bg-purple-50 border border-purple-200">
+                        <div>
+                          <div className="text-sm font-semibold text-gray-800">📚 Save to Question Bank</div>
+                          <div className="text-xs text-gray-500">Add these questions to the question bank for future use</div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={saveToBank}
+                            onChange={(e) => setSaveToBank(e.target.checked)}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                        </label>
+                      </div>
+                      
+                      {saveToBank && (
+                        <div className="mt-3">
+                          <label className="block text-xs font-semibold text-gray-700 mb-2">
+                            Class Level for Question Bank
+                          </label>
+                          <select
+                            value={selectedClassLevel}
+                            onChange={(e) => setSelectedClassLevel(e.target.value)}
+                            className="w-full text-sm px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all"
+                          >
+                            {CLASS_LEVELS.map(level => (
+                              <option key={level.id} value={level.id}>{level.icon} {level.name}</option>
+                            ))}
+                          </select>
+                          <p className="text-xs text-gray-400 mt-2">
+                            💡 Questions will be saved with {DIFFICULTY_LEVELS.find(d => d.id === form.difficulty)?.points} points and {DIFFICULTY_LEVELS.find(d => d.id === form.difficulty)?.timeLimit}s time limit
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1156,7 +1956,7 @@ const AdminQuizzes = () => {
             {/* Questions Section */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex items-center justify-between">
+                <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
                       <svg className="w-5 h-5 text-[#00B0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1167,7 +1967,7 @@ const AdminQuizzes = () => {
                     <p className="text-xs text-gray-500 mt-1 ml-7">Add and manage quiz questions</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#00B0FF]/10 to-[#008080]/10">
+                    <div className="px-3 py-1.5 rounded-lg bg-[#00B0FF]/10">
                       <span className="text-sm font-semibold text-[#008080]">{questions.length}</span>
                       <span className="text-xs text-gray-500 ml-1">questions</span>
                     </div>
@@ -1216,9 +2016,16 @@ const AdminQuizzes = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={saveQuiz}
+                      onClick={handlePreviewQuiz}
+                      className="flex-1 py-3 rounded-lg text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 transition-all"
+                    >
+                      👁️ Preview Quiz
+                    </button>
+                    <button
+                      type="button"
+                      onClick={saveQuizDirect}
                       disabled={saving}
-                      className="flex-1 py-3 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[#00B0FF] to-[#008080] hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 py-3 rounded-lg text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {saving ? (
                         <>
@@ -1244,7 +2051,7 @@ const AdminQuizzes = () => {
         {/* Manage Quizzes */}
         {activeTab === 'manage' && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-            <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
@@ -1258,7 +2065,7 @@ const AdminQuizzes = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setActiveTab('create')}
-                    className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#00B0FF] to-[#008080] hover:shadow-lg transition-all flex items-center gap-2"
+                    className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 transition-all flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1270,7 +2077,7 @@ const AdminQuizzes = () => {
             </div>
 
             {/* Filters */}
-            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50">
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="relative">
                   <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1347,7 +2154,7 @@ const AdminQuizzes = () => {
                   ) : (
                     <button
                       onClick={() => setActiveTab('create')}
-                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-[#00B0FF] to-[#008080] hover:shadow-lg transition"
+                      className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 transition"
                     >
                       Create Quiz
                     </button>
@@ -1361,6 +2168,134 @@ const AdminQuizzes = () => {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Bulk Import Tab - Simple Upload Only (No Instructions) */}
+        {activeTab === 'import' && (
+          <div className="space-y-6">
+            {/* Simple Upload Area */}
+            <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-12 text-center hover:border-teal-500 transition-all">
+              <input
+                type="file"
+                id="bulkImportFile"
+                accept=".pdf,.csv"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={isImporting}
+              />
+              <label
+                htmlFor="bulkImportFile"
+                className="cursor-pointer flex flex-col items-center gap-4"
+              >
+                <div className="w-24 h-24 rounded-full bg-teal-100 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-lg font-medium text-gray-700">
+                    {isImporting ? 'Processing file...' : 'Click to upload PDF or CSV file'}
+                  </p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Upload a file to import questions
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {/* Import Error */}
+            {importError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-red-500 text-lg">⚠️</span>
+                  <p className="text-sm text-red-700">{importError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Import Success - Show imported questions preview */}
+            {importedQuestions.length > 0 && !importError && (
+              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                <div className="px-5 py-4 border-b border-gray-100 bg-green-50 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">✅</span>
+                    <div>
+                      <h3 className="font-semibold text-green-800">Import Successful!</h3>
+                      <p className="text-xs text-green-600 mt-0.5">{importedQuestions.length} questions extracted from file</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={clearImportedQuestions}
+                    className="text-gray-400 hover:text-red-500 transition"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="p-4 max-h-96 overflow-y-auto">
+                  <div className="space-y-3">
+                    {importedQuestions.map((q, idx) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800 mb-2">{q.question}</p>
+                            <div className="space-y-1">
+                              {q.options && q.options.map((opt, optIdx) => (
+                                <div key={optIdx} className="flex items-center gap-2 text-xs">
+                                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
+                                    opt === q.correctAnswer ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
+                                  }`}>
+                                    {String.fromCharCode(65 + optIdx)}
+                                  </span>
+                                  <span className={`flex-1 ${opt === q.correctAnswer ? 'font-medium text-green-700' : 'text-gray-600'}`}>
+                                    {opt}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="px-5 py-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                  <button
+                    onClick={clearImportedQuestions}
+                    className="px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+                  >
+                    Clear All
+                  </button>
+                  <button
+                    onClick={addImportedQuestionsToQuiz}
+                    className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 transition flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add {importedQuestions.length} Questions to Quiz
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Processing Indicator */}
+            {isImporting && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-xl p-8 text-center">
+                  <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-700 font-medium">Processing your file...</p>
+                  <p className="text-xs text-gray-400 mt-1">This may take a few moments</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -1380,6 +2315,20 @@ const AdminQuizzes = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #a8a8a8;
+        }
+        
+        .prose u {
+          text-decoration: underline;
+          text-decoration-thickness: 2px;
+          text-decoration-color: #14b8a6;
+        }
+        
+        .prose strong {
+          font-weight: 700;
+        }
+        
+        .prose em {
+          font-style: italic;
         }
       `}</style>
     </div>

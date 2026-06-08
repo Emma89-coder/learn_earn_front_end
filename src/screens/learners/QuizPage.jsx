@@ -11,12 +11,33 @@ import basketImage from '../../assets/images/basket.png';
 import mathsImage from '../../assets/images/maths.png';
 import chichewaImage from '../../assets/images/chichewa.png';
 
+// Helper function to render formatted text
+const renderFormattedText = (text) => {
+  if (!text) return '';
+  
+  let formatted = text
+    .replace(/__(.*?)__/g, '<u class="underline decoration-2 decoration-teal-500">$1</u>')
+    .replace(/<u>(.*?)<\/u>/g, '<u class="underline decoration-2 decoration-teal-500">$1</u>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>')
+    .replace(/\n/g, '<br/>');
+  
+  return formatted;
+};
+
+// Only Standards 5-8
+const LEVELS = [
+  { id: 'standard-5', name: 'Standard 5', icon: '🎓', color: 'from-green-500 to-teal-500' },
+  { id: 'standard-6', name: 'Standard 6', icon: '🏆', color: 'from-blue-500 to-cyan-500' },
+  { id: 'standard-7', name: 'Standard 7', icon: '🎯', color: 'from-purple-500 to-pink-500' },
+  { id: 'standard-8', name: 'Standard 8', icon: '⚡', color: 'from-orange-500 to-red-500' }
+];
+
 const QuizPage = () => {
   const navigate = useNavigate();
   const [activeSubject, setActiveSubject] = useState(null);
   const [isClosing, setIsClosing] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [expandedQuiz, setExpandedQuiz] = useState(null);
+  const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [flippedCardId, setFlippedCardId] = useState(null);
@@ -28,6 +49,10 @@ const QuizPage = () => {
     const savedSoundSetting = localStorage.getItem('portal-sound-fx');
     return savedSoundSetting ? savedSoundSetting === 'true' : true;
   });
+  
+  const [learnerProgress, setLearnerProgress] = useState(null);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+  const [currentLearnerLevel, setCurrentLearnerLevel] = useState(null);
 
   const subjects = [
     { id: 'social-studies', name: 'SOCIAL STUDIES', icon: '🌍📖', iconBg: 'from-emerald-500 to-teal-500', combined: true },
@@ -40,7 +65,25 @@ const QuizPage = () => {
 
   useEffect(() => {
     fetchQuizzes();
+    fetchLearnerProgress();
   }, []);
+
+  const fetchLearnerProgress = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/learner/progress`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setLearnerProgress(response.data.progress);
+        setCurrentLearnerLevel(response.data.progress.current_level);
+      }
+    } catch (error) {
+      console.error('Error fetching progress:', error);
+    } finally {
+      setIsLoadingProgress(false);
+    }
+  };
 
   const fetchQuizzes = async () => {
     try {
@@ -52,6 +95,10 @@ const QuizPage = () => {
       
       if (response.data.success) {
         setQuizzes(response.data.quizzes || []);
+        if (response.data.learner_progress) {
+          setLearnerProgress(response.data.learner_progress);
+          setCurrentLearnerLevel(response.data.learner_progress.current_level);
+        }
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
@@ -62,12 +109,19 @@ const QuizPage = () => {
   };
 
   const getQuizzesBySubject = (subjectId) => {
+    let filtered = [];
     if (subjectId === 'social-studies') {
       const socialQuizzes = quizzes.filter(quiz => quiz.topic === 'social-studies');
       const bibleQuizzes = quizzes.filter(quiz => quiz.topic === 'bible-knowledge');
-      return [...socialQuizzes, ...bibleQuizzes];
+      filtered = [...socialQuizzes, ...bibleQuizzes];
+    } else {
+      filtered = quizzes.filter(quiz => quiz.topic === subjectId);
     }
-    return quizzes.filter(quiz => quiz.topic === subjectId);
+    
+    return filtered.filter(quiz => {
+      if (!quiz.class_level) return true;
+      return quiz.class_level === currentLearnerLevel;
+    });
   };
 
   const toggleTheme = () => {
@@ -100,8 +154,7 @@ const QuizPage = () => {
   const handleTileClick = (subject) => {
     speakText(`Opening ${subject.name} quizzes`);
     setActiveSubject(subject);
-    setIsMaximized(false);
-    setExpandedQuiz(null);
+    setSelectedQuiz(null);
   };
 
   const closeDialog = () => {
@@ -109,23 +162,62 @@ const QuizPage = () => {
     setIsClosing(true);
     setTimeout(() => {
       setActiveSubject(null);
+      setSelectedQuiz(null);
       setIsClosing(false);
-      setIsMaximized(false);
-      setExpandedQuiz(null);
       setFlippedCardId(null);
     }, 300);
   };
 
-  const toggleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    setExpandedQuiz(null);
+  const closeQuizDialog = () => {
+    setSelectedQuiz(null);
   };
 
-  const toggleQuizExpand = (quizId) => {
-    setExpandedQuiz(prev => (prev === quizId ? null : quizId));
+  const handleQuizClick = (quiz) => {
+    setSelectedQuiz(quiz);
   };
 
-  if (loading) {
+  const handleStartQuiz = (quiz) => {
+    speakText(`Starting ${quiz.title}`);
+    if (quiz.random_selection) {
+      navigate(`/quiz/${quiz.id}?random=true&limit=${quiz.questions_per_attempt || 20}`);
+    } else {
+      navigate(`/quiz/${quiz.id}`);
+    }
+  };
+
+  const getTotalQuestions = (quiz) => {
+    let questions = quiz.questions;
+    if (typeof questions === 'string') {
+      try { questions = JSON.parse(questions); } catch(e) { return 0; }
+    }
+    return questions?.length || 0;
+  };
+
+  const getQuestionsDisplayText = (quiz) => {
+    const totalQuestions = getTotalQuestions(quiz);
+    
+    if (quiz.random_selection) {
+      const perAttempt = quiz.questions_per_attempt || 20;
+      if (totalQuestions > perAttempt) {
+        return `🎲 ${perAttempt}/${totalQuestions}`;
+      }
+      return `📝 ${totalQuestions}`;
+    }
+    return `📝 ${totalQuestions}`;
+  };
+
+  const isRandomQuiz = (quiz) => {
+    const totalQuestions = getTotalQuestions(quiz);
+    return quiz.random_selection && totalQuestions > (quiz.questions_per_attempt || 20);
+  };
+
+  const getLevelDisplayName = (level) => {
+    if (!level) return null;
+    const found = LEVELS.find(l => l.id === level);
+    return found ? found.name : level.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+  };
+
+  if (loading || isLoadingProgress) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-darkblue-950' : 'bg-ice-50'}`}>
         <div className="text-center">
@@ -195,17 +287,24 @@ const QuizPage = () => {
       <main className="flex-1 flex flex-col overflow-hidden max-w-5xl mx-auto w-full px-3 py-2">
         
         {/* Welcome Section */}
-        <div className="text-center mb-2 flex-shrink-0">
+        <div className="text-center mb-3 flex-shrink-0">
           <h2 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-darkblue-900'}`}>
             Explore Subjects
           </h2>
           <p className={`text-xs ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
             Hover to see available quizzes
           </p>
+          {learnerProgress && (
+            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-teal-100 dark:bg-teal-900/30 rounded-full">
+              <span className="text-xs font-medium text-teal-700 dark:text-teal-300">
+                📚 Level: {getLevelDisplayName(learnerProgress.current_level)}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 flex-1 overflow-hidden">
+        {/* Subject Grid with Flip Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto pb-2">
           {subjects.map((subject) => {
             const subjectQuizzes = getQuizzesBySubject(subject.id);
             const totalReward = subjectQuizzes.reduce((sum, q) => sum + (q.points_reward || 50), 0);
@@ -391,26 +490,40 @@ const QuizPage = () => {
                     <h3 className="text-white font-bold text-sm mb-2 text-center flex-shrink-0">Available Quizzes</h3>
                     
                     <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-1 min-h-0">
-                      {subjectQuizzes.slice(0, 3).map((quiz) => (
-                        <div 
-                          key={quiz.id} 
-                          className="bg-white/10 rounded-md p-1.5 hover:bg-white/20 transition cursor-pointer" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTileClick(subject);
-                            setTimeout(() => toggleQuizExpand(quiz.id), 350);
-                          }}
-                        >
-                          <p className="text-white text-xs font-semibold truncate">{quiz.title}</p>
-                          <div className="flex justify-between items-center mt-0.5">
-                            <p className="text-white/60 text-[10px]">📝 {quiz.questions?.length || 0} items</p>
-                            <p className="text-yellow-300 text-[10px] font-semibold">+{quiz.points_reward || 50}</p>
+                      {subjectQuizzes.slice(0, 3).map((quiz) => {
+                        const questionsDisplay = getQuestionsDisplayText(quiz);
+                        const isRandom = isRandomQuiz(quiz);
+                        
+                        return (
+                          <div 
+                            key={quiz.id} 
+                            className="bg-white/10 rounded-md p-1.5 hover:bg-white/20 transition cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTileClick(subject);
+                              setTimeout(() => handleQuizClick(quiz), 350);
+                            }}
+                          >
+                            <p className="text-white text-xs font-semibold truncate flex items-center gap-1">
+                              {quiz.title}
+                            </p>
+                            <div className="flex justify-between items-center mt-0.5">
+                              <p className="text-white/60 text-[10px]">{questionsDisplay}</p>
+                              <p className="text-yellow-300 text-[10px] font-semibold">+{quiz.points_reward || 50}</p>
+                            </div>
+                            {isRandom && (
+                              <div className="mt-0.5">
+                                <span className="text-[8px] bg-blue-500/30 text-blue-200 px-1 py-0.5 rounded">
+                                  🎲 Random
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {subjectQuizzes.length === 0 && (
                         <div className="h-full flex items-center justify-center">
-                          <p className="text-white/40 text-xs text-center">No quizzes yet</p>
+                          <p className="text-white/40 text-xs text-center">No quizzes available</p>
                         </div>
                       )}
                       {subjectQuizzes.length > 3 && (
@@ -421,7 +534,6 @@ const QuizPage = () => {
                     </div>
                     <p className="text-white/40 text-[10px] text-center mt-2 flex-shrink-0">Click to browse →</p>
                   </div>
-
                 </div>
               </div>
             );
@@ -429,239 +541,230 @@ const QuizPage = () => {
         </div>
       </main>
 
-      {/* Cleaner, Smaller Quiz Modal with Solid Teal Header */}
-      {activeSubject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn" onClick={closeDialog}>
+      {/* Quiz List Dialog */}
+      {activeSubject && !selectedQuiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={closeDialog}>
           <div 
-            className={`transition-all duration-300 ${
-              isMaximized 
-                ? 'w-full h-full max-w-none max-h-none rounded-none' 
-                : 'w-full max-w-2xl rounded-2xl'
-            } ${isDarkMode ? 'bg-gray-900' : 'bg-white'} shadow-2xl flex flex-col ${isClosing ? 'animate-scaleDown' : 'animate-scaleUp'}`}
+            className={`w-full max-w-2xl rounded-2xl shadow-2xl transition-all duration-300 ${
+              isDarkMode ? 'bg-gray-900' : 'bg-white'
+            } ${isClosing ? 'animate-scaleDown' : 'animate-scaleUp'}`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header - Solid Teal */}
-            <div className="bg-teal-500 rounded-t-2xl">
-              <div className="px-5 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-lg">
-                      {activeSubject.id === 'social-studies' ? (
-                        <img src={mapImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
-                      ) : activeSubject.id === 'english' ? (
-                        <img src={learnerImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
-                      ) : activeSubject.id === 'primary-science' ? (
-                        <img src={scienceImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
-                      ) : activeSubject.id === 'arts-life-skills' ? (
-                        <img src={basketImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
-                      ) : activeSubject.id === 'mathematics' ? (
-                        <img src={mathsImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
-                      ) : activeSubject.id === 'chichewa' ? (
-                        <img src={chichewaImage} alt={activeSubject.name} className="w-8 h-8 object-contain" />
-                      ) : (
-                        <span>{activeSubject.icon}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold text-lg">
-                        {activeSubject.name}
-                      </h3>
-                      <p className="text-white/80 text-xs mt-0.5">
-                        {currentSubjectQuizzes.length} quizzes available
-                      </p>
-                    </div>
+            {/* Header */}
+            <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-t-2xl px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                    {activeSubject.id === 'social-studies' ? (
+                      <img src={mapImage} alt="" className="w-8 h-8 object-contain" />
+                    ) : activeSubject.id === 'english' ? (
+                      <img src={learnerImage} alt="" className="w-8 h-8 object-contain" />
+                    ) : activeSubject.id === 'primary-science' ? (
+                      <img src={scienceImage} alt="" className="w-8 h-8 object-contain" />
+                    ) : activeSubject.id === 'arts-life-skills' ? (
+                      <img src={basketImage} alt="" className="w-8 h-8 object-contain" />
+                    ) : activeSubject.id === 'mathematics' ? (
+                      <img src={mathsImage} alt="" className="w-8 h-8 object-contain" />
+                    ) : activeSubject.id === 'chichewa' ? (
+                      <img src={chichewaImage} alt="" className="w-8 h-8 object-contain" />
+                    ) : (
+                      <span className="text-2xl">{activeSubject.icon}</span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <button 
-                      onClick={toggleMaximize} 
-                      className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-all"
-                    >
-                      {isMaximized ? '📐' : '🗖'}
-                    </button>
-                    <button 
-                      onClick={closeDialog} 
-                      className="p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-all"
-                    >
-                      ✕
-                    </button>
+                  <div>
+                    <h3 className="text-white font-bold text-xl">{activeSubject.name}</h3>
+                    <p className="text-white/70 text-sm">{currentSubjectQuizzes.length} quizzes available</p>
                   </div>
                 </div>
+                <button onClick={closeDialog} className="text-white/80 hover:text-white transition text-2xl">
+                  ×
+                </button>
               </div>
             </div>
 
-            {/* Quiz List - Clean and Compact */}
-            <div className={`flex-1 overflow-y-auto p-4 custom-scrollbar ${isMaximized ? 'max-h-none' : 'max-h-[50vh]'}`}>
-              {currentSubjectQuizzes.length > 0 ? (
-                <div className="space-y-2.5">
-                  {currentSubjectQuizzes.map((quiz, idx) => {
-                    let questions = quiz.questions;
-                    if (typeof questions === 'string') {
-                      try { questions = JSON.parse(questions); } catch(e) { questions = []; }
-                    }
-                    const questionCount = questions?.length || 0;
-                    const timeEstimate = Math.ceil(questionCount * 0.5);
-                    
-                    return (
-                      <div 
-                        key={quiz.id} 
-                        className={`rounded-xl overflow-hidden transition-all duration-200 ${
-                          isDarkMode 
-                            ? 'bg-gray-800/50 border border-gray-700' 
-                            : 'bg-gray-50 border border-gray-200'
-                        } ${expandedQuiz === quiz.id ? 'ring-1 ring-teal-500' : ''}`}
-                      >
-                        {/* Quiz Header */}
-                        <button
-                          onClick={() => toggleQuizExpand(quiz.id)}
-                          className="w-full p-3 text-left transition-all hover:bg-teal-50 dark:hover:bg-gray-700/50"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-                                  isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-500 text-white'
-                                }`}>
-                                  {idx + 1}
-                                </div>
-                                <h4 className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                                  {quiz.title}
-                                </h4>
-                              </div>
-                              
-                              {/* Stats Row */}
-                              <div className="flex flex-wrap items-center gap-2 ml-8">
-                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${
-                                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
-                                }`}>
-                                  <span>📝</span>
-                                  <span>{questionCount}</span>
-                                </div>
-                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${
-                                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
-                                }`}>
-                                  <span>⏱️</span>
-                                  <span>{timeEstimate}m</span>
-                                </div>
-                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                                  isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-700'
-                                }`}>
-                                  <span>💎</span>
-                                  <span>+{quiz.points_reward || 50}</span>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Expand Icon */}
-                            <div className={`transition-transform duration-200 ${expandedQuiz === quiz.id ? 'rotate-180' : ''}`}>
-                              <svg className={`w-4 h-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </div>
+            {/* Quiz List */}
+            <div className="p-4 max-h-[50vh] overflow-y-auto">
+              <div className="space-y-2">
+                {currentSubjectQuizzes.map((quiz, idx) => {
+                  const totalQuestions = getTotalQuestions(quiz);
+                  const isRandom = isRandomQuiz(quiz);
+                  const timeEstimate = Math.ceil((quiz.random_selection ? (quiz.questions_per_attempt || 20) : totalQuestions) * 0.5);
+                  
+                  return (
+                    <button
+                      key={quiz.id}
+                      onClick={() => handleQuizClick(quiz)}
+                      className={`w-full text-left p-4 rounded-xl transition-all hover:scale-[1.02] ${
+                        isDarkMode 
+                          ? 'bg-gray-800 hover:bg-gray-700' 
+                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                            isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-500 text-white'
+                          }`}>
+                            {idx + 1}
                           </div>
-                        </button>
-                        
-                        {/* Expanded Content */}
-                        {expandedQuiz === quiz.id && (
-                          <div className={`p-3 border-t ${isDarkMode ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-100'}`}>
-                            {quiz.image_url && (
-                              <div className="mb-2 rounded-lg overflow-hidden">
-                                <img src={quiz.image_url} alt={quiz.title} className="w-full h-24 object-cover" />
-                              </div>
-                            )}
-                            
-                            <p className={`text-xs mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                              {quiz.description || 'Test your knowledge with this quiz!'}
-                            </p>
-                            
-                            <div className="flex gap-2 mb-3">
-                              <div className={`text-[10px] px-2 py-0.5 rounded-full ${
-                                isDarkMode ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                🎯 Pass: 60%
-                              </div>
-                              <div className={`text-[10px] px-2 py-0.5 rounded-full ${
-                                isDarkMode ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-700'
-                              }`}>
-                                ⚡ {quiz.difficulty || 'Medium'}
-                              </div>
-                            </div>
-                            
-                            <button
-                              onClick={() => navigate(`/quiz/${quiz.id}`)}
-                              className="w-full py-2 rounded-lg font-semibold text-sm bg-teal-500 text-white hover:bg-teal-600 transition-all transform hover:scale-[1.02]"
-                            >
-                              Start Quiz →
-                            </button>
-                          </div>
-                        )}
+                          <h4 className={`font-semibold text-base ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                            {quiz.title}
+                          </h4>
+                          {isRandom && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
+                              Random
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-teal-500 text-lg">→</span>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="text-5xl mb-2">📭</div>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    No quizzes available
-                  </p>
-                </div>
-              )}
+                      
+                      <div className="flex items-center gap-3 ml-11">
+                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${
+                          isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          <span>📝</span>
+                          <span>{isRandom ? `${quiz.questions_per_attempt || 20}/${totalQuestions}` : totalQuestions}</span>
+                        </div>
+                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${
+                          isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          <span>⏱️</span>
+                          <span>{timeEstimate} min</span>
+                        </div>
+                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded font-semibold ${
+                          isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-700'
+                        }`}>
+                          <span>💎</span>
+                          <span>+{quiz.points_reward || 50}</span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Footer */}
-            <div className={`p-3 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} rounded-b-2xl`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs">📚</span>
-                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {currentSubjectQuizzes.length} quizzes
-                    </span>
+            <div className={`p-4 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-100'}`}>
+              <button
+                onClick={closeDialog}
+                className="w-full py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Redesigned Start Quiz Dialog */}
+      {selectedQuiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={closeQuizDialog}>
+          <div 
+            className={`w-full max-w-md rounded-2xl shadow-2xl transition-all duration-300 animate-scaleUp ${
+              isDarkMode ? 'bg-gray-900' : 'bg-white'
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Hero Section */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-teal-600 rounded-t-2xl"></div>
+              <div className="relative p-6 text-center">
+                <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <span className="text-4xl">📋</span>
+                </div>
+                <h3 className="text-white font-bold text-xl mb-1">{selectedQuiz.title}</h3>
+                {selectedQuiz.class_level && (
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-xs">
+                    <span>{getLevelDisplayName(selectedQuiz.class_level)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs">💎</span>
-                    <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {currentSubjectQuizzes.reduce((sum, q) => sum + (q.points_reward || 50), 0)} pts
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                <div className={`text-center p-3 rounded-xl ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                }`}>
+                  <div className="text-2xl mb-1">📝</div>
+                  <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {getTotalQuestions(selectedQuiz)}
+                  </div>
+                  <div className="text-xs text-gray-500">Questions</div>
+                </div>
+                
+                <div className={`text-center p-3 rounded-xl ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                }`}>
+                  <div className="text-2xl mb-1">💎</div>
+                  <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    +{selectedQuiz.points_reward || 50}
+                  </div>
+                  <div className="text-xs text-gray-500">Points</div>
+                </div>
+                
+                <div className={`text-center p-3 rounded-xl ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
+                }`}>
+                  <div className="text-2xl mb-1">⏱️</div>
+                  <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {Math.ceil(getTotalQuestions(selectedQuiz) * 0.5)}
+                  </div>
+                  <div className="text-xs text-gray-500">Minutes</div>
+                </div>
+              </div>
+
+              {/* Random Quiz Info */}
+              {isRandomQuiz(selectedQuiz) && (
+                <div className={`mb-4 p-3 rounded-xl text-center ${
+                  isDarkMode ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'
+                }`}>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-lg">🎲</span>
+                    <span className={`text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                      Random {selectedQuiz.questions_per_attempt || 20} of {getTotalQuestions(selectedQuiz)} questions
                     </span>
                   </div>
                 </div>
+              )}
+
+              {/* Description */}
+              {selectedQuiz.description && (
+                <div 
+                  className={`mb-6 p-3 rounded-xl text-sm leading-relaxed ${
+                    isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-600'
+                  }`}
+                  dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedQuiz.description) }}
+                />
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
                 <button
-                  onClick={closeDialog}
-                  className="px-4 py-1.5 rounded-lg text-xs font-medium bg-teal-500 text-white hover:bg-teal-600 transition"
+                  onClick={closeQuizDialog}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition ${
+                    isDarkMode 
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
-                  Close
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleStartQuiz(selectedQuiz)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-teal-500 text-white hover:bg-teal-600 transition transform hover:scale-[1.02]"
+                >
+                  Start Quiz →
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Mobile Bottom Navigation */}
-      <div className={`flex-shrink-0 lg:hidden px-3 py-1.5 border-t backdrop-blur-lg ${
-        isDarkMode 
-          ? 'bg-darkblue-950/90 border-darkblue-800' 
-          : 'bg-white/90 border-ice-200'
-      }`}>
-        <div className="flex justify-around items-center">
-          <button onClick={() => navigate('/learner-dashboard')} className="flex flex-col items-center gap-0.5">
-            <span className="text-lg">🏠</span>
-            <span className={`text-[10px] ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>Home</span>
-          </button>
-          <button onClick={() => navigate('/quizzes')} className="flex flex-col items-center gap-0.5">
-            <span className="text-lg">🎮</span>
-            <span className={`text-[10px] ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>Quizzes</span>
-          </button>
-          <button onClick={() => navigate('/rewards')} className="flex flex-col items-center gap-0.5">
-            <span className="text-lg">🎁</span>
-            <span className={`text-[10px] ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>Store</span>
-          </button>
-          <button onClick={() => navigate('/leaderboard')} className="flex flex-col items-center gap-0.5">
-            <span className="text-lg">🏆</span>
-            <span className={`text-[10px] ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>Rank</span>
-          </button>
-        </div>
-      </div>
 
       <style jsx>{`
         .perspective {
@@ -677,10 +780,6 @@ const QuizPage = () => {
         .rotate-y-180 {
           transform: rotateY(180deg);
         }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
         @keyframes scaleUp {
           from { transform: scale(0.95); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
@@ -688,9 +787,6 @@ const QuizPage = () => {
         @keyframes scaleDown {
           from { transform: scale(1); opacity: 1; }
           to { transform: scale(0.95); opacity: 0; }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out forwards;
         }
         .animate-scaleUp {
           animation: scaleUp 0.25s ease-out forwards;
@@ -708,8 +804,8 @@ const QuizPage = () => {
           background: ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(20,184,166,0.3)'};
           border-radius: 10px;
         }
-        .ml-8 {
-          margin-left: 2rem;
+        .ml-11 {
+          margin-left: 2.75rem;
         }
       `}</style>
     </div>

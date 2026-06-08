@@ -37,55 +37,47 @@ const AdminLogin = () => {
   };
 
   const SchoolBranding = () => (
-    <div className="w-full flex flex-col items-center text-center mb-5">
+    <div className="w-full flex flex-col items-center text-center mb-6">
       <div className="relative transform transition-all duration-500 hover:scale-105">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#00B0FF]/20 to-[#008080]/20 rounded-full blur-3xl"></div>
         <img 
           src="logo.png" 
           alt="Learn & Earn Logo" 
-          className="relative w-48 h-48 object-contain drop-shadow-2xl"
+          className="relative w-44 h-44 object-contain drop-shadow-2xl"
           loading="eager"
         />
       </div>
       
-      <h1 className="text-2xl font-bold bg-gradient-to-r from-[#1A237E] to-[#008080] bg-clip-text text-transparent -mt-2">
+      <h1 className="text-2xl font-bold text-[#1A237E] -mt-2">
         Learn & Earn
       </h1>
       
       <div className="flex items-center gap-2 mt-1">
-        <div className="w-8 h-0.5 bg-gradient-to-r from-[#1A237E] to-[#00B0FF] rounded-full"></div>
+        <div className="w-8 h-0.5 bg-[#1A237E] rounded-full"></div>
         <span className="text-xs font-medium text-slate-500 tracking-wider">ADMIN PORTAL</span>
-        <div className="w-8 h-0.5 bg-gradient-to-r from-[#00B0FF] to-[#1A237E] rounded-full"></div>
+        <div className="w-8 h-0.5 bg-[#1A237E] rounded-full"></div>
       </div>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-[#F0F4F8] via-[#E8F4F8] to-[#F0F8FF] overflow-hidden">
+    <div className="fixed inset-0 w-full h-full flex items-center justify-center p-4 bg-white overflow-hidden">
       
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#00B0FF]/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#008080]/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-[#1A237E]/5 to-[#00B0FF]/5 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="relative w-full max-w-sm mx-auto">
+      <div className="relative w-full max-w-md mx-auto">
         
         <SchoolBranding />
 
-        {/* Modern Form Card */}
-        <div className="w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-[#00B0FF]/20 p-5">
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* Form Card */}
+        <div className="w-full bg-white rounded-3xl shadow-lg border border-slate-200 p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             
             {/* Username Field */}
-            <div className="space-y-1">
-              <label className="block text-slate-700 text-xs font-semibold ml-1">
+            <div className="space-y-1.5">
+              <label className="block text-slate-700 text-sm font-semibold ml-1">
                 Username
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all group-focus-within:scale-110">
-                  <svg className="w-4 h-4 text-slate-400 group-focus-within:text-[#00B0FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-400 group-focus-within:text-[#008080] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
@@ -94,20 +86,20 @@ const AdminLogin = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
-                  className="w-full pl-9 pr-3 py-1.5 bg-white border-2 border-[#00B0FF]/20 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all duration-200 shadow-sm"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="Enter your admin username"
                 />
               </div>
             </div>
 
             {/* Password Field */}
-            <div className="space-y-1">
-              <label className="block text-slate-700 text-xs font-semibold ml-1">
+            <div className="space-y-1.5">
+              <label className="block text-slate-700 text-sm font-semibold ml-1">
                 Password
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-all group-focus-within:scale-110">
-                  <svg className="w-4 h-4 text-slate-400 group-focus-within:text-[#00B0FF] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-400 group-focus-within:text-[#008080] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
@@ -116,17 +108,17 @@ const AdminLogin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
-                  className="w-full pl-9 pr-3 py-1.5 bg-white border-2 border-[#00B0FF]/20 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#00B0FF] focus:ring-2 focus:ring-[#00B0FF]/20 transition-all duration-200 shadow-sm"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="Enter your password"
                 />
               </div>
             </div>
 
-            {/* Login Button - Gradient Azure to Teal */}
+            {/* Login Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2 bg-gradient-to-r from-[#00B0FF] to-[#008080] text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm group"
+              className="w-full mt-2 py-2.5 bg-[#008080] text-white font-bold rounded-2xl shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm group"
             >
               {loading ? (
                 <>
@@ -139,7 +131,7 @@ const AdminLogin = () => {
               ) : (
                 <>
                   <span>Sign In</span>
-                  <svg className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </>
@@ -149,8 +141,8 @@ const AdminLogin = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mt-4 p-2.5 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-2xl">
-              <div className="flex items-center gap-2 text-red-700 text-xs">
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-2xl">
+              <div className="flex items-center gap-2 text-red-700 text-sm">
                 <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -160,23 +152,23 @@ const AdminLogin = () => {
           )}
         </div>
 
-        {/* Footer - Minimal & Elegant */}
+        {/* Footer */}
         <div className="mt-5 pt-3">
           <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
-            <span className="flex items-center gap-1.5 font-medium text-slate-500 hover:text-[#1A237E] transition-colors cursor-pointer">
+            <span className="flex items-center gap-1.5 font-medium text-slate-400 hover:text-[#1A237E] transition-colors cursor-pointer">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6-4h12a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4V7a4 4 0 00-8 0v4h8z" />
               </svg>
               Secure Portal
             </span>
             <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-            <span className="text-slate-500 hover:text-[#00B0FF] transition-colors cursor-pointer font-medium">Admin Access</span>
+            <span className="text-slate-400 hover:text-[#008080] transition-colors cursor-pointer font-medium">Admin Access</span>
             <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-            <span className="text-slate-500 hover:text-[#008080] transition-colors cursor-pointer font-medium">System Management</span>
+            <span className="text-slate-400 hover:text-[#008080] transition-colors cursor-pointer font-medium">System Management</span>
           </div>
         </div>
 
-        {/* Help Text */}
+        {/* Authorized Personnel Only */}
         <p className="text-center text-xs text-slate-400 mt-3">
           Authorized personnel only
         </p>

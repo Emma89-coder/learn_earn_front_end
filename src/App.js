@@ -19,6 +19,7 @@ import AdminRewards from './screens/admin/AdminRewards';
 import AdminQuizzes from './screens/admin/AdminQuizzes';
 import AdminBadges from './screens/admin/AdminBadges';
 import AdminLearners from './screens/admin/AdminLearners';
+import QuestionBank from './screens/admin/QuestionBank'; // ADD THIS LINE
 
 function App() {
   return (
@@ -47,7 +48,7 @@ function App() {
               <QuizPage />
             </PrivateRoute>
           } />
-          {/* Take Quiz Route - IMPORTANT: Add this line */}
+          {/* Take Quiz Route */}
           <Route path="/quiz/:quizId" element={
             <PrivateRoute allowedRoles={['learner']}>
               <TakeQuiz />
@@ -93,6 +94,13 @@ function App() {
           <Route path="/admin-learners" element={
             <PrivateRoute allowedRoles={['admin']}>
               <AdminLearners />
+            </PrivateRoute>
+          } />
+          
+          {/* ADD THIS ROUTE - Question Bank */}
+          <Route path="/admin/question-bank" element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <QuestionBank />
             </PrivateRoute>
           } />
           
