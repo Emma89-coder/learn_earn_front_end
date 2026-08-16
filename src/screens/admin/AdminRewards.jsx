@@ -16,6 +16,17 @@ const AdminRewards = () => {
   const [rewards, setRewards] = useState([]);
   const [selectedReward, setSelectedReward] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [adminTab, setAdminTab] = useState('rewards');
+  const [redemptions, setRedemptions] = useState([]);
+  const [loadingRedemptions, setLoadingRedemptions] = useState(false);
+  const [redemptionFilter, setRedemptionFilter] = useState('all');
+  const [redemptionSummary, setRedemptionSummary] = useState({ 
+    total_redemptions: 0, 
+    total_points_spent: 0, 
+    total_refunded: 0, 
+    total_collected: 0, 
+    total_pending: 0 
+  });
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('portal-theme');
     return savedTheme ? savedTheme === 'dark' : false;
@@ -39,6 +50,11 @@ const AdminRewards = () => {
     image_url: '',
     image_scale: 1
   });
+
+  // State for refund confirmation dialog
+  const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [refundTarget, setRefundTarget] = useState(null);
+  const [refundingAll, setRefundingAll] = useState(false);
 
   useEffect(() => {
     fetchRewards();
@@ -66,6 +82,230 @@ const AdminRewards = () => {
     }
   };
 
+  const fetchRedemptions = async () => {
+    try {
+      setLoadingRedemptions(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${API_URL}/api/admin/redemptions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log('📋 All redemptions from API:', res.data.redemptions);
+      
+      if (res.data.success) {
+        const allRedemptions = res.data.redemptions || [];
+        
+        // CRITICAL FIX: Filter out ANY redemption with status 'refunded'
+        const activeRedemptions = allRedemptions.filter(r => {
+          // Check multiple possible status values
+          const status = (r.status || '').toLowerCase();
+          const isRefunded = status === 'refunded' || status === 'refund';
+          
+          // Also check if there's a refunded_at timestamp
+          const hasRefundedAt = r.refunded_at !== null && r.refunded_at !== undefined && r.refunded_at !== '';
+          
+          // Keep only non-refunded redemptions
+          return !isRefunded && !hasRefundedAt;
+        });
+        
+        console.log('📋 Active redemptions (after filtering):', activeRedemptions.length);
+        console.log('📋 Refunded redemptions removed:', allRedemptions.length - activeRedemptions.length);
+        
+        // Log the IDs of refunded redemptions that were removed
+        const refundedIds = allRedemptions
+          .filter(r => {
+            const status = (r.status || '').toLowerCase();
+            return status === 'refunded' || status === 'refund' || (r.refunded_at !== null && r.refunded_at !== undefined && r.refunded_at !== '');
+          })
+          .map(r => r.id);
+        console.log('📋 Refunded IDs removed:', refundedIds);
+        
+        setRedemptions(activeRedemptions);
+        
+        // Calculate summary
+        const summary = {
+          total_redemptions: activeRedemptions.length,
+          total_points_spent: activeRedemptions.reduce((sum, r) => sum + (r.points_spent || 0), 0),
+          total_refunded: allRedemptions.filter(r => {
+            const status = (r.status || '').toLowerCase();
+            return status === 'refunded' || status === 'refund' || (r.refunded_at !== null && r.refunded_at !== undefined && r.refunded_at !== '');
+          }).length,
+          total_collected: activeRedemptions.filter(r => r.collected === true).length,
+          total_pending: activeRedemptions.filter(r => r.collected !== true).length,
+        };
+        setRedemptionSummary(summary);
+      }
+    } catch (error) {
+      console.error('Fetch redemptions error:', error);
+      toast.error('Failed to load redemptions');
+    } finally {
+      setLoadingRedemptions(false);
+    }
+  };
+
+  const toggleCollected = async (redemptionId, currentStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.put(`${API_URL}/api/admin/redemptions/${redemptionId}/collected`, {
+        collected: !currentStatus
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setRedemptions(prev => prev.map(r =>
+          r.id === redemptionId
+            ? { ...r, collected: !currentStatus, collected_at: !currentStatus ? new Date().toISOString() : null }
+            : r
+        ));
+        toast.success(!currentStatus ? 'Marked as collected' : 'Marked as not collected');
+        // Refresh summary
+        fetchRedemptions();
+      }
+    } catch (error) {
+      console.error('Toggle collected error:', error);
+      toast.error('Failed to update');
+    }
+  };
+
+  const handleRefund = async (redemptionId, rewardName, points) => {
+    setRefundTarget({ id: redemptionId, name: rewardName, points });
+    setShowRefundDialog(true);
+  };
+
+  const confirmRefund = async () => {
+    if (!refundTarget) return;
+    
+    const { id, name, points } = refundTarget;
+    
+    try {
+      setLoadingRedemptions(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        `${API_URL}/api/admin/redemptions/${id}/refund`, 
+        {}, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      console.log('📋 Refund response:', res.data);
+      
+      if (res.data.success) {
+        // CRITICAL FIX: Filter out the refunded redemption from state
+        setRedemptions(prevRedemptions => {
+          const filtered = prevRedemptions.filter(r => r.id !== id);
+          console.log('📋 Removed refunded redemption. Remaining:', filtered.length);
+          return filtered;
+        });
+        
+        // Update summary immediately
+        setRedemptionSummary(prev => {
+          const newSummary = {
+            ...prev,
+            total_redemptions: Math.max(0, prev.total_redemptions - 1),
+            total_refunded: prev.total_refunded + 1,
+            total_points_spent: Math.max(0, prev.total_points_spent - (points || 0)),
+            total_pending: Math.max(0, prev.total_pending - 1)
+          };
+          console.log('📋 Updated summary:', newSummary);
+          return newSummary;
+        });
+        
+        toast.success(res.data.message || `Refunded ${points} points for "${name}" - Voucher removed from list`);
+        
+        // Force a complete refresh after a short delay to ensure consistency
+        setTimeout(() => {
+          console.log('🔄 Forcing refresh after refund...');
+          fetchRedemptions();
+          fetchRewards();
+        }, 300);
+        
+      } else {
+        toast.error(res.data.error || 'Refund failed');
+      }
+    } catch (error) {
+      console.error('Refund error:', error);
+      const errorMsg = error.response?.data?.error || 'Failed to process refund';
+      toast.error(errorMsg);
+    } finally {
+      setShowRefundDialog(false);
+      setRefundTarget(null);
+      setLoadingRedemptions(false);
+    }
+  };
+
+  const [showRefundAllDialog, setShowRefundAllDialog] = useState(false);
+  const [refundAllCount, setRefundAllCount] = useState(0);
+
+  const handleRefundAll = () => {
+    // Only refund pending (not collected) redemptions
+    const pendingIds = redemptions.filter(r => !r.collected && r.status !== 'refunded').map(r => r.id);
+    const pendingCount = pendingIds.length;
+    
+    if (pendingCount === 0) {
+      toast.error('No pending redemptions to refund');
+      return;
+    }
+    
+    setRefundAllCount(pendingCount);
+    setShowRefundAllDialog(true);
+  };
+
+  const confirmRefundAll = async () => {
+    setShowRefundAllDialog(false);
+    setRefundingAll(true);
+
+    try {
+      setLoadingRedemptions(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.post(
+        `${API_URL}/api/admin/redemptions/refund-all`, 
+        {}, 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      console.log('📋 Refund all response:', res.data);
+      
+      if (res.data.success) {
+        // CRITICAL FIX: Remove ALL pending redemptions from the list, keep only collected ones
+        setRedemptions(prev => {
+          const remaining = prev.filter(r => r.collected === true);
+          console.log('📋 Removed all pending redemptions. Remaining (collected only):', remaining.length);
+          return remaining;
+        });
+        
+        // Update summary
+        setRedemptionSummary(prev => {
+          const remainingCount = prev.total_redemptions - refundAllCount;
+          return {
+            ...prev,
+            total_redemptions: Math.max(0, remainingCount),
+            total_refunded: prev.total_refunded + refundAllCount,
+            total_pending: 0,
+            total_points_spent: prev.total_points_spent - prev.total_points_spent
+          };
+        });
+        
+        toast.success(res.data.message || `Successfully refunded ${res.data.refund_count || refundAllCount} redemptions - Vouchers removed from list`);
+        
+        // Force refresh
+        setTimeout(() => {
+          console.log('🔄 Forcing refresh after refund all...');
+          fetchRedemptions();
+          fetchRewards();
+        }, 300);
+      } else {
+        toast.error(res.data.error || 'Refund all failed');
+      }
+    } catch (error) {
+      console.error('Refund all error:', error);
+      const errorMsg = error.response?.data?.error || 'Failed to refund all';
+      toast.error(errorMsg);
+    } finally {
+      setRefundingAll(false);
+      setLoadingRedemptions(false);
+    }
+  };
+
+  // Reset form
   const resetForm = () => {
     setSelectedReward(null);
     setForm({
@@ -551,10 +791,6 @@ const AdminRewards = () => {
     }
   };
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
   const getStockStatus = (stock) => {
     if (stock === 0) return { label: 'Out of Stock', color: 'bg-red-500/10 text-red-500' };
     if (stock < 10) return { label: 'Low Stock', color: 'bg-amber-500/10 text-amber-500' };
@@ -564,175 +800,421 @@ const AdminRewards = () => {
   const totalPoints = rewards.reduce((sum, r) => sum + (Number(r.points_required) || 0), 0);
   const totalStock = rewards.reduce((sum, r) => sum + (Number(r.stock_quantity) || 0), 0);
 
+  // Refund Confirmation Dialog
+  const RefundDialog = () => {
+    if (!showRefundDialog || !refundTarget) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className={`max-w-md w-full rounded-2xl p-6 shadow-2xl border-2 ${
+          isDarkMode 
+            ? 'bg-slate-800 border-teal-400' 
+            : 'bg-white border-teal-500'
+        }`}>
+          <h3 className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+            Confirm Refund
+          </h3>
+          <p className={`text-sm mb-4 ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+            Are you sure you want to refund <strong>{refundTarget.points}</strong> points for 
+            "<strong>{refundTarget.name}</strong>"?
+          </p>
+          <div className={`p-3 rounded-lg mb-4 ${isDarkMode ? 'bg-amber-500/10' : 'bg-amber-50'} border border-amber-500/30`}>
+            <p className={`text-xs ${isDarkMode ? 'text-amber-300' : 'text-amber-700'}`}>
+              ⚠️ This will return the points to the learner's balance and <strong>permanently remove</strong> this voucher from both admin and learner views.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setShowRefundDialog(false);
+                setRefundTarget(null);
+              }}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition border-2 ${
+                isDarkMode 
+                  ? 'border-slate-600 text-slate-300 hover:bg-slate-700' 
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmRefund}
+              className="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition shadow-md"
+            >
+              Yes, Refund & Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const RefundAllDialog = () => {
+    if (!showRefundAllDialog) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className={`max-w-md w-full rounded-2xl p-6 shadow-2xl border-2 ${
+          isDarkMode 
+            ? 'bg-slate-800 border-teal-400' 
+            : 'bg-white border-teal-500'
+        }`}>
+          <h3 className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+            Refund All Pending Redemptions
+          </h3>
+          <p className={`text-sm mb-4 ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+            Refund ALL <strong>{refundAllCount}</strong> pending redemptions? This will return all points to the learners and remove the vouchers.
+          </p>
+          <div className={`p-3 rounded-lg mb-4 ${isDarkMode ? 'bg-red-500/10' : 'bg-red-50'} border border-red-500/30`}>
+            <p className={`text-xs ${isDarkMode ? 'text-red-300' : 'text-red-700'}`}>
+              ⚠️ This action cannot be undone. All pending vouchers will be permanently revoked and points will be returned to each learner.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowRefundAllDialog(false)}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition border-2 ${
+                isDarkMode 
+                  ? 'border-slate-600 text-slate-300 hover:bg-slate-700' 
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmRefundAll}
+              className="flex-1 px-4 py-2 rounded-lg text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition shadow-md"
+            >
+              Yes, Refund All ({refundAllCount})
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className={`min-h-screen transition-all duration-500 ${
+    <div className={`min-h-screen w-full max-w-full transition-all duration-500 ${
       isDarkMode 
         ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
         : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
     }`}>
       
-      <header className={`sticky top-0 z-50 w-full backdrop-blur-xl transition-all duration-500 ${
-        isDarkMode 
-          ? 'bg-slate-900/80 border-b border-white/10' 
-          : 'bg-white/80 border-b border-slate-200'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <div className="relative w-10 h-10 bg-gradient-to-br from-darkblue-600 to-azure-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                  </svg>
-                </div>
-              </div>
-              <div>
-                <h1 className={`text-xl font-bold tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-                  Reward <span className="bg-gradient-to-r from-azure-500 to-teal-500 bg-clip-text text-transparent">Catalog</span>
-                </h1>
-                <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Manage rewards and point-based incentives
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleTheme}
-                className={`p-2 rounded-xl transition-all duration-300 ${
-                  isDarkMode 
-                    ? 'bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700' 
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {isDarkMode ? '☀️' : '🌙'}
-              </button>
-              
-              <button
-                onClick={() => navigate('/admin-dashboard')}
-                className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-medium transition-all ${
-                  isDarkMode 
-                    ? 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700' 
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                Dashboard
-              </button>
-              
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 ${
-                    isDarkMode 
-                      ? 'bg-slate-800 border border-slate-700 hover:bg-slate-700' 
-                      : 'bg-white border border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-darkblue-600 to-azure-500 flex items-center justify-center">
-                    <span className="text-sm text-white font-medium">A</span>
-                  </div>
-                  <span className="hidden sm:inline text-sm font-medium">Admin</span>
-                  <svg className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {showUserMenu && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)}></div>
-                    <div className={`absolute right-0 mt-2 w-44 rounded-xl shadow-lg overflow-hidden z-50 border animate-fadeIn ${
-                      isDarkMode 
-                        ? 'bg-slate-800 border-slate-700' 
-                        : 'bg-white border-slate-200'
-                    }`}>
-                      <button
-                        onClick={logout}
-                        className={`w-full px-4 py-2 text-left text-sm transition-colors ${
-                          isDarkMode 
-                            ? 'text-red-400 hover:bg-red-500/10' 
-                            : 'text-red-600 hover:bg-red-50'
-                        }`}
-                      >
-                        <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        Sign Out
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
-        {/* Smaller Stat Cards - No Icons */}
-        <div className="grid grid-cols-3 gap-2 mb-5">
-          <div className={`rounded-lg px-3 py-2 transition-all duration-300 ${
+      <main className="w-full px-0 sm:px-0 lg:px-0 py-4 max-w-full">        
+        {/* Stat Cards */}
+        <div className="grid grid-cols-3 gap-2 mb-5 w-full">
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
             isDarkMode 
-              ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700' 
-              : 'bg-white shadow-md border border-slate-100'
+              ? 'bg-blue-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-blue-50 border-teal-500 shadow-md'
           }`}>
-            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p className={`text-[9px] uppercase tracking-wider ${
+              isDarkMode ? 'text-blue-300' : 'text-[#19475B]'
+            }`}>
               Total Rewards
             </p>
-            <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+            <p className={`text-lg font-bold ${
+              isDarkMode ? 'text-blue-200' : 'text-[#19475B]'
+            }`}>
               {rewards.length}
             </p>
           </div>
 
-          <div className={`rounded-lg px-3 py-2 transition-all duration-300 ${
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
             isDarkMode 
-              ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700' 
-              : 'bg-white shadow-md border border-slate-100'
+              ? 'bg-emerald-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-emerald-50 border-teal-500 shadow-md'
           }`}>
-            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p className={`text-[9px] uppercase tracking-wider ${
+              isDarkMode ? 'text-emerald-300' : 'text-[#19475B]'
+            }`}>
               Total Stock
             </p>
-            <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+            <p className={`text-lg font-bold ${
+              isDarkMode ? 'text-emerald-200' : 'text-[#19475B]'
+            }`}>
               {totalStock}
             </p>
           </div>
 
-          <div className={`rounded-lg px-3 py-2 transition-all duration-300 ${
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
             isDarkMode 
-              ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700' 
-              : 'bg-white shadow-md border border-slate-100'
+              ? 'bg-purple-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-purple-50 border-teal-500 shadow-md'
           }`}>
-            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+            <p className={`text-[9px] uppercase tracking-wider ${
+              isDarkMode ? 'text-purple-300' : 'text-[#19475B]'
+            }`}>
               Total Points
             </p>
-            <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+            <p className={`text-lg font-bold ${
+              isDarkMode ? 'text-purple-200' : 'text-[#19475B]'
+            }`}>
               {totalPoints.toLocaleString()}
             </p>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-5">
+          <button
+            onClick={() => setAdminTab('rewards')}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              adminTab === 'rewards'
+                ? 'bg-teal-500 text-white shadow-md'
+                : isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            🎁 Manage Rewards
+          </button>
+          <button
+            onClick={() => { setAdminTab('redemptions'); fetchRedemptions(); }}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+              adminTab === 'redemptions'
+                ? 'bg-teal-500 text-white shadow-md'
+                : isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            🎟️ Active Redemptions
+            {redemptions.length > 0 && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                adminTab === 'redemptions' ? 'bg-white/30 text-white' : 'bg-teal-100 text-teal-700'
+              }`}>{redemptions.length}</span>
+            )}
+          </button>
+        </div>
+
+        {/* ── REDEMPTIONS TAB ── */}
+        {adminTab === 'redemptions' && (
+          <div className={`rounded-2xl border-2 overflow-hidden ${isDarkMode ? 'bg-slate-800/50 border-teal-400' : 'bg-white border-teal-500 shadow-xl'}`}>
+            <div className={`p-4 border-b ${isDarkMode ? 'border-teal-400/30 bg-slate-900/30' : 'border-teal-100 bg-teal-50'}`}>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h2 className={`text-base font-bold ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+                    Active Redemptions
+                  </h2>
+                  <p className={`text-[11px] mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                    Refunded vouchers are automatically removed
+                  </p>
+                </div>
+                <div className="flex gap-1.5 items-center flex-wrap">
+                  {[
+                    { id: 'all', label: 'All' },
+                    { id: 'pending', label: '⏳ Pending' },
+                    { id: 'collected', label: '✓ Collected' },
+                  ].map(f => (
+                    <button key={f.id}
+                      onClick={() => setRedemptionFilter(f.id)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                        redemptionFilter === f.id
+                          ? 'bg-teal-500 text-white'
+                          : isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >{f.label}</button>
+                  ))}
+                  <button
+                    onClick={handleRefundAll}
+                    disabled={refundingAll || redemptions.filter(r => !r.collected).length === 0}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition ml-2 ${
+                      refundingAll || redemptions.filter(r => !r.collected).length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {refundingAll ? '⏳ Processing...' : `Refund All (${redemptions.filter(r => !r.collected).length})`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Summary stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3">
+                <div className={`p-2 rounded-lg text-center ${isDarkMode ? 'bg-slate-800' : 'bg-white border border-gray-100'}`}>
+                  <p className={`text-lg font-black ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{redemptionSummary.total_redemptions}</p>
+                  <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Active</p>
+                </div>
+                <div className={`p-2 rounded-lg text-center ${isDarkMode ? 'bg-slate-800' : 'bg-white border border-gray-100'}`}>
+                  <p className={`text-lg font-black text-amber-600`}>💎 {redemptionSummary.total_points_spent}</p>
+                  <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Points Spent</p>
+                </div>
+                <div className={`p-2 rounded-lg text-center ${isDarkMode ? 'bg-slate-800' : 'bg-white border border-gray-100'}`}>
+                  <p className={`text-lg font-black text-red-500`}>{redemptionSummary.total_refunded}</p>
+                  <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Refunded (Removed)</p>
+                </div>
+                <div className={`p-2 rounded-lg text-center ${isDarkMode ? 'bg-slate-800' : 'bg-white border border-gray-100'}`}>
+                  <p className={`text-lg font-black text-green-600`}>{redemptionSummary.total_collected}</p>
+                  <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Collected</p>
+                </div>
+                <div className={`p-2 rounded-lg text-center ${isDarkMode ? 'bg-slate-800' : 'bg-white border border-gray-100'}`}>
+                  <p className={`text-lg font-black text-amber-500`}>{redemptionSummary.total_pending}</p>
+                  <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Pending</p>
+                </div>
+              </div>
+            </div>
+
+            {loadingRedemptions ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-3 border-teal-500 border-t-transparent mx-auto mb-2" />
+                <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>Loading redemptions...</p>
+              </div>
+            ) : redemptions.length === 0 ? (
+              <div className="p-10 text-center">
+                <div className="text-4xl mb-3">🎟️</div>
+                <p className={`font-semibold ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>No active redemptions</p>
+                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                  Refunded vouchers are automatically removed from this list
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className={`text-[11px] uppercase tracking-wider ${isDarkMode ? 'bg-slate-900/50 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
+                      <th className="px-4 py-3 font-semibold">Voucher</th>
+                      <th className="px-4 py-3 font-semibold">Learner</th>
+                      <th className="px-4 py-3 font-semibold">Gift</th>
+                      <th className="px-4 py-3 font-semibold">Points</th>
+                      <th className="px-4 py-3 font-semibold">Date</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${isDarkMode ? 'divide-slate-700' : 'divide-gray-100'}`}>
+                    {redemptions
+                      .filter(r => {
+                        if (redemptionFilter === 'pending') return !r.collected;
+                        if (redemptionFilter === 'collected') return r.collected;
+                        return true;
+                      })
+                      .map(r => (
+                      <tr key={r.id} className={`${isDarkMode ? 'hover:bg-slate-700/30' : 'hover:bg-gray-50'} transition`}>
+                        <td className="px-4 py-3">
+                          {r.status === 'refunded' ? (
+                            <span className="font-mono text-xs font-bold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded">
+                              REVOKED
+                            </span>
+                          ) : (
+                            <span className={`font-mono font-bold text-sm ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                              {r.voucher_number || '—'}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                              {r.learner_name || 'Unknown Learner'}
+                            </p>
+                            {r.learner_class && <p className={`text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>{r.learner_class}</p>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-200' : 'text-gray-700'}`}>
+                            {r.reward_name || '—'}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-sm font-bold ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                            💎 {r.points_spent}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                            {new Date(r.redeemed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {r.status === 'refunded' ? (
+                            <span className="text-[11px] bg-red-100 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-semibold">
+                              ↩ Refunded
+                            </span>
+                          ) : r.collected ? (
+                            <span className="text-[11px] bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-semibold">
+                              ✓ Collected
+                            </span>
+                          ) : (
+                            <span className="text-[11px] bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-semibold">
+                              ⏳ Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {r.status === 'refunded' ? (
+                            <span className={`text-xs italic ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                              No actions
+                            </span>
+                          ) : (
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            <button
+                              onClick={() => toggleCollected(r.id, r.collected)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                                r.collected
+                                  ? 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200'
+                                  : 'bg-green-500 text-white hover:bg-green-600 shadow-sm'
+                              }`}
+                            >
+                              {r.collected ? 'Undo' : 'Mark Collected'}
+                            </button>
+                            {!r.collected && (
+                              <button
+                                onClick={() => handleRefund(r.id, r.reward_name || 'Reward', r.points_spent)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition"
+                              >
+                                Refund & Remove
+                              </button>
+                            )}
+                          </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Summary footer */}
+            {redemptions.length > 0 && (
+              <div className={`p-3 border-t flex items-center justify-between text-xs flex-wrap gap-2 ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-gray-100 text-gray-500'}`}>
+                <span>{redemptions.length} active redemptions</span>
+                <span>
+                  {redemptions.filter(r => r.collected).length} collected / 
+                  {redemptions.filter(r => !r.collected).length} pending / 
+                  {redemptionSummary.total_refunded} refunded (removed)
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── REWARDS TAB ── */}
+        {adminTab === 'rewards' && (
+        <div className="grid gap-6 lg:grid-cols-2 w-full">
           
-          <div className={`rounded-2xl transition-all duration-500 overflow-hidden ${
+          {/* Reward Collection Card */}
+          <div className={`rounded-2xl transition-all duration-500 overflow-hidden border-2 ${
             isDarkMode 
-              ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700' 
-              : 'bg-white shadow-xl border border-slate-100'
+              ? 'bg-slate-800/50 backdrop-blur-sm border-teal-400' 
+              : 'bg-white shadow-xl border-teal-500'
           }`}>
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+            <div className={`p-4 border-b ${
+              isDarkMode 
+                ? 'border-teal-400/30 bg-emerald-900/20' 
+                : 'border-teal-500/30 bg-gradient-to-r from-emerald-50 to-green-50'
+            }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                  <h2 className={`text-base font-bold ${
+                    isDarkMode ? 'text-emerald-300' : 'text-[#19475B]'
+                  }`}>
                     Reward Collection
                   </h2>
-                  <p className={`text-[11px] mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-[11px] mt-0.5 ${
+                    isDarkMode ? 'text-emerald-300/70' : 'text-[#19475B]/70'
+                  }`}>
                     Browse and manage your reward items
                   </p>
                 </div>
                 <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
-                  isDarkMode ? 'bg-azure-500/20 text-azure-400' : 'bg-azure-100 text-azure-600'
+                  isDarkMode 
+                    ? 'bg-emerald-500/20 text-emerald-300' 
+                    : 'bg-emerald-100 text-[#19475B]'
                 }`}>
                   {rewards.length} items
                 </div>
@@ -751,7 +1233,7 @@ const AdminRewards = () => {
                   <svg className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                   </svg>
-                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
                     No rewards yet. Create your first reward!
                   </p>
                 </div>
@@ -762,14 +1244,14 @@ const AdminRewards = () => {
                     return (
                       <div
                         key={reward.id}
-                        className={`group relative rounded-xl p-3 transition-all duration-300 cursor-pointer overflow-hidden ${
+                        className={`group relative rounded-xl p-3 transition-all duration-300 cursor-pointer overflow-hidden border ${
                           selectedReward?.id === reward.id
                             ? isDarkMode 
-                              ? 'bg-gradient-to-r from-azure-500/20 to-teal-500/20 border border-azure-500/50 shadow-lg' 
-                              : 'bg-gradient-to-r from-azure-50 to-teal-50 border border-azure-500/30 shadow-md'
+                              ? 'bg-gradient-to-r from-emerald-500/20 to-green-500/20 border-emerald-500/50 shadow-lg' 
+                              : 'bg-gradient-to-r from-emerald-50 to-green-50 border-teal-500 shadow-md'
                             : isDarkMode 
-                              ? 'bg-slate-900/50 border border-slate-700 hover:border-azure-500/30 hover:shadow-lg' 
-                              : 'bg-white border border-slate-100 hover:shadow-lg'
+                              ? 'bg-slate-900/50 border-slate-700 hover:border-emerald-500/30 hover:shadow-lg' 
+                              : 'bg-white border-slate-200 hover:border-teal-500 hover:shadow-lg'
                         }`}
                         onClick={() => handleEditReward(reward)}
                       >
@@ -793,9 +1275,9 @@ const AdminRewards = () => {
                             </div>
                           ) : (
                             <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md ${
-                              isDarkMode ? 'bg-gradient-to-br from-azure-500/30 to-teal-500/30' : 'bg-gradient-to-br from-azure-100 to-teal-100'
+                              isDarkMode ? 'bg-gradient-to-br from-emerald-500/30 to-green-500/30' : 'bg-gradient-to-br from-emerald-100 to-green-100'
                             }`}>
-                              <svg className="w-7 h-7 text-azure-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                               </svg>
                             </div>
@@ -804,10 +1286,14 @@ const AdminRewards = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1">
-                                <h3 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+                                <h3 className={`font-bold text-sm ${
+                                  isDarkMode ? 'text-white' : 'text-[#19475B]'
+                                }`}>
                                   {reward.name}
                                 </h3>
-                                <p className={`text-[11px] mt-0.5 line-clamp-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                <p className={`text-[11px] mt-0.5 line-clamp-2 ${
+                                  isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'
+                                }`}>
                                   {reward.description || 'No description provided'}
                                 </p>
                               </div>
@@ -824,7 +1310,9 @@ const AdminRewards = () => {
                             </div>
                             
                             <div className="flex flex-wrap gap-1.5 mt-2">
-                              <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-azure-500/10 to-teal-500/10 text-azure-600 dark:text-azure-400`}>
+                              <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-emerald-500/10 to-green-500/10 ${
+                                isDarkMode ? 'text-emerald-400' : 'text-[#19475B]'
+                              }`}>
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v1m0 1v1m0 1v1m0 1v1M6 12a6 6 0 1012 0 6 6 0 00-12 0z" />
                                 </svg>
@@ -847,23 +1335,34 @@ const AdminRewards = () => {
             </div>
           </div>
 
-          <div className={`rounded-2xl transition-all duration-500 ${
+          {/* Create/Edit Reward Card */}
+          <div className={`rounded-2xl transition-all duration-500 overflow-hidden border-2 ${
             isDarkMode 
-              ? 'bg-slate-800/50 backdrop-blur-sm border border-slate-700' 
-              : 'bg-white shadow-xl border border-slate-100'
+              ? 'bg-slate-800/50 backdrop-blur-sm border-teal-400' 
+              : 'bg-white shadow-xl border-teal-500'
           }`}>
-            <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-              <h2 className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+            <div className={`p-4 border-b ${
+              isDarkMode 
+                ? 'border-teal-400/30 bg-emerald-900/20' 
+                : 'border-teal-500/30 bg-gradient-to-r from-emerald-50 to-green-50'
+            }`}>
+              <h2 className={`text-base font-bold ${
+                isDarkMode ? 'text-emerald-300' : 'text-[#19475B]'
+              }`}>
                 {selectedReward ? 'Edit Reward' : 'Create New Reward'}
               </h2>
-              <p className={`text-[11px] mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              <p className={`text-[11px] mt-0.5 ${
+                isDarkMode ? 'text-emerald-300/70' : 'text-[#19475B]/70'
+              }`}>
                 {selectedReward ? 'Update reward details' : 'Add a new reward to the catalog'}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
               <div>
-                <label className={`block text-xs font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <label className={`block text-xs font-semibold mb-1.5 ${
+                  isDarkMode ? 'text-slate-300' : 'text-[#19475B]'
+                }`}>
                   Gift Image
                 </label>
                 
@@ -878,7 +1377,7 @@ const AdminRewards = () => {
                             ? 'bg-teal-500 text-white'
                             : isDarkMode
                               ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              : 'bg-slate-100 text-[#19475B] hover:bg-slate-200'
                         }`}
                       >
                         <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -894,7 +1393,7 @@ const AdminRewards = () => {
                             ? 'bg-teal-500 text-white'
                             : isDarkMode
                               ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              : 'bg-slate-100 text-[#19475B] hover:bg-slate-200'
                         }`}
                       >
                         <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -906,7 +1405,7 @@ const AdminRewards = () => {
 
                     {imageInputMode === 'upload' && (
                       <div 
-                        className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300 cursor-pointer hover:border-teal-500 ${
+                        className={`relative border-2 border-solid rounded-xl p-6 text-center transition-all duration-300 cursor-pointer hover:border-teal-500 ${
                           isDarkMode 
                             ? 'border-slate-700 bg-slate-900/50 hover:bg-slate-800/50' 
                             : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
@@ -972,7 +1471,7 @@ const AdminRewards = () => {
                             className={`flex-1 rounded-lg border px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-teal-500 ${
                               isDarkMode 
                                 ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500' 
-                                : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400'
+                                : 'bg-white border-slate-200 text-[#19475B] placeholder-slate-400'
                             }`}
                           />
                           <button
@@ -989,14 +1488,16 @@ const AdminRewards = () => {
                 ) : (
                   <div className="space-y-3">
                     <div className="relative rounded-xl overflow-hidden group border-2 border-teal-500/30">
-                      <div className="relative">
+                      <div className="relative w-full">
                         <img 
                           src={form.image_url || imagePreview} 
                           alt="Gift preview" 
-                          className="reward-image-preview w-full h-48 object-contain bg-slate-100 dark:bg-slate-900 transition-all duration-300"
+                          className="reward-image-preview w-full h-auto max-h-96 object-contain bg-slate-100 dark:bg-slate-900 transition-all duration-300"
                           style={{
                             transform: `scale(${imageScale || 1})`,
-                            transformOrigin: 'center center'
+                            transformOrigin: 'center center',
+                            width: '100%',
+                            minHeight: '200px'
                           }}
                           onError={(e) => {
                             e.target.style.display = 'none';
@@ -1056,10 +1557,10 @@ const AdminRewards = () => {
                           : 'border-teal-300 bg-teal-50'
                       }`}>
                         <div className="flex items-center justify-between mb-2">
-                          <h4 className={`text-xs font-semibold ${isDarkMode ? 'text-teal-400' : 'text-teal-700'}`}>
+                          <h4 className={`text-xs font-semibold ${isDarkMode ? 'text-teal-400' : 'text-[#19475B]'}`}>
                             Image Size Control
                           </h4>
-                          <span className={`text-xs font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-700'}`}>
+                          <span className={`text-xs font-bold ${isDarkMode ? 'text-teal-400' : 'text-[#19475B]'}`}>
                             {Math.round((imageScale || 1) * 100)}%
                           </span>
                         </div>
@@ -1098,7 +1599,7 @@ const AdminRewards = () => {
                                   ? 'bg-teal-500 text-white'
                                   : isDarkMode
                                     ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                                    : 'bg-slate-200 text-[#19475B] hover:bg-slate-300'
                               }`}
                             >
                               {Math.round(scale * 100)}%
@@ -1163,7 +1664,9 @@ const AdminRewards = () => {
               </div>
 
               <div>
-                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <label className={`block text-xs font-semibold mb-1 ${
+                  isDarkMode ? 'text-slate-300' : 'text-[#19475B]'
+                }`}>
                   Reward Name <span className="text-red-500 text-xs">*</span>
                 </label>
                 <input
@@ -1174,13 +1677,15 @@ const AdminRewards = () => {
                   className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
                     isDarkMode 
                       ? 'bg-slate-900 border-slate-700 text-white focus:border-transparent' 
-                      : 'bg-white border-slate-200 text-slate-800 focus:border-transparent'
+                      : 'bg-white border-slate-200 text-[#19475B] focus:border-transparent'
                   }`}
                 />
               </div>
 
               <div>
-                <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                <label className={`block text-xs font-semibold mb-1 ${
+                  isDarkMode ? 'text-slate-300' : 'text-[#19475B]'
+                }`}>
                   Description
                 </label>
                 <textarea
@@ -1191,14 +1696,16 @@ const AdminRewards = () => {
                   className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none ${
                     isDarkMode 
                       ? 'bg-slate-900 border-slate-700 text-white' 
-                      : 'bg-white border-slate-200 text-slate-800'
+                      : 'bg-white border-slate-200 text-[#19475B]'
                   }`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <label className={`block text-xs font-semibold mb-1 ${
+                    isDarkMode ? 'text-slate-300' : 'text-[#19475B]'
+                  }`}>
                     Points <span className="text-red-500 text-xs">*</span>
                   </label>
                   <input
@@ -1211,13 +1718,15 @@ const AdminRewards = () => {
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 ${
                       isDarkMode 
                         ? 'bg-slate-900 border-slate-700 text-white' 
-                        : 'bg-white border-slate-200 text-slate-800'
+                        : 'bg-white border-slate-200 text-[#19475B]'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <label className={`block text-xs font-semibold mb-1 ${
+                    isDarkMode ? 'text-slate-300' : 'text-[#19475B]'
+                  }`}>
                     Stock
                   </label>
                   <input
@@ -1229,7 +1738,7 @@ const AdminRewards = () => {
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 ${
                       isDarkMode 
                         ? 'bg-slate-900 border-slate-700 text-white' 
-                        : 'bg-white border-slate-200 text-slate-800'
+                        : 'bg-white border-slate-200 text-[#19475B]'
                     }`}
                   />
                 </div>
@@ -1246,19 +1755,30 @@ const AdminRewards = () => {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all duration-300 ${
+                    isDarkMode 
+                      ? 'border-teal-400 text-teal-400 hover:bg-teal-400/10' 
+                      : 'border-teal-500 text-[#19475B] hover:bg-teal-50'
+                  }`}
                 >
                   Reset
                 </button>
               </div>
 
-              <div className="text-[10px] text-center text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-700">
+              <div className="text-[10px] text-center pt-1 border-t ${
+                isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-400'
+              }">
                 <span className="text-red-500">*</span> Required fields
               </div>
             </form>
           </div>
         </div>
+        )}
       </main>
+
+      {/* Refund Confirmation Dialog */}
+      <RefundDialog />
+      <RefundAllDialog />
 
       <style>{`
         @keyframes fadeIn {
@@ -1297,6 +1817,12 @@ const AdminRewards = () => {
           background: #14b8a6;
           cursor: pointer;
           border: none;
+        }
+        .reward-image-preview {
+          width: 100% !important;
+          max-width: 100% !important;
+          display: block;
+          aspect-ratio: 16/9;
         }
       `}</style>
     </div>

@@ -33,18 +33,24 @@ const LEVELS = [
   { id: 'standard-8', name: 'Standard 8', icon: '⚡' }
 ];
 
+const GAME_LEVEL_COLORS = {
+  1:'bg-green-400', 2:'bg-green-500', 3:'bg-teal-400', 4:'bg-teal-500',
+  5:'bg-blue-400',  6:'bg-blue-500',  7:'bg-purple-400',8:'bg-purple-500',
+  9:'bg-orange-500',10:'bg-red-500',
+};
+const GAME_LEVEL_LABELS = [
+  'Starter','Explorer','Thinker','Achiever','Scholar',
+  'Expert','Master','Elite','Legend','Champion',
+];
+
 const QuizPage = () => {
   const navigate = useNavigate();
   const [activeSubject, setActiveSubject] = useState(null);
   const [isClosing, setIsClosing] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [quizzes, setQuizzes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [flippedCardId, setFlippedCardId] = useState(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('portal-theme');
-    return savedTheme ? savedTheme === 'dark' : false;
-  });
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
     const savedSoundSetting = localStorage.getItem('portal-sound-fx');
     return savedSoundSetting ? savedSoundSetting === 'true' : true;
@@ -58,7 +64,7 @@ const QuizPage = () => {
     locked_levels: ['standard-6', 'standard-7', 'standard-8'],
     all_levels: ['standard-5', 'standard-6', 'standard-7', 'standard-8']
   });
-  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
   const [currentLearnerLevel, setCurrentLearnerLevel] = useState('standard-5');
 
   const subjects = [
@@ -85,7 +91,6 @@ const QuizPage = () => {
         return;
       }
 
-      // Try the main endpoint
       const response = await axios.get(`${API_URL}/api/learner/progress`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -98,7 +103,6 @@ const QuizPage = () => {
     } catch (error) {
       console.error('Error fetching progress:', error);
       
-      // Handle different error types
       if (error.response) {
         console.error('Response status:', error.response.status);
         console.error('Response data:', error.response.data);
@@ -115,7 +119,6 @@ const QuizPage = () => {
         console.warn('No response from server. Using default values.');
       }
       
-      // Use default progress values
       setLearnerProgress({
         current_level: 'standard-5',
         class_level: 'standard-5',
@@ -132,7 +135,6 @@ const QuizPage = () => {
 
   const fetchQuizzes = async () => {
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
       
       if (!token) {
@@ -180,12 +182,6 @@ const QuizPage = () => {
       if (!quiz.class_level) return true;
       return quiz.class_level === currentLearnerLevel;
     });
-  };
-
-  const toggleTheme = () => {
-    const nextTheme = !isDarkMode;
-    setIsDarkMode(nextTheme);
-    localStorage.setItem('portal-theme', nextTheme ? 'dark' : 'light');
   };
 
   const toggleSound = () => {
@@ -275,13 +271,16 @@ const QuizPage = () => {
     return found ? found.name : level.split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
   };
 
-  if (loading || isLoadingProgress) {
+  // Stats
+  const totalQuizzes = quizzes.length;
+
+  if (loading && quizzes.length === 0 && !isLoadingProgress) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-darkblue-950' : 'bg-ice-50'}`}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={`text-sm ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
-            {isLoadingProgress ? 'Loading progress...' : 'Loading quizzes...'}
+          <p className="text-sm text-slate-300">
+            Loading quizzes...
           </p>
         </div>
       </div>
@@ -291,80 +290,104 @@ const QuizPage = () => {
   const currentSubjectQuizzes = activeSubject ? getQuizzesBySubject(activeSubject.id) : [];
 
   return (
-    <div className={`h-screen flex flex-col overflow-hidden transition-all duration-500 ${
-      isDarkMode ? 'bg-darkblue-950' : 'bg-ice-50'
-    }`}>
+    <div
+      className="learner-themed min-h-screen w-full max-w-full transition-all duration-500"
+      style={{
+        background: 'linear-gradient(135deg, #ecfef8 0%, #dff8f2 45%, #ccf5eb 100%)',
+        color: '#075351',
+        fontFamily: 'Calibri, "Segoe UI", "Trebuchet MS", sans-serif',
+      }}
+    >
       
-      {/* Header */}
-      <header className="flex-shrink-0 z-50 shadow-md transition-all duration-300" style={{ backgroundColor: '#daf2f5' }}>
-        <div className="max-w-5xl mx-auto px-3 py-2">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/learner-dashboard')}>
-              <div className="w-8 h-8 bg-teal-500 rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-lg">📚</span>
-              </div>
-              <div>
-                <h1 className="text-base font-bold text-darkblue-900">
-                  Quiz <span className="text-teal-500">Hub</span>
-                </h1>
-                <p className="text-[11px] text-darkblue-600">
-                  Choose your subject
-                </p>
+      {/* Header - Ice-white text on dark background */}
+      <header className="shadow-[0_20px_45px_-22px_rgba(7,83,81,0.55)] border-b border-white/10 sticky top-0 z-50" style={{ background: 'linear-gradient(135deg, #075351 0%, #0a6a67 100%)', color: '#f7fbff' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  className="w-12 h-12 object-contain drop-shadow-lg"
+                  loading="eager"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/48x48?text=LE';
+                  }}
+                />
+                <div>
+                  <h1 className="text-2xl font-black tracking-tighter" style={{ fontFamily: 'Calibri, "Segoe UI", "Trebuchet MS", sans-serif', color: '#f7fbff' }}>
+                    LearnEarn
+                  </h1>
+                  <p className="text-sm font-semibold uppercase tracking-wider" style={{ color: '#f7fbff' }}>Quiz Hub</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleSound}
-                className={`p-1.5 rounded-lg transition ${
-                  isSoundEnabled 
-                    ? 'bg-teal-500 text-white' 
-                    : 'bg-slate-500/20 text-slate-600'
-                }`}
-              >
-                {isSoundEnabled ? '🔊' : '🔇'}
-              </button>
-              <button
-                onClick={toggleTheme}
-                className={`p-1.5 rounded-lg transition ${
-                  isDarkMode 
-                    ? 'bg-darkblue-800 text-yellow-400' 
-                    : 'bg-teal-100 text-darkblue-600'
-                }`}
-              >
-                {isDarkMode ? '☀️' : '🌙'}
-              </button>
-              <button
-                onClick={() => navigate('/learner-dashboard')}
-                className="px-3 py-1 rounded-lg text-xs font-medium bg-teal-500 text-white hover:bg-teal-600 transition"
-              >
-                Exit
-              </button>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleSound}
+                  className={`px-3 py-2 rounded-lg text-base font-medium transition-all ${
+                    isSoundEnabled 
+                      ? 'bg-teal-500 text-[#f7fbff] shadow-lg' 
+                      : 'bg-white/10 text-[#f7fbff]/70 hover:bg-white/20'
+                  }`}
+                  title={isSoundEnabled ? 'Sound On' : 'Sound Off'}
+                >
+                  {isSoundEnabled ? 'Sound On' : 'Sound Off'}
+                </button>
+                <button
+                  onClick={() => navigate('/learner-dashboard')}
+                  className="px-4 py-2 rounded-lg text-base font-medium bg-teal-500 text-[#f7fbff] hover:bg-teal-600 transition shadow-md"
+                >
+                  Exit
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Bar - All ice-white text */}
+          <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 py-2">
+            <div className="rounded-2xl bg-white/10 px-3 py-2 text-center backdrop-blur-sm">
+              <p className="text-sm font-medium uppercase tracking-wider" style={{ color: '#ffffff' }}>Quizzes</p>
+              <p className="text-base font-bold" style={{ color: '#f7fbff' }}>{totalQuizzes}</p>
+            </div>
+            <div className="rounded-2xl bg-white/10 px-3 py-2 text-center backdrop-blur-sm">
+              <p className="text-sm font-medium uppercase tracking-wider" style={{ color: '#f7fbff' }}>Level</p>
+              <p className="text-base font-bold" style={{ color: '#f7fbff' }}>{getLevelDisplayName(learnerProgress.current_level) || 'Standard 5'}</p>
+            </div>
+            <div className="rounded-2xl bg-white/10 px-3 py-2 text-center backdrop-blur-sm">
+              <p className="text-sm font-medium uppercase tracking-wider" style={{ color: '#f7fbff' }}>Progress</p>
+              <p className="text-base font-bold" style={{ color: '#f7fbff' }}>{learnerProgress.completed_levels?.length || 0}/{LEVELS.length}</p>
+            </div>
+            <div className="rounded-2xl bg-white/10 px-3 py-2 text-center backdrop-blur-sm">
+              <p className="text-sm font-medium uppercase tracking-wider" style={{ color: '#f7fbff' }}>Subjects</p>
+              <p className="text-base font-bold" style={{ color: '#f7fbff' }}>{subjects.length}</p>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col overflow-hidden max-w-5xl mx-auto w-full px-3 py-2">
-        
-        {/* Welcome Section */}
-        <div className="text-center mb-3 flex-shrink-0">
-          <h2 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-darkblue-900'}`}>
-            Explore Subjects
-          </h2>
-          <p className={`text-xs ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
-            Hover to see available quizzes
-          </p>
-          {learnerProgress && (
-            <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-teal-100 dark:bg-teal-900/30 rounded-full">
-              <span className="text-xs font-medium text-teal-700 dark:text-teal-300">
-                📚 Level: {getLevelDisplayName(learnerProgress.current_level)}
-              </span>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6">
+        <div className="sticky top-[118px] z-40 mb-6 -mt-[1px] overflow-hidden rounded-b-[42px] rounded-t-none border-x border-b border-[#d7eee7] bg-[linear-gradient(180deg,#ffffff_0%,#f9fffd_100%)] px-6 py-5 shadow-[0_18px_45px_-28px_rgba(7,83,81,0.55)] sm:px-7 sm:py-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-[34px] leading-[1] font-black uppercase tracking-[0.06em] text-[#0b6a67]" style={{ fontFamily: '"Segoe UI", Calibri, "Trebuchet MS", sans-serif' }}>
+                Explore Subjects
+              </h2>
+              <p className="mt-3 text-sm text-[#2f6b64] sm:text-base">
+                Hover or tap a subject to preview quizzes and start learning.
+              </p>
             </div>
-          )}
+            <div className="inline-flex h-10 items-center rounded-full border border-[#cde5df] bg-[linear-gradient(180deg,#f5fbff_0%,#eaf4f8_100%)] px-5 text-sm font-bold text-[#0a6663] shadow-[0_8px_18px_-12px_rgba(7,83,81,0.45)]">
+              {totalQuizzes} ready-to-play quizzes
+            </div>
+          </div>
         </div>
 
-        {/* Subject Grid with Flip Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 flex-1 overflow-y-auto pb-2">
+        {/* Subject Grid with Flip Cards - Ice-white text on cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {subjects.map((subject) => {
             const subjectQuizzes = getQuizzesBySubject(subject.id);
             const totalReward = subjectQuizzes.reduce((sum, q) => sum + (q.points_reward || 50), 0);
@@ -373,8 +396,7 @@ const QuizPage = () => {
             return (
               <div
                 key={subject.id}
-                className="relative cursor-pointer perspective group"
-                style={{ height: '200px' }}
+                className="relative h-[235px] cursor-pointer perspective group"
                 onMouseEnter={() => {
                   speakText(subject.name);
                   setFlippedCardId(subject.id);
@@ -387,8 +409,8 @@ const QuizPage = () => {
               >
                 <div className={`w-full h-full preserve-3d transition-all duration-700 relative ${isFlipped ? 'rotate-y-180' : ''}`}>
                   
-                  {/* Front Side */}
-                  <div className="absolute inset-0 backface-hidden rounded-lg bg-teal-500 p-3 flex flex-col border border-teal-400/50 shadow-md overflow-hidden">
+                  {/* Front Side - Teal themed with ice-white text */}
+                  <div className="absolute inset-0 backface-hidden rounded-[30px] border border-white/20 bg-gradient-to-br from-[#0f766e] via-[#0e9488] to-[#14b8a6] p-4 flex flex-col shadow-[0_20px_45px_-20px_rgba(7,83,81,0.6)] overflow-hidden">
                     
                     {subject.id === 'social-studies' ? (
                       <>
@@ -396,18 +418,18 @@ const QuizPage = () => {
                           <img 
                             src={mapImage}
                             alt="Malawi Map"
-                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                            className="w-auto h-full max-h-[160px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                           />
                         </div>
                         <div className="flex justify-between items-center mt-0 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
-                          <div className="text-white font-black text-sm tracking-wider">
+                          <div className="font-black text-base tracking-wider" style={{ color: '#f7fbff' }}>
                             SOCIAL STUDIES
                           </div>
-                          <div className="text-yellow-300 font-bold text-xs">
-                            50 points
+                          <div className="text-yellow-300 font-bold text-sm">
+                            +{totalReward}
                           </div>
                         </div>
                       </>
@@ -417,18 +439,18 @@ const QuizPage = () => {
                           <img 
                             src={learnerImage}
                             alt="English Learning"
-                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                            className="w-auto h-full max-h-[160px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                           />
                         </div>
                         <div className="flex justify-between items-center mt-0 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
-                          <div className="text-white font-black text-sm tracking-wider">
+                          <div className="font-black text-base tracking-wider" style={{ color: '#f7fbff' }}>
                             ENGLISH
                           </div>
-                          <div className="text-yellow-300 font-bold text-xs">
-                            {totalReward} pts
+                          <div className="text-yellow-300 font-bold text-sm">
+                            +{totalReward}
                           </div>
                         </div>
                       </>
@@ -438,18 +460,18 @@ const QuizPage = () => {
                           <img 
                             src={scienceImage}
                             alt="Primary Science"
-                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                            className="w-auto h-full max-h-[160px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                           />
                         </div>
                         <div className="flex justify-between items-center mt-0 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
-                          <div className="text-white font-black text-sm tracking-wider">
+                          <div className="font-black text-base tracking-wider" style={{ color: '#f7fbff' }}>
                             PRIMARY SCIENCE
                           </div>
-                          <div className="text-yellow-300 font-bold text-xs">
-                            {totalReward} pts
+                          <div className="text-yellow-300 font-bold text-sm">
+                            +{totalReward}
                           </div>
                         </div>
                       </>
@@ -459,18 +481,18 @@ const QuizPage = () => {
                           <img 
                             src={basketImage}
                             alt="Arts & Life Skills"
-                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                            className="w-auto h-full max-h-[160px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                           />
                         </div>
                         <div className="flex justify-between items-center mt-0 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
-                          <div className="text-white font-black text-sm tracking-wider">
+                          <div className="font-black text-base tracking-wider" style={{ color: '#f7fbff' }}>
                             ARTS & LIFE SKILLS
                           </div>
-                          <div className="text-yellow-300 font-bold text-xs">
-                            {totalReward} pts
+                          <div className="text-yellow-300 font-bold text-sm">
+                            +{totalReward}
                           </div>
                         </div>
                       </>
@@ -480,18 +502,18 @@ const QuizPage = () => {
                           <img 
                             src={mathsImage}
                             alt="Mathematics"
-                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                            className="w-auto h-full max-h-[160px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                           />
                         </div>
                         <div className="flex justify-between items-center mt-0 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
-                          <div className="text-white font-black text-sm tracking-wider">
+                          <div className="font-black text-base tracking-wider" style={{ color: '#f7fbff' }}>
                             MATHEMATICS
                           </div>
-                          <div className="text-yellow-300 font-bold text-xs">
-                            {totalReward} pts
+                          <div className="text-yellow-300 font-bold text-sm">
+                            +{totalReward}
                           </div>
                         </div>
                       </>
@@ -501,18 +523,18 @@ const QuizPage = () => {
                           <img 
                             src={chichewaImage}
                             alt="Chichewa"
-                            className="w-auto h-full max-h-[145px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
+                            className="w-auto h-full max-h-[160px] object-contain hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                           />
                         </div>
                         <div className="flex justify-between items-center mt-0 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[10px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
-                          <div className="text-white font-black text-sm tracking-wider">
+                          <div className="font-black text-base tracking-wider" style={{ color: '#f7fbff' }}>
                             CHICHEWA
                           </div>
-                          <div className="text-yellow-300 font-bold text-xs">
-                            {totalReward} pts
+                          <div className="text-yellow-300 font-bold text-sm">
+                            +{totalReward}
                           </div>
                         </div>
                       </>
@@ -524,11 +546,11 @@ const QuizPage = () => {
                           </span>
                         </div>
                         <div className="flex-1 flex flex-col justify-center text-center min-h-0">
-                          <h3 className="text-white font-bold text-base tracking-tight mb-1 leading-tight">
+                          <h3 className="font-bold text-base tracking-tight mb-1 leading-tight" style={{ color: '#f7fbff', fontFamily: '"Segoe UI", Calibri, "Trebuchet MS", sans-serif' }}>
                             {subject.name}
                           </h3>
                           {subject.combined && (
-                            <div className="text-white/70 text-[10px]">
+                            <div className="text-sm" style={{ color: '#f7fbff' }}>
                               Social Studies + Bible
                             </div>
                           )}
@@ -538,16 +560,16 @@ const QuizPage = () => {
                         </div>
                         <div className="text-center mt-1 flex-shrink-0">
                           <div className="bg-white/20 rounded-full px-2 py-0.5 inline-block">
-                            <span className="text-white text-[11px] font-semibold">{subjectQuizzes.length} quizzes</span>
+                            <span className="text-white text-sm font-semibold">{subjectQuizzes.length} quizzes</span>
                           </div>
                         </div>
                       </>
                     )}
                   </div>
                   
-                  {/* Back Side */}
-                  <div className="absolute inset-0 backface-hidden rotate-y-180 bg-teal-600 p-3 flex flex-col rounded-lg border border-teal-500/50 shadow-md overflow-hidden">
-                    <h3 className="text-white font-bold text-sm mb-2 text-center flex-shrink-0">Available Quizzes</h3>
+                  {/* Back Side - Dark teal with ice-white text */}
+                  <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-[30px] border border-white/10 bg-gradient-to-br from-[#0a4d4a] via-[#0e6e69] to-[#0f766e] p-4 flex flex-col shadow-[0_20px_45px_-20px_rgba(7,83,81,0.65)] overflow-hidden">
+                    <h3 className="font-bold text-base mb-2 text-center flex-shrink-0" style={{ color: '#f7fbff' }}>Available Quizzes</h3>
                     
                     <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-1 min-h-0">
                       {subjectQuizzes.slice(0, 3).map((quiz) => {
@@ -564,16 +586,16 @@ const QuizPage = () => {
                               setTimeout(() => handleQuizClick(quiz), 350);
                             }}
                           >
-                            <p className="text-white text-xs font-semibold truncate flex items-center gap-1">
+                            <p className="text-sm font-semibold truncate flex items-center gap-1" style={{ color: '#f7fbff' }}>
                               {quiz.title}
                             </p>
                             <div className="flex justify-between items-center mt-0.5">
-                              <p className="text-white/60 text-[10px]">{questionsDisplay}</p>
-                              <p className="text-yellow-300 text-[10px] font-semibold">+{quiz.points_reward || 50}</p>
+                              <p className="text-sm" style={{ color: '#f7fbff' }}>{questionsDisplay}</p>
+                              <p className="text-yellow-300 text-sm font-semibold">+{quiz.points_reward || 50}</p>
                             </div>
                             {isRandom && (
                               <div className="mt-0.5">
-                                <span className="text-[8px] bg-blue-500/30 text-blue-200 px-1 py-0.5 rounded">
+                                <span className="text-xs bg-blue-500/30 text-blue-200 px-1 py-0.5 rounded">
                                   🎲 Random
                                 </span>
                               </div>
@@ -583,16 +605,16 @@ const QuizPage = () => {
                       })}
                       {subjectQuizzes.length === 0 && (
                         <div className="h-full flex items-center justify-center">
-                          <p className="text-white/40 text-xs text-center">No quizzes available</p>
+                          <p className="text-xs text-center" style={{ color: '#f7fbff' }}>No quizzes available</p>
                         </div>
                       )}
                       {subjectQuizzes.length > 3 && (
-                        <p className="text-white/60 text-[10px] text-center font-medium pt-1">
+                        <p className="text-sm text-center font-medium pt-1" style={{ color: '#f7fbff' }}>
                           +{subjectQuizzes.length - 3} more quizzes
                         </p>
                       )}
                     </div>
-                    <p className="text-white/40 text-[10px] text-center mt-2 flex-shrink-0">Click to browse →</p>
+                    <p className="text-sm text-center mt-2 flex-shrink-0" style={{ color: '#f7fbff' }}>Click to browse →</p>
                   </div>
                 </div>
               </div>
@@ -601,115 +623,111 @@ const QuizPage = () => {
         </div>
       </main>
 
-      {/* Quiz List Dialog */}
+      {/* Quiz List Dialog - Ice-white text on dark surfaces */}
       {activeSubject && !selectedQuiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={closeDialog}>
           <div 
-            className={`w-full max-w-2xl rounded-2xl shadow-2xl transition-all duration-300 ${
-              isDarkMode ? 'bg-gray-900' : 'bg-white'
-            } ${isClosing ? 'animate-scaleDown' : 'animate-scaleUp'}`}
+            className={`w-full max-w-2xl overflow-hidden rounded-[32px] shadow-[0_30px_80px_-24px_rgba(2,24,38,0.35)] transition-all duration-300 border border-teal-300 bg-white backdrop-blur-xl ${isClosing ? 'animate-scaleDown' : 'animate-scaleUp'}`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="bg-teal-500 rounded-t-2xl px-6 py-4">
+            {/* Header - with ice-white text */}
+            <div className="p-6 border-b border-teal-200 bg-gradient-to-r from-[#f2fdf9] via-[#f9fffe] to-[#eefbf7]">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-teal-500 shadow-lg">
                     {activeSubject.id === 'social-studies' ? (
-                      <img src={mapImage} alt="" className="w-8 h-8 object-contain" />
+                      <img src={mapImage} alt="" className="w-10 h-10 object-contain" />
                     ) : activeSubject.id === 'english' ? (
-                      <img src={learnerImage} alt="" className="w-8 h-8 object-contain" />
+                      <img src={learnerImage} alt="" className="w-10 h-10 object-contain" />
                     ) : activeSubject.id === 'primary-science' ? (
-                      <img src={scienceImage} alt="" className="w-8 h-8 object-contain" />
+                      <img src={scienceImage} alt="" className="w-10 h-10 object-contain" />
                     ) : activeSubject.id === 'arts-life-skills' ? (
-                      <img src={basketImage} alt="" className="w-8 h-8 object-contain" />
+                      <img src={basketImage} alt="" className="w-10 h-10 object-contain" />
                     ) : activeSubject.id === 'mathematics' ? (
-                      <img src={mathsImage} alt="" className="w-8 h-8 object-contain" />
+                      <img src={mathsImage} alt="" className="w-10 h-10 object-contain" />
                     ) : activeSubject.id === 'chichewa' ? (
-                      <img src={chichewaImage} alt="" className="w-8 h-8 object-contain" />
+                      <img src={chichewaImage} alt="" className="w-10 h-10 object-contain" />
                     ) : (
-                      <span className="text-2xl">{activeSubject.icon}</span>
+                      <span className="text-3xl">{activeSubject.icon}</span>
                     )}
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-xl">{activeSubject.name}</h3>
-                    <p className="text-white/70 text-sm">{currentSubjectQuizzes.length} quizzes available</p>
+                    <h3 className="text-xl font-bold" style={{ color: '#075351', fontFamily: '"Segoe UI", Calibri, "Trebuchet MS", sans-serif' }}>
+                      {activeSubject.name}
+                    </h3>
+                    <p className="text-sm" style={{ color: '#2f6b64' }}>
+                      {currentSubjectQuizzes.length} quizzes available
+                    </p>
                   </div>
                 </div>
-                <button onClick={closeDialog} className="text-white/80 hover:text-white transition text-2xl">
+                <button 
+                  onClick={closeDialog} 
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dff6ef] text-2xl transition-colors hover:bg-[#ccefe2]" style={{ color: '#0f766e' }}
+                >
                   ×
                 </button>
               </div>
             </div>
 
-            {/* Quiz List */}
-            <div className="p-4 max-h-[50vh] overflow-y-auto">
-              <div className="space-y-2">
-                {currentSubjectQuizzes.map((quiz, idx) => {
-                  const totalQuestions = getTotalQuestions(quiz);
-                  const isRandom = isRandomQuiz(quiz);
-                  const timeEstimate = Math.ceil((quiz.random_selection ? (quiz.questions_per_attempt || 20) : totalQuestions) * 0.5);
-                  
-                  return (
-                    <button
-                      key={quiz.id}
-                      onClick={() => handleQuizClick(quiz)}
-                      className={`w-full text-left p-4 rounded-xl transition-all hover:scale-[1.02] ${
-                        isDarkMode 
-                          ? 'bg-gray-800 hover:bg-gray-700' 
-                          : 'bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                            isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-500 text-white'
-                          }`}>
-                            {idx + 1}
-                          </div>
-                          <h4 className={`font-semibold text-base ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                            {quiz.title}
-                          </h4>
-                          {isRandom && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
-                              Random
-                            </span>
-                          )}
+            {/* Quiz List - Ice-white text */}
+            <div className="p-5 sm:p-6 max-h-[50vh] overflow-y-auto custom-scrollbar space-y-2" style={{ color: '#075351' }}>
+              {currentSubjectQuizzes.map((quiz, idx) => {
+                const totalQuestions = getTotalQuestions(quiz);
+                const isRandom = isRandomQuiz(quiz);
+                const timeEstimate = Math.ceil((quiz.random_selection ? (quiz.questions_per_attempt || 20) : totalQuestions) * 0.5);
+                
+                return (
+                  <button
+                    key={quiz.id}
+                    onClick={() => handleQuizClick(quiz)}
+                    className="w-full text-left p-4 rounded-[20px] transition-all hover:scale-[1.01] bg-white hover:bg-[#f4fbf8] border border-teal-200 shadow-sm hover:shadow-md"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold bg-[#dff6ef] text-[#0f766e]">
+                          {idx + 1}
                         </div>
-                        <span className="text-teal-500 text-lg">→</span>
+                        <h4 className="font-semibold text-base" style={{ color: '#075351', fontFamily: '"Segoe UI", Calibri, "Trebuchet MS", sans-serif' }}>
+                          {quiz.title}
+                        </h4>
+                        {isRandom && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#dbeafe] text-[#1d4ed8] border border-blue-200">
+                            Random
+                          </span>
+                        )}
                       </div>
-                      
-                      <div className="flex items-center gap-3 ml-11">
-                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${
-                          isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          <span>📝</span>
-                          <span>{isRandom ? `${quiz.questions_per_attempt || 20}/${totalQuestions}` : totalQuestions}</span>
-                        </div>
-                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${
-                          isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          <span>⏱️</span>
-                          <span>{timeEstimate} min</span>
-                        </div>
-                        <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded font-semibold ${
-                          isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-700'
-                        }`}>
-                          <span>💎</span>
-                          <span>+{quiz.points_reward || 50}</span>
-                        </div>
+                      <span className="text-sm font-semibold text-[#0f766e]">Open</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 ml-11">
+                      <div className="text-xs px-2 py-1 rounded bg-[#0f766e] text-[#f7fbff]">
+                        {isRandom ? `${quiz.questions_per_attempt || 20}/${totalQuestions}` : totalQuestions}
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
+                      <div className="text-xs px-2 py-1 rounded bg-[#0f766e] text-[#f7fbff]">
+                        {timeEstimate} min
+                      </div>
+                      <div className="text-xs px-2 py-1 rounded font-semibold bg-[#dff6ef] text-[#0f766e]">
+                        +{quiz.points_reward || 50}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+              
+              {currentSubjectQuizzes.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-sm" style={{ color: '#2f6b64' }}>
+                    No quizzes available for this subject
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Footer */}
-            <div className={`p-4 border-t ${isDarkMode ? 'border-gray-800' : 'border-gray-100'}`}>
+            <div className="p-4 border-t border-teal-200 bg-[#f6fdfb]">
               <button
                 onClick={closeDialog}
-                className="w-full py-2.5 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                className="w-full py-2.75 rounded-[16px] text-sm font-medium transition bg-[#dff6ef] text-[#075351] hover:bg-[#ccefe2]"
               >
                 Close
               </button>
@@ -718,86 +736,74 @@ const QuizPage = () => {
         </div>
       )}
 
-      {/* Redesigned Start Quiz Dialog */}
+      {/* Start Quiz Dialog - Ice-white text on dark surfaces */}
       {selectedQuiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={closeQuizDialog}>
           <div 
-            className={`w-full max-w-md rounded-2xl shadow-2xl transition-all duration-300 animate-scaleUp ${
-              isDarkMode ? 'bg-gray-900' : 'bg-white'
-            }`}
+            className="w-full max-w-md rounded-[28px] shadow-[0_30px_80px_-24px_rgba(2,24,38,0.35)] transition-all duration-300 border border-teal-200/70 animate-scaleUp bg-white/95 backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Hero Section */}
+            {/* Hero Section - with ice-white text */}
             <div className="relative">
-              <div className="absolute inset-0 bg-teal-500 rounded-t-2xl"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-teal-600 rounded-t-2xl"></div>
               <div className="relative p-6 text-center">
                 <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                   <span className="text-4xl">📋</span>
                 </div>
-                <h3 className="text-white font-bold text-xl mb-1">{selectedQuiz.title}</h3>
+                <h3 className="font-bold text-xl mb-1" style={{ color: '#075351', fontFamily: '"Segoe UI", Calibri, "Trebuchet MS", sans-serif' }}>{selectedQuiz.title}</h3>
                 {selectedQuiz.class_level && (
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-white text-xs">
+                  <div className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-white/30 text-xs font-medium" style={{ color: '#075351' }}>
                     <span>{getLevelDisplayName(selectedQuiz.class_level)}</span>
+                  </div>
+                )}
+                {selectedQuiz.quiz_level && (
+                  <div className={`inline-flex items-center gap-1 mt-1 px-3 py-0.5 rounded-full text-xs font-bold ${GAME_LEVEL_COLORS[selectedQuiz.quiz_level] || 'bg-teal-500'}`} style={{ color: '#f7fbff' }}>
+                    <span>Level {selectedQuiz.quiz_level} — {GAME_LEVEL_LABELS[(selectedQuiz.quiz_level || 1) - 1]}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Content */}
+            {/* Content - Ice-white text */}
             <div className="p-6">
               {/* Stats Grid */}
               <div className="grid grid-cols-3 gap-3 mb-6">
-                <div className={`text-center p-3 rounded-xl ${
-                  isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  <div className="text-2xl mb-1">📝</div>
-                  <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                <div className="text-center p-3 rounded-xl border border-teal-100 bg-[#f7fbff]">
+                  <div className="text-lg font-bold" style={{ color: '#075351' }}>
                     {getTotalQuestions(selectedQuiz)}
                   </div>
-                  <div className="text-xs text-gray-500">Questions</div>
+                  <div className="text-xs" style={{ color: '#2f6b64' }}>Questions</div>
                 </div>
                 
-                <div className={`text-center p-3 rounded-xl ${
-                  isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  <div className="text-2xl mb-1">💎</div>
-                  <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                <div className="text-center p-3 rounded-xl border border-teal-100 bg-[#f7fbff]">
+                  <div className="text-lg font-bold" style={{ color: '#075351' }}>
                     +{selectedQuiz.points_reward || 50}
                   </div>
-                  <div className="text-xs text-gray-500">Points</div>
+                  <div className="text-xs" style={{ color: '#2f6b64' }}>Points</div>
                 </div>
                 
-                <div className={`text-center p-3 rounded-xl ${
-                  isDarkMode ? 'bg-gray-800' : 'bg-gray-50'
-                }`}>
-                  <div className="text-2xl mb-1">⏱️</div>
-                  <div className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                <div className="text-center p-3 rounded-xl border border-teal-100 bg-[#f7fbff]">
+                  <div className="text-lg font-bold" style={{ color: '#075351' }}>
                     {Math.ceil(getTotalQuestions(selectedQuiz) * 0.5)}
                   </div>
-                  <div className="text-xs text-gray-500">Minutes</div>
+                  <div className="text-xs" style={{ color: '#2f6b64' }}>Minutes</div>
                 </div>
               </div>
 
               {/* Random Quiz Info */}
               {isRandomQuiz(selectedQuiz) && (
-                <div className={`mb-4 p-3 rounded-xl text-center ${
-                  isDarkMode ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'
-                }`}>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-lg">🎲</span>
-                    <span className={`text-sm font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-                      Random {selectedQuiz.questions_per_attempt || 20} of {getTotalQuestions(selectedQuiz)} questions
-                    </span>
-                  </div>
+                <div className="mb-4 p-3 rounded-xl text-center border bg-blue-500/10 border-blue-500/20">
+                  <span className="text-sm font-medium" style={{ color: '#f7fbff' }}>
+                    Random {selectedQuiz.questions_per_attempt || 20} of {getTotalQuestions(selectedQuiz)} questions
+                  </span>
                 </div>
               )}
 
               {/* Description */}
               {selectedQuiz.description && (
                 <div 
-                  className={`mb-6 p-3 rounded-xl text-sm leading-relaxed ${
-                    isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-600'
-                  }`}
+                  className="mb-6 p-3 rounded-xl text-sm leading-relaxed bg-[#f7fbff] border border-teal-100"
+                  style={{ color: '#075351' }}
                   dangerouslySetInnerHTML={{ __html: renderFormattedText(selectedQuiz.description) }}
                 />
               )}
@@ -806,19 +812,15 @@ const QuizPage = () => {
               <div className="flex gap-3">
                 <button
                   onClick={closeQuizDialog}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition ${
-                    isDarkMode 
-                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium transition bg-[#eaf8f4] text-[#075351] hover:bg-[#d7f2ea]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleStartQuiz(selectedQuiz)}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-teal-500 text-white hover:bg-teal-600 transition transform hover:scale-[1.02]"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-gradient-to-r from-[#0f766e] to-[#0b5f5a] text-white shadow-md hover:shadow-lg hover:scale-[1.02] transition-all duration-300"
                 >
-                  Start Quiz →
+                  Start Quiz
                 </button>
               </div>
             </div>
@@ -826,7 +828,21 @@ const QuizPage = () => {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out forwards;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
         .perspective {
           perspective: 1000px;
         }
@@ -861,7 +877,7 @@ const QuizPage = () => {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: ${isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(20,184,166,0.3)'};
+          background: rgba(15,118,110,0.22);
           border-radius: 10px;
         }
         .ml-11 {

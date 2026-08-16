@@ -1,0 +1,33 @@
+// All 28 districts of Malawi
+const MALAWI_DISTRICTS = [
+  'Balaka',
+  'Blantyre',
+  'Chikwawa',
+  'Chiradzulu',
+  'Chitipa',
+  'Dedza',
+  'Dowa',
+  'Karonga',
+  'Kasungu',
+  'Likoma',
+  'Lilongwe',
+  'Machinga',
+  'Mangochi',
+  'Mchinji',
+  'Mulanje',
+  'Mwanza',
+  'Mzimba',
+  'Neno',
+  'Nkhata Bay',
+  'Nkhotakota',
+  'Nsanje',
+  'Ntcheu',
+  'Ntchisi',
+  'Phalombe',
+  'Rumphi',
+  'Salima',
+  'Thyolo',
+  'Zomba',
+];
+
+export default MALAWI_DISTRICTS;

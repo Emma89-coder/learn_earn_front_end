@@ -2,11 +2,186 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default CSS custom properties — overridden at runtime by ThemeContext */
+:root {
+  --learner-font-family: 'Cambria', serif;
+  --learner-font-size: 14px;
+  --learner-heading-size: 20px;
+  --learner-body-color: #1f2937;
+  --learner-heading-color: #0f766e;
+  --learner-link-color: #0d9488;
+  --learner-bg-color: #f0fdfa;
+  --learner-border-radius: 12px;
+  --learner-header-bg: #19475F;
+  --learner-navbar-bg: #005F73;
+  --learner-container-bg: #ffffff;
+  --learner-container-border: #e2e8f0;
+  --learner-accent-color: #14b8a6;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  color: var(--learner-body-color, #e2e8f0);
+  font-family: var(--learner-font-family), -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Apply learner theme variables to learner pages */
+.learner-themed {
+  font-family: var(--learner-font-family), sans-serif;
+  font-size: var(--learner-font-size);
+  color: var(--learner-body-color, #e2e8f0);
+  background-color: var(--learner-bg-color, #003B46);
+}
+
+.learner-themed h1,
+.learner-themed h2,
+.learner-themed h3 {
+  color: var(--learner-heading-color, #ffffff);
+}
+
+.learner-themed h1 { font-size: 1.25rem; }
+.learner-themed h2 { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+.learner-themed h3 { font-size: 0.875rem; font-weight: 600; }
+
+.learner-themed a,
+.learner-themed .btn-primary {
+  color: var(--learner-link-color);
+}
+
+/* Card and container consistency */
+.learner-themed .rounded-2xl,
+.learner-themed .rounded-xl {
+  border-color: var(--learner-container-border, #e2e8f0);
+}
+
+.learner-themed p,
+.learner-themed span,
+.learner-themed label {
+  font-family: var(--learner-font-family), sans-serif;
+  color: var(--learner-body-color, #e2e8f0);
+}
+
+/* Compact card text */
+.learner-themed .text-sm { font-size: 0.8125rem; }
+.learner-themed .text-xs { font-size: 0.6875rem; }
+.learner-themed .text-base { font-size: 0.875rem; }
+.learner-themed .text-lg { font-size: 1rem; }
+.learner-themed .text-xl { font-size: 1.125rem; }
+.learner-themed .text-2xl { font-size: 1.25rem; }
+
+
+/* ============ THEME SYSTEM CSS VARIABLES ============ */
+:root {
+  --theme-primary: #0d9488;
+  --theme-primary-dark: #0f766e;
+  --theme-primary-light: #14b8a6;
+  --theme-secondary: #0891b2;
+  --theme-secondary-dark: #0e7490;
+  --theme-secondary-light: #06b6d4;
+  --theme-accent: #f0fdfa;
+  --theme-accent-dark: #ccfbf1;
+  --theme-text: #1f2937;
+  --theme-text-light: #6b7280;
+  --theme-background: #f0fdfa;
+  --theme-card-bg: #ffffff;
+  --theme-border: #e2e8f0;
+  --theme-success: #10b981;
+  --theme-warning: #f59e0b;
+  --theme-danger: #ef4444;
+}
+
+/* Theme-aware utility classes */
+.theme-bg {
+  background-color: var(--theme-background);
+}
+
+.theme-card {
+  background-color: var(--theme-card-bg);
+  border-color: var(--theme-border);
+}
+
+.theme-text {
+  color: var(--theme-text);
+}
+
+.theme-text-light {
+  color: var(--theme-text-light);
+}
+
+.theme-primary {
+  color: var(--theme-primary);
+}
+
+.theme-bg-primary {
+  background-color: var(--theme-primary);
+}
+
+.theme-border {
+  border-color: var(--theme-border);
+}
+
+/* Smooth transitions for theme changes */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ============ LEARNER PAGE GLOBAL THEME OVERRIDES ============ */
+/* These override Tailwind's bg-white, border-teal-*, bg-teal-* on learner pages */
+
+/* Cards and containers - use theme container colors */
+.learner-themed .rounded-xl,
+.learner-themed .rounded-2xl,
+.learner-themed .rounded-lg {
+  border-color: var(--learner-container-border, #e2e8f0);
+}
+
+/* Primary accent buttons */
+.learner-themed .bg-teal-500,
+.learner-themed .bg-teal-600,
+.learner-themed .bg-teal-700 {
+  background-color: var(--learner-link-color, #0d9488) !important;
+}
+
+.learner-themed .hover\:bg-teal-600:hover,
+.learner-themed .hover\:bg-teal-700:hover {
+  background-color: var(--learner-heading-color, #0f766e) !important;
+}
+
+/* Text accent colors */
+.learner-themed .text-teal-500,
+.learner-themed .text-teal-600,
+.learner-themed .text-teal-700 {
+  color: var(--learner-link-color, #0d9488) !important;
+}
+
+/* Border accent colors */
+.learner-themed .border-teal-500,
+.learner-themed .border-teal-400,
+.learner-themed .border-teal-300 {
+  border-color: var(--learner-link-color, #0d9488) !important;
+}
+
+/* Background tints */
+.learner-themed .bg-teal-50,
+.learner-themed .bg-teal-100 {
+  background-color: color-mix(in srgb, var(--learner-link-color, #0d9488) 8%, white) !important;
+}
+
+/* Ring/focus colors */
+.learner-themed .ring-teal-500,
+.learner-themed .focus\:ring-teal-500:focus {
+  --tw-ring-color: var(--learner-link-color, #0d9488) !important;
+}
+
+/* Stats bar in headers */
+.learner-themed .border-white\/20 {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Page background */
+.learner-themed {
+  background-color: var(--learner-bg-color, #f0fdfa);
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
@@ -39,6 +40,7 @@ const CrownIcon = () => (
 // ==========================================
 const Leaderboard = () => {
   const { user, logout } = useAuth();
+  const { settings: theme, getPageStyles } = useTheme();
   const navigate = useNavigate();
   
   const [leaderboard, setLeaderboard] = useState([]);
@@ -94,10 +96,12 @@ const Leaderboard = () => {
   }), [isDarkMode]);
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${colors.bg}`}>
+    <div className={`learner-themed min-h-screen transition-colors duration-300 ${colors.bg}`}
+      style={getPageStyles('leaderboard')}
+    >
       
       {/* Top Navigation Header - Teal Themed */}
-      <header className={`sticky top-0 z-40 w-full bg-gradient-to-r from-teal-600 to-teal-700 shadow-lg transition-colors`}>
+      <header className={`sticky top-0 z-40 w-full shadow-lg transition-colors`} style={{ backgroundColor: 'var(--learner-header-bg, #19475F)' }}>
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-20">
             <div className="flex items-center gap-3">

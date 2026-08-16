@@ -5,12 +5,14 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
 
-// Import the Hangman Manager component
+// Import components
 import AdminHangmanManager from './AdminHangmanManager';
-// Import the AdminRewards component
 import AdminRewards from './AdminRewards';
-// Import the AdminSpellingBee component
 import AdminSpellingBee from './AdminSpellingBee';
+import AdminBadges from './AdminBadges';
+import AdminRAGEngine from './AdminRAGEngine';
+import AdminAppearanceSettings from './AdminAppearance';
+import ThemeSettings from '../../components/admin/ThemeSettings';
 
 // Subjects configuration - No emojis
 const SUBJECTS = [
@@ -855,7 +857,7 @@ const AdminDashboard = () => {
             <div>
               <div className="mb-4 pb-3 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="text-3xl">📂</div>
+                  <span className="text-3xl">📂</span>
                   <div>
                     <h2 className="text-lg font-semibold text-gray-800">{SUBJECTS.find(s => s.id === currentFolder)?.name}</h2>
                     <p className="text-xs text-gray-500">{currentFolderQuizzes.length} items</p>
@@ -945,7 +947,7 @@ const AdminDashboard = () => {
             <div className="bg-white rounded-xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
               <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                 <div className="flex items-center gap-3">
-                  <div className="text-2xl">📄</div>
+                  <span className="text-2xl">📄</span>
                   <div>
                     <h2 className="text-lg font-semibold text-gray-800">{selectedQuizTitle}</h2>
                     <p className="text-xs text-gray-500">{selectedQuizQuestions.length} questions</p>
@@ -1117,7 +1119,7 @@ const AdminDashboard = () => {
     );
   };
 
-  // Render Rewards Tab - Using the AdminRewards component
+  // Render Rewards Tab
   const renderRewards = () => {
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -1126,33 +1128,11 @@ const AdminDashboard = () => {
     );
   };
 
-  // Render Badges Tab - Link to standalone Badges page
+  // Render Badges Tab
   const renderBadges = () => {
     return (
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-        <div className="p-8 text-center">
-          <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#00B0FF]/10 to-[#008080]/10 rounded-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-[#00B0FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-            </svg>
-          </div>
-          <h3 className="text-xl font-semibold text-[#1A237E] mb-2">Badge Studio</h3>
-          <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
-            Design, automate, and manually assign achievement badges to reward and motivate your learners.
-          </p>
-          <button
-            onClick={() => navigate('/admin-badges')}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#00B0FF] to-[#008080] text-white rounded-xl font-medium hover:shadow-lg transition-all hover:scale-105"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            Open Badge Studio
-          </button>
-          <p className="text-xs text-slate-400 mt-4">
-            You will be redirected to the full badge management interface
-          </p>
-        </div>
+        <AdminBadges />
       </div>
     );
   };
@@ -1167,6 +1147,35 @@ const AdminDashboard = () => {
     return <AdminSpellingBee />;
   };
 
+  // Render RAG Intelligence Tab
+  const renderRAG = () => {
+    return <AdminRAGEngine />;
+  };
+
+  // Render Appearance Settings Tab
+  const renderAppearance = () => {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 mb-4">Manage appearance settings</p>
+        <button onClick={() => navigate('/admin-appearance')} className="px-5 py-2 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition">
+          Open Appearance Settings
+        </button>
+      </div>
+    );
+  };
+
+  // Render Districts Tab
+  const renderDistricts = () => {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 mb-4">Manage Malawi district questions for learners</p>
+        <button onClick={() => navigate('/admin-districts')} className="px-5 py-2 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 transition">
+          Open Districts Manager
+        </button>
+      </div>
+    );
+  };
+
   // Navigation tabs
   const mainNavItems = [
     { id: 'overview', label: 'Overview' },
@@ -1176,7 +1185,9 @@ const AdminDashboard = () => {
     { id: 'rewards', label: 'Rewards' },
     { id: 'badges', label: 'Badges' },
     { id: 'hangman', label: 'Hangman' },
-    { id: 'spelling', label: 'Spelling Bee' }
+    { id: 'spelling', label: 'Spelling Bee' },
+    { id: 'districts', label: 'Districts' },
+    { id: 'rag', label: 'AI Intelligence' }
   ];
 
   const renderMainContent = () => {
@@ -1189,6 +1200,10 @@ const AdminDashboard = () => {
       case 'badges': return renderBadges();
       case 'hangman': return renderHangmanManager();
       case 'spelling': return renderSpellingBeeManager();
+      case 'districts': return renderDistricts();
+      case 'rag': return renderRAG();
+      case 'appearance': return renderAppearance();
+      case 'theme': return <ThemeSettings />;
       default: return renderOverview();
     }
   };
@@ -1202,7 +1217,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-dashboard min-h-screen bg-gray-50">
       <header className="sticky top-0 z-50 bg-teal-600 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
@@ -1283,13 +1298,13 @@ const AdminDashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="mb-4 border-b border-gray-200 bg-white rounded-t-xl px-4">
-          <nav className="flex gap-1 overflow-x-auto">
+        <div className="mb-4 border-b border-gray-200 bg-white rounded-t-xl px-4 overflow-x-auto">
+          <nav className="flex gap-1 overflow-x-auto py-1">
             {mainNavItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveMainTab(item.id)}
-                className={`px-3 py-2 text-xs font-medium transition-all border-b-2 ${
+                className={`px-3 py-2 text-xs font-medium transition-all border-b-2 whitespace-nowrap ${
                   activeMainTab === item.id
                     ? 'text-teal-600 border-teal-600'
                     : 'text-gray-500 border-transparent hover:text-teal-600 hover:border-teal-300'
@@ -1303,6 +1318,30 @@ const AdminDashboard = () => {
 
         {renderMainContent()}
       </main>
+
+      <style>{`
+        .admin-dashboard {
+          font-family: Calibri, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          font-size: 15px;
+          line-height: 1.5;
+        }
+        .admin-dashboard,
+        .admin-dashboard * {
+          font-family: Calibri, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        }
+        .admin-dashboard .text-xs {
+          font-size: 0.9rem !important;
+        }
+        .admin-dashboard .text-sm {
+          font-size: 1rem !important;
+        }
+        .admin-dashboard [class*="text-[9px]"] {
+          font-size: 0.82rem !important;
+        }
+        .admin-dashboard [class*="text-[10px]"] {
+          font-size: 0.88rem !important;
+        }
+      `}</style>
     </div>
   );
 };

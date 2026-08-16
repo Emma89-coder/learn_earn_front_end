@@ -1,18 +1,26 @@
-// AdminHangmanManager.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
+import dictionaryService from '../../services/dictionaryService';
 import {
-  ArrowLeft, Plus, Edit, Trash2, Save, X, Upload,
-  Image, BookOpen, Shirt, Briefcase, Globe, GraduationCap,
-  Music, Utensils, Car, Home, Activity, Gamepad2,
+  Plus, Edit, Trash2, Save, X, Upload,
+  Image, BookOpen, Globe, GraduationCap,
+  Music, Activity,
   Search, Download, Upload as UploadIcon, RefreshCw,
-  Trophy, Zap, TrendingUp, Award, Sparkles, Wand2,
-  Folder, FolderOpen, File, ChevronRight, ChevronDown
+  Sparkles, Wand2,
+  Folder, FolderOpen, File, ChevronRight, ChevronDown,
+  Star, AlertCircle, Loader, CheckCircle, Globe as GlobeIcon,
+  FileText, FileSpreadsheet
 } from 'lucide-react';
+
+// Import file parsing libraries
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 const AdminHangmanManager = () => {
   const { user, logout } = useAuth();
@@ -32,9 +40,20 @@ const AdminHangmanManager = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [importFile, setImportFile] = useState(null);
+  const [parsedWords, setParsedWords] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [showPdfImport, setShowPdfImport] = useState(false);
+  const [pdfImporting, setPdfImporting] = useState(false);
+  const [pdfCategory, setPdfCategory] = useState('');
   const [generatingHint, setGeneratingHint] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState({});
-  const [viewMode, setViewMode] = useState('folders'); // 'folders' or 'list'
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('portal-theme');
+    return savedTheme ? savedTheme === 'dark' : false;
+  });
+  const [isFetchingDictionary, setIsFetchingDictionary] = useState(false);
+  const [dictionaryData, setDictionaryData] = useState(null);
+  const [showDictionaryPanel, setShowDictionaryPanel] = useState(false);
   const [formData, setFormData] = useState({
     word: '',
     category: '',
@@ -43,104 +62,89 @@ const AdminHangmanManager = () => {
     points: 2
   });
 
-  // Category definitions with folder icons
+  useEffect(() => {
+    localStorage.setItem('portal-theme', isDarkMode ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
+
+  // Subject-based category definitions - Teal themed
   const categoryOptions = {
-    clothes: { 
-      name: 'Clothes', 
-      icon: <Shirt size={20} />, 
-      color: '#ec4899', 
-      bg: 'bg-pink-100', 
-      text: 'text-pink-700',
-      description: 'Fashion and clothing items',
-      emoji: '👗'
+    'mathematics': { 
+      name: 'Mathematics', 
+      icon: <BookOpen size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'Math vocabulary and terms',
+      emoji: '🔢'
     },
-    careers: { 
-      name: 'Careers', 
-      icon: <Briefcase size={20} />, 
-      color: '#3b82f6', 
-      bg: 'bg-blue-100', 
-      text: 'text-blue-700',
-      description: 'Professions and jobs',
-      emoji: '💼'
+    'english': { 
+      name: 'English', 
+      icon: <BookOpen size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'English language vocabulary',
+      emoji: '📚'
     },
-    countries: { 
-      name: 'Countries', 
-      icon: <Globe size={20} />, 
-      color: '#10b981', 
-      bg: 'bg-emerald-100', 
-      text: 'text-emerald-700',
-      description: 'Nations around the world',
+    'primary-science': { 
+      name: 'Science', 
+      icon: <Globe size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'Science terms and concepts',
+      emoji: '🔬'
+    },
+    'social-studies': { 
+      name: 'Social Studies', 
+      icon: <GraduationCap size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'Geography, history and civics',
       emoji: '🌍'
     },
-    classroom: { 
-      name: 'Classroom', 
-      icon: <GraduationCap size={20} />, 
-      color: '#8b5cf6', 
-      bg: 'bg-purple-100', 
-      text: 'text-purple-700',
-      description: 'School and education items',
-      emoji: '🏫'
+    'bible-knowledge': { 
+      name: 'Bible Knowledge', 
+      icon: <BookOpen size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'Biblical terms and names',
+      emoji: '📖'
     },
-    music: { 
-      name: 'Music', 
-      icon: <Music size={20} />, 
-      color: '#f43f5e', 
-      bg: 'bg-rose-100', 
-      text: 'text-rose-700',
-      description: 'Musical instruments and terms',
-      emoji: '🎵'
+    'arts-life-skills': { 
+      name: 'Arts & Life Skills', 
+      icon: <Music size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'Creative arts and life skills',
+      emoji: '🎨'
     },
-    food: { 
-      name: 'Food', 
-      icon: <Utensils size={20} />, 
-      color: '#f59e0b', 
-      bg: 'bg-amber-100', 
-      text: 'text-amber-700',
-      description: 'Delicious food items',
-      emoji: '🍕'
-    },
-    vehicles: { 
-      name: 'Vehicles', 
-      icon: <Car size={20} />, 
-      color: '#06b6d4', 
-      bg: 'bg-cyan-100', 
-      text: 'text-cyan-700',
-      description: 'Transportation and vehicles',
-      emoji: '🚗'
-    },
-    home: { 
-      name: 'Home', 
-      icon: <Home size={20} />, 
-      color: '#14b8a6', 
-      bg: 'bg-teal-100', 
-      text: 'text-teal-700',
-      description: 'Household items and rooms',
-      emoji: '🏠'
-    },
-    sports: { 
-      name: 'Sports', 
-      icon: <Activity size={20} />, 
-      color: '#ef4444', 
-      bg: 'bg-red-100', 
-      text: 'text-red-700',
-      description: 'Sports and athletic activities',
-      emoji: '⚽'
-    },
-    gaming: { 
-      name: 'Gaming', 
-      icon: <Gamepad2 size={20} />, 
-      color: '#8b5cf6', 
-      bg: 'bg-indigo-100', 
-      text: 'text-indigo-700',
-      description: 'Video games and gaming terms',
-      emoji: '🎮'
+    'chichewa': { 
+      name: 'Chichewa', 
+      icon: <GraduationCap size={16} />, 
+      color: '#0d9488', 
+      bg: 'bg-teal-50', 
+      text: 'text-teal-600',
+      border: 'border-teal-200',
+      description: 'Chichewa language vocabulary',
+      emoji: '🇲🇼'
     }
   };
 
-  const difficultyColors = {
-    easy: { bg: 'bg-green-100', text: 'text-green-700' },
-    medium: { bg: 'bg-amber-100', text: 'text-amber-700' },
-    hard: { bg: 'bg-red-100', text: 'text-red-700' }
+  const difficultyConfig = {
+    easy: { bg: 'bg-teal-100', text: 'text-teal-700', label: 'Easy', icon: '🟢' },
+    medium: { bg: 'bg-teal-200', text: 'text-teal-800', label: 'Medium', icon: '🟡' },
+    hard: { bg: 'bg-teal-300', text: 'text-teal-900', label: 'Hard', icon: '🔴' }
   };
 
   // Toggle folder expansion
@@ -165,108 +169,202 @@ const AdminHangmanManager = () => {
     setExpandedFolders({});
   };
 
-  // AI Hint Generation
-  const generateAIHint = async (word, category) => {
-    if (!word) {
+  // Generate fallback hint
+  const generateFallbackHint = (word, category) => {
+    const categoryHints = {
+      'mathematics': ['A mathematical term or concept', 'Used in math calculations', 'A number or shape related word'],
+      'english': ['An English language term', 'A grammar or vocabulary word', 'Related to reading and writing'],
+      'primary-science': ['A science term or concept', 'Related to nature or experiments', 'A scientific word'],
+      'social-studies': ['Related to geography or history', 'A place or cultural term', 'About people and society'],
+      'bible-knowledge': ['A biblical term or name', 'Related to faith and scripture', 'From the Bible'],
+      'arts-life-skills': ['Related to art or life skills', 'A creative or practical term', 'About expression or health'],
+      'chichewa': ['A Chichewa vocabulary word', 'A word in the Chichewa language', 'Used in everyday Chichewa']
+    };
+
+    const hints = categoryHints[category] || ['A word related to this subject', 'A term you need to guess'];
+    return hints[Math.floor(Math.random() * hints.length)] + ` (${word.length} letters)`;
+  };
+
+  // Dictionary-based hint generation
+  const generateFromDictionary = async (word) => {
+    if (!word || word.trim() === '') {
+      toast.error('Please enter a word first');
+      return null;
+    }
+
+    setIsFetchingDictionary(true);
+    setDictionaryData(null);
+    setShowDictionaryPanel(false);
+
+    try {
+      const data = await dictionaryService.getWordData(word);
+      
+      if (data && (data.hint || data.definition)) {
+        setDictionaryData(data);
+        setShowDictionaryPanel(true);
+        
+        const hint = data.hint || data.definition || '';
+        
+        let difficulty = formData.difficulty;
+        if (word.length <= 4) difficulty = 'easy';
+        else if (word.length <= 6) difficulty = 'medium';
+        else if (word.length <= 8) difficulty = 'hard';
+        else difficulty = 'medium';
+        
+        const points = word.length <= 4 ? 2 : word.length <= 6 ? 3 : word.length <= 8 ? 4 : 5;
+        
+        setFormData(prev => ({
+          ...prev,
+          hint: hint,
+          difficulty: difficulty,
+          points: points
+        }));
+        
+        toast.success(`Found definition for "${word}"!`);
+        return { hint, difficulty, points };
+      } else {
+        const fallbackHint = generateFallbackHint(word, formData.category || '');
+        setFormData(prev => ({
+          ...prev,
+          hint: fallbackHint
+        }));
+        toast.success('Using fallback hint generation');
+        return { hint: fallbackHint };
+      }
+    } catch (error) {
+      console.error('Error fetching from dictionary:', error);
+      const fallbackHint = generateFallbackHint(word, formData.category || '');
+      setFormData(prev => ({
+        ...prev,
+        hint: fallbackHint
+      }));
+      toast.success('Using fallback hint generation');
+      return { hint: fallbackHint };
+    } finally {
+      setIsFetchingDictionary(false);
+    }
+  };
+
+  // Generate hint using dictionary or fallback
+  const generateHint = async (word) => {
+    if (!word || word.trim() === '') {
       toast.error('Please enter a word first');
       return;
     }
-
+    
     setGeneratingHint(true);
+    
     try {
-      // Smart hint generation
-      const hint = generateFallbackHint(word, category);
-      setFormData(prev => ({ ...prev, hint: hint }));
-      toast.success('✨ Hint generated successfully!');
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/api/ai/generate-hangman-hint`, {
+        word,
+        category: formData.category || ''
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data?.success && response.data.hint) {
+        setFormData(prev => ({
+          ...prev,
+          hint: response.data.hint
+        }));
+        toast.success('AI hint generated!');
+        return;
+      }
     } catch (error) {
-      console.error('Error generating hint:', error);
-      toast.error('Failed to generate hint');
+      console.warn('AI hangman hint failed, falling back to dictionary:', error.response?.data || error.message);
+    }
+
+    try {
+      const data = await dictionaryService.getWordData(word);
+      if (data && data.hint) {
+        setFormData(prev => ({
+          ...prev,
+          hint: data.hint
+        }));
+        toast.success('Hint from dictionary!');
+      } else if (data && data.definition) {
+        setFormData(prev => ({
+          ...prev,
+          hint: data.definition
+        }));
+        toast.success('Hint from dictionary definition!');
+      } else {
+        const fallbackHint = generateFallbackHint(word, formData.category || '');
+        setFormData(prev => ({
+          ...prev,
+          hint: fallbackHint
+        }));
+        toast.success('Hint generated using fallback!');
+      }
+    } catch (error) {
+      const fallbackHint = generateFallbackHint(word, formData.category || '');
+      setFormData(prev => ({
+        ...prev,
+        hint: fallbackHint
+      }));
+      toast.success('Hint generated using fallback!');
     } finally {
       setGeneratingHint(false);
     }
   };
 
-  // Fallback hint generation
-  const generateFallbackHint = (word, category) => {
-    const wordHints = {
-      MALAWI: 'The Warm Heart of Africa',
-      ZAMBIA: 'Home to Victoria Falls',
-      TANZANIA: 'Home to Mount Kilimanjaro',
-      KENYA: 'Known for its wildlife safaris',
-      NIGERIA: 'The Giant of Africa',
-      GHANA: 'The Gold Coast of Africa',
-      EGYPT: 'Home to the ancient pyramids',
-      'SOUTH AFRICA': 'The Rainbow Nation',
-      TEACHER: 'Helps students learn and grow',
-      DOCTOR: 'Treats patients and saves lives',
-      ENGINEER: 'Builds and designs structures',
-      NURSE: 'Cares for patients in hospitals',
-      GUITAR: 'A stringed musical instrument with six strings',
-      PIANO: 'A keyboard instrument with black and white keys',
-      DRUMS: 'Percussion instrument played with sticks',
-      VIOLIN: 'String instrument played with a bow',
-      PIZZA: 'Italian dish with cheese and toppings',
-      BURGER: 'Served between two buns with a patty',
-      PASTA: 'Italian noodle dish',
-      SUSHI: 'Japanese rice dish with raw fish',
-      BICYCLE: 'Two-wheeled pedal-powered vehicle',
-      CAR: 'Four-wheeled motor vehicle for transportation',
-      KITCHEN: 'Room where food is prepared and cooked',
-      BATHROOM: 'Room for personal hygiene and bathing',
-      BEDROOM: 'Room where you sleep and rest',
-      FOOTBALL: 'Most popular sport played with a round ball',
-      BASKETBALL: 'Sport played with a hoop and ball',
-      TENNIS: 'Racket sport played on a court',
-      SWIMMING: 'Moving through water using limbs',
-      MINECRAFT: 'Popular block-building video game',
-      FORTNITE: 'Popular battle royale video game',
-      MARIO: 'Famous plumber video game character',
-      ZELDA: 'Adventure video game series',
-      HANGMAN: 'A classic word guessing game',
-      JACKET: 'A piece of clothing worn on the upper body for warmth',
-      TROUSERS: 'A garment worn on the legs, also called pants',
-      SHIRT: 'A garment worn on the upper torso',
-      DRESS: 'A one-piece garment for women',
-      SKIRT: 'A garment that hangs from the waist',
-      JEANS: 'Denim pants for casual wear',
-      SWEATER: 'A knitted garment for warmth',
-      SCARF: 'Worn around the neck for warmth or style',
-      GLOVES: 'Hand coverings for warmth or protection',
-      BOOTS: 'Footwear that covers the ankle and foot',
-      SANDALS: 'Open footwear with straps',
-      HAT: 'Headwear for fashion or protection from sun',
-      BELT: 'A strap worn around the waist to hold up pants'
-    };
-
-    // Check for word-specific hint
-    const wordKey = word.toUpperCase();
-    if (wordHints[wordKey]) {
-      return wordHints[wordKey];
+  // Auto-generate hint on blur
+  const autoGenerateHint = async () => {
+    if (formData.word && !formData.hint) {
+      await generateFromDictionary(formData.word);
     }
-
-    // Category-based hints
-    const categoryHints = {
-      clothes: ['A type of garment worn on the body', 'A fashion item you wear', 'Something you put on daily'],
-      careers: ['A profession or occupation', 'A job title or career path', 'What someone does for work'],
-      countries: ['A nation in the world', 'A country with a capital city', 'A place on the map'],
-      classroom: ['Found in a school or classroom', 'Something students use', 'An educational item'],
-      music: ['A musical instrument or term', 'Something used to create music', 'A sound-making device'],
-      food: ['A type of food or dish', 'Something delicious to eat', 'A culinary item'],
-      vehicles: ['A mode of transportation', 'Something that moves people or goods', 'A vehicle on the road'],
-      home: ['Found in a house or home', 'A household item', 'Something in your living space'],
-      sports: ['A sport or physical activity', 'Something played competitively', 'An athletic activity'],
-      gaming: ['A video game or gaming term', 'Something from the gaming world', 'A game title or reference']
-    };
-
-    const hints = categoryHints[category] || ['A word related to this category', 'A term you need to guess'];
-    return hints[Math.floor(Math.random() * hints.length)] + ` (${word.length} letters)`;
   };
 
-  // Auto-generate hint
-  const autoGenerateHint = async () => {
-    if (formData.word && formData.category && !formData.hint) {
-      await generateAIHint(formData.word, formData.category);
-    }
+  // Render dictionary info panel
+  const renderDictionaryInfo = () => {
+    if (!dictionaryData || !showDictionaryPanel) return null;
+    
+    return (
+      <div className={`p-4 rounded-xl border-2 space-y-2 animate-fadeIn ${
+        isDarkMode 
+          ? 'bg-teal-900/30 border-teal-400/30' 
+          : 'bg-gradient-to-r from-teal-50 to-cyan-50 border-teal-300'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GlobeIcon size={16} className="text-teal-600" />
+            <span className="text-xs font-semibold text-teal-800 dark:text-teal-300">Dictionary Definition</span>
+          </div>
+          <button
+            onClick={() => setShowDictionaryPanel(false)}
+            className="p-1 hover:bg-teal-100 rounded-lg transition text-gray-400"
+          >
+            <X size={14} />
+          </button>
+        </div>
+        {dictionaryData.phonetic && (
+          <p className="text-xs text-teal-600 dark:text-teal-400 font-mono">/{dictionaryData.phonetic}/</p>
+        )}
+        <p className="text-sm text-teal-800 dark:text-teal-200">
+          <span className="font-medium">Definition:</span> {dictionaryData.definition || dictionaryData.hint}
+        </p>
+        {dictionaryData.partOfSpeech && (
+          <p className="text-xs text-teal-600 dark:text-teal-400">
+            <span className="font-medium">Part of Speech:</span> {dictionaryData.partOfSpeech}
+          </p>
+        )}
+        {dictionaryData.synonyms && dictionaryData.synonyms.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            <span className="text-xs text-teal-600 dark:text-teal-400 font-medium">Synonyms:</span>
+            {dictionaryData.synonyms.slice(0, 5).map((syn, i) => (
+              <span key={i} className="text-xs bg-teal-100 text-teal-700 dark:bg-teal-800/50 dark:text-teal-300 px-2 py-0.5 rounded-full">
+                {syn}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-center gap-2 mt-1 pt-1 border-t border-teal-200 dark:border-teal-400/20">
+          <CheckCircle size={14} className="text-teal-500" />
+          <span className="text-xs text-teal-700 dark:text-teal-400">Dictionary data loaded successfully</span>
+        </div>
+      </div>
+    );
   };
 
   // Fetch words
@@ -282,7 +380,6 @@ const AdminHangmanManager = () => {
         setWords(response.data.words);
         const uniqueCategories = [...new Set(response.data.words.map(w => w.category))];
         setCategories(uniqueCategories);
-        // Auto-expand categories with words
         const expanded = {};
         uniqueCategories.forEach(cat => {
           expanded[cat] = true;
@@ -352,7 +449,7 @@ const AdminHangmanManager = () => {
       });
 
       if (response.data.success) {
-        toast.success('Word added successfully! 🎉');
+        toast.success('Word added successfully!');
         setShowAddModal(false);
         resetForm();
         fetchWords();
@@ -394,7 +491,7 @@ const AdminHangmanManager = () => {
       });
 
       if (response.data.success) {
-        toast.success('Word updated successfully! 📝');
+        toast.success('Word updated successfully!');
         setShowEditModal(false);
         resetForm();
         fetchWords();
@@ -421,7 +518,7 @@ const AdminHangmanManager = () => {
       });
 
       if (response.data.success) {
-        toast.success('Word deleted successfully! 🗑️');
+        toast.success('Word deleted successfully!');
         fetchWords();
       }
     } catch (error) {
@@ -444,6 +541,8 @@ const AdminHangmanManager = () => {
     setSelectedImage(null);
     setImagePreview(null);
     setEditingWord(null);
+    setDictionaryData(null);
+    setShowDictionaryPanel(false);
   };
 
   // Open edit modal
@@ -462,88 +561,6 @@ const AdminHangmanManager = () => {
     setShowEditModal(true);
   };
 
-  // Add default words
-  const addDefaultWords = async () => {
-    const defaultWords = [
-      // Countries
-      { word: 'MALAWI', category: 'countries' },
-      { word: 'ZAMBIA', category: 'countries' },
-      { word: 'TANZANIA', category: 'countries' },
-      { word: 'KENYA', category: 'countries' },
-      { word: 'NIGERIA', category: 'countries' },
-      // Careers
-      { word: 'TEACHER', category: 'careers' },
-      { word: 'DOCTOR', category: 'careers' },
-      { word: 'ENGINEER', category: 'careers' },
-      { word: 'NURSE', category: 'careers' },
-      // Music
-      { word: 'GUITAR', category: 'music' },
-      { word: 'PIANO', category: 'music' },
-      { word: 'DRUMS', category: 'music' },
-      { word: 'VIOLIN', category: 'music' },
-      // Food
-      { word: 'PIZZA', category: 'food' },
-      { word: 'BURGER', category: 'food' },
-      { word: 'PASTA', category: 'food' },
-      { word: 'SUSHI', category: 'food' },
-      // Vehicles
-      { word: 'BICYCLE', category: 'vehicles' },
-      { word: 'CAR', category: 'vehicles' },
-      { word: 'MOTORCYCLE', category: 'vehicles' },
-      // Home
-      { word: 'KITCHEN', category: 'home' },
-      { word: 'BATHROOM', category: 'home' },
-      { word: 'BEDROOM', category: 'home' },
-      { word: 'LIVINGROOM', category: 'home' },
-      // Sports
-      { word: 'FOOTBALL', category: 'sports' },
-      { word: 'BASKETBALL', category: 'sports' },
-      { word: 'TENNIS', category: 'sports' },
-      { word: 'SWIMMING', category: 'sports' },
-      // Gaming
-      { word: 'MINECRAFT', category: 'gaming' },
-      { word: 'FORTNITE', category: 'gaming' },
-      { word: 'MARIO', category: 'gaming' },
-      // Clothes
-      { word: 'JACKET', category: 'clothes' },
-      { word: 'TROUSERS', category: 'clothes' },
-      { word: 'SHIRT', category: 'clothes' },
-      { word: 'DRESS', category: 'clothes' }
-    ];
-
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      
-      let added = 0;
-      for (const wordData of defaultWords) {
-        try {
-          const hint = generateFallbackHint(wordData.word, wordData.category);
-          await axios.post(`${API_URL}/api/admin/hangman/words`, {
-            word: wordData.word,
-            category: wordData.category,
-            hint: hint,
-            difficulty: 'medium',
-            points: 2
-          }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          added++;
-        } catch (e) {
-          console.log('Skipping existing word:', wordData.word);
-        }
-      }
-      
-      toast.success(`Added ${added} default words to folders! 🎯`);
-      fetchWords();
-    } catch (error) {
-      console.error('Error adding default words:', error);
-      toast.error('Failed to add default words');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Export words
   const exportWords = () => {
     const dataStr = JSON.stringify(words, null, 2);
@@ -554,78 +571,328 @@ const AdminHangmanManager = () => {
     a.download = `hangman_words_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Words exported successfully! 📤');
+    toast.success('Words exported successfully!');
   };
 
-  // Import words
-  const importWords = async () => {
-    if (!importFile) {
-      toast.error('Please select a file to import');
+  // Parse DOCX file
+  const parseDocx = async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      const text = result.value;
+      return parseTextContent(text);
+    } catch (error) {
+      console.error('Error parsing DOCX:', error);
+      throw new Error('Failed to parse DOCX file');
+    }
+  };
+
+  // Parse PDF file
+  const parsePdf = async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({
+        data: arrayBuffer,
+        useSystemFonts: true,
+        useWorkerFetch: true,
+        disableAutoFetch: false,
+        stopAtErrors: false
+      });
+      const pdf = await loadingTask.promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n';
+      }
+
+      await pdf.destroy();
+      return parseTextContent(fullText);
+    } catch (error) {
+      console.warn('Primary PDF parse failed, trying fallback:', error);
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({
+          data: arrayBuffer,
+          useSystemFonts: false,
+          useWorkerFetch: false,
+          disableAutoFetch: false,
+          stopAtErrors: true
+        });
+        const pdf = await loadingTask.promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+
+        await pdf.destroy();
+        return parseTextContent(fullText);
+      } catch (fallbackError) {
+        console.error('Fallback PDF parse failed:', fallbackError);
+        throw new Error('Failed to parse PDF file');
+      }
+    }
+  };
+
+  // Parse text content to extract words
+  const parseTextContent = (text) => {
+    const words = [];
+    const cleanedText = text
+      .replace(/\r\n/g, '\n')
+      .replace(/[•*\u2022]/g, '')
+      .replace(/[—–]/g, '-')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    const lines = cleanedText
+      .split('\n')
+      .map(line => line.trim().replace(/^[\d\.\)\-\s]+/, ''))
+      .filter(line => line.length > 0);
+
+    for (const line of lines) {
+      const normalizedLine = line.replace(/\s*[-–—:;|]\s*/, ' - ');
+
+      // Try to parse as "word - hint" format
+      const match = normalizedLine.match(/^([A-Za-z]+)\s*-\s*(.+)$/);
+      if (match) {
+        words.push({
+          word: match[1].trim().toUpperCase(),
+          hint: match[2].trim()
+        });
+        continue;
+      }
+
+      // Try to parse as "word,hint" or "word;hint" format
+      const parts = normalizedLine.split(/[,;]\s*/).map(s => s.trim());
+      if (parts.length >= 2 && parts[0] && parts[1]) {
+        words.push({
+          word: parts[0].toUpperCase(),
+          hint: parts[1]
+        });
+        continue;
+      }
+
+      // Try to parse as "word" only (no hint)
+      const wordMatch = normalizedLine.match(/^([A-Za-z]+)$/);
+      if (wordMatch && wordMatch[1].length > 1) {
+        words.push({
+          word: wordMatch[1].trim().toUpperCase(),
+          hint: `A word with ${wordMatch[1].length} letters`
+        });
+      }
+    }
+
+    return words;
+  };
+
+  // Handle file import selection
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const fileExtension = file.name.split('.').pop().toLowerCase();
+    
+    // Check if file type is supported
+    const supportedTypes = ['json', 'csv', 'txt', 'docx', 'pdf'];
+    if (!supportedTypes.includes(fileExtension)) {
+      toast.error(`Unsupported file type: ${fileExtension}. Supported types: ${supportedTypes.join(', ')}`);
+      return;
+    }
+    
+    setImportFile(file);
+    setParsedWords([]);
+    setShowPreview(false);
+    
+    try {
+      let parsed = [];
+      
+      if (fileExtension === 'json') {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        parsed = Array.isArray(data) ? data : [data];
+      } else if (fileExtension === 'csv') {
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
+        parsed = lines.map(line => {
+          const [word, hint, category, difficulty] = line.split(',').map(s => s.trim());
+          return { word: word?.toUpperCase(), hint, category, difficulty };
+        });
+      } else if (fileExtension === 'txt') {
+        const text = await file.text();
+        parsed = parseTextContent(text);
+      } else if (fileExtension === 'docx') {
+        parsed = await parseDocx(file);
+      } else if (fileExtension === 'pdf') {
+        parsed = await parsePdf(file);
+      }
+      
+      // Validate and clean parsed words
+      const validWords = parsed
+        .filter(w => w.word && w.word.length > 0)
+        .map(w => ({
+          word: w.word.toUpperCase(),
+          hint: w.hint || `A word with ${w.word.length} letters`,
+          category: w.category || 'general',
+          difficulty: w.difficulty || 'medium'
+        }));
+      
+      if (validWords.length === 0) {
+        toast.warning('No valid words found in the file');
+        setParsedWords([]);
+      } else {
+        setParsedWords(validWords);
+        setShowPreview(true);
+        toast.dismiss();
+        toast.success(`Found ${validWords.length} words in the file`);
+      }
+    } catch (error) {
+      console.error('Error parsing file:', error);
+      toast.dismiss();
+      toast.error(`Failed to parse file: ${error.message}`);
+      setParsedWords([]);
+    }
+  };
+
+  // Import parsed words
+  const importParsedWords = async () => {
+    if (parsedWords.length === 0) {
+      toast.error('No words to import');
       return;
     }
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const reader = new FileReader();
+      // Close modal immediately for better UX
+      setShowBulkImport(false);
       
-      reader.onload = async (e) => {
+      const token = localStorage.getItem('token');
+      let added = 0;
+      let enhanced = 0;
+      
+      for (const word of parsedWords) {
         try {
-          const importedWords = JSON.parse(e.target.result);
-          let added = 0;
-          
-          for (const word of importedWords) {
+          // Generate hint if missing
+          if (!word.hint || word.hint.includes('letters')) {
             try {
-              if (!word.hint) {
+              const dictData = await dictionaryService.getWordData(word.word);
+              if (dictData && (dictData.hint || dictData.definition)) {
+                word.hint = dictData.hint || dictData.definition;
+                enhanced++;
+              } else {
                 word.hint = generateFallbackHint(word.word, word.category);
               }
-              await axios.post(`${API_URL}/api/admin/hangman/words`, word, {
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              added++;
-            } catch (e) {
-              console.log('Skipping existing word:', word.word);
+            } catch (dictError) {
+              word.hint = generateFallbackHint(word.word, word.category);
             }
           }
           
-          toast.success(`Imported ${added} words into folders! 📥`);
-          setImportFile(null);
-          setShowBulkImport(false);
-          fetchWords();
-        } catch (error) {
-          console.error('Error importing words:', error);
-          toast.error('Failed to import words. Check file format.');
-        } finally {
-          setLoading(false);
+          await axios.post(`${API_URL}/api/admin/hangman/words`, word, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          added++;
+        } catch (e) {
+          console.log('Skipping existing word:', word.word);
         }
-      };
+      }
       
-      reader.readAsText(importFile);
+      // Reset state
+      setImportFile(null);
+      setParsedWords([]);
+      setShowPreview(false);
+      
+      // Fetch updated word list
+      await fetchWords();
+      
+      // Dismiss all toasts silently
+      toast.dismiss();
     } catch (error) {
       console.error('Error importing words:', error);
+      toast.dismiss();
       toast.error('Failed to import words');
+    } finally {
       setLoading(false);
     }
   };
 
-  // Bulk generate hints
+  // PDF Import — extract words + images from PDF via backend
+  const handlePdfImport = async (file) => {
+    if (!file) return;
+    if (!pdfCategory) {
+      toast.error('Please select a subject folder first');
+      return;
+    }
+
+    setPdfImporting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('pdf', file);
+      formData.append('category', pdfCategory);
+
+      const response = await axios.post(`${API_URL}/api/admin/hangman/import-pdf`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
+        timeout: 60000 // 60s for large PDFs
+      });
+
+      if (response.data.success) {
+        const { saved, images_extracted, total_found, errors } = response.data;
+        toast.success(`Imported ${saved} words (${images_extracted} images extracted)`);
+        if (errors && errors.length > 0) {
+          console.warn('Import errors:', errors);
+        }
+        setShowPdfImport(false);
+        setPdfCategory('');
+        fetchWords();
+      } else {
+        toast.error(response.data.message || 'Import failed');
+      }
+    } catch (error) {
+      console.error('PDF import error:', error);
+      toast.error(error.response?.data?.message || 'Failed to import PDF');
+    } finally {
+      setPdfImporting(false);
+    }
+  };
+
+  // Bulk generate hints with dictionary
   const bulkGenerateHints = async () => {
     if (words.length === 0) {
       toast.error('No words to generate hints for');
       return;
     }
 
-    if (!window.confirm(`Generate hints for all ${words.length} words?`)) {
+    if (!window.confirm(`Generate hints for all ${words.length} words using dictionary?`)) {
       return;
     }
 
     setLoading(true);
     let updated = 0;
     let failed = 0;
+    let fromDictionary = 0;
 
     for (const word of words) {
       try {
-        const newHint = generateFallbackHint(word.word, word.category);
+        let newHint = null;
+        
+        try {
+          const dictData = await dictionaryService.getWordData(word.word);
+          if (dictData && (dictData.hint || dictData.definition)) {
+            newHint = dictData.hint || dictData.definition;
+            fromDictionary++;
+          }
+        } catch (dictError) {
+          newHint = generateFallbackHint(word.word, word.category);
+        }
+        
         if (newHint && newHint !== word.hint) {
           const token = localStorage.getItem('token');
           await axios.put(`${API_URL}/api/admin/hangman/words/${word._id}`, {
@@ -642,7 +909,7 @@ const AdminHangmanManager = () => {
       }
     }
 
-    toast.success(`✨ Updated ${updated} words with new hints! ${failed} failed.`);
+    toast.success(`Updated ${updated} words! (${fromDictionary} from dictionary, ${updated - fromDictionary} from fallback) ${failed} failed.`);
     fetchWords();
     setLoading(false);
   };
@@ -681,168 +948,293 @@ const AdminHangmanManager = () => {
 
   // Render Word Card
   const WordCard = ({ word, index }) => (
-    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all hover:border-teal-300">
-      <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-sm font-bold text-teal-700 flex-shrink-0">
+    <div className={`flex items-center gap-2 p-2 rounded-lg border transition-all hover:shadow-md group ${
+      isDarkMode 
+        ? 'bg-slate-800 border-slate-700 hover:border-teal-400' 
+        : 'bg-white border-gray-200 hover:border-teal-400'
+    }`}>
+      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+        isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-600'
+      }`}>
         {index + 1}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-800">{word.word}</span>
+        <div className="flex items-center gap-1.5">
+          <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            {word.word}
+          </span>
           {word.hint && (
-            <span className="text-xs text-purple-600 flex items-center gap-1">
-              <Sparkles size={12} />
+            <span className={`text-[10px] flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${
+              isDarkMode ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-50 text-teal-600'
+            }`}>
+              <Sparkles size={10} />
               {word.hint}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            difficultyColors[word.difficulty]?.bg || 'bg-gray-100'
-          } ${difficultyColors[word.difficulty]?.text || 'text-gray-600'}`}>
-            {word.difficulty || 'medium'}
+          <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+            difficultyConfig[word.difficulty]?.bg || 'bg-teal-100'
+          } ${difficultyConfig[word.difficulty]?.text || 'text-teal-700'}`}>
+            {difficultyConfig[word.difficulty]?.icon} {difficultyConfig[word.difficulty]?.label || word.difficulty}
           </span>
-          <span className="text-xs text-gray-500">⭐ {word.points || 2} pts</span>
+          <span className={`text-[10px] flex items-center gap-0.5 ${
+            isDarkMode ? 'text-slate-400' : 'text-gray-500'
+          }`}>
+            <Star size={10} className="text-teal-400" />
+            {word.points || 2} pts
+          </span>
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         {word.imageUrl && (
-          <img src={word.imageUrl} alt={word.word} className="w-8 h-8 rounded-lg object-cover border border-gray-200" />
+          <img src={word.imageUrl} alt={word.word} className="w-6 h-6 rounded object-cover border border-gray-200" />
         )}
         <button
           onClick={() => openEditModal(word)}
-          className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-500 transition-colors"
+          className={`p-1 rounded transition-colors ${
+            isDarkMode ? 'hover:bg-teal-500/20 text-teal-400' : 'hover:bg-teal-50 text-teal-500'
+          }`}
           title="Edit"
         >
-          <Edit size={16} />
+          <Edit size={14} />
         </button>
         <button
           onClick={() => handleDeleteWord(word._id)}
-          className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+          className={`p-1 rounded transition-colors ${
+            isDarkMode ? 'hover:bg-red-500/20 text-red-400' : 'hover:bg-red-50 text-red-500'
+          }`}
           title="Delete"
         >
-          <Trash2 size={16} />
+          <Trash2 size={14} />
         </button>
       </div>
     </div>
   );
 
-  // Add Word Modal
+  // Add Word Modal Component
   const AddWordModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setShowAddModal(false); resetForm(); }}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-md">
-              <Plus size={20} className="text-white" />
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+      isDarkMode ? 'bg-black/80' : 'bg-black/50'
+    } backdrop-blur-sm`} onClick={() => { setShowAddModal(false); resetForm(); }}>
+      <div className={`rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 ${
+        isDarkMode 
+          ? 'bg-slate-800 border-teal-400' 
+          : 'bg-white border-teal-500'
+      }`} onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className={`px-5 py-3 border-b flex justify-between items-center ${
+          isDarkMode 
+            ? 'border-teal-400/30 bg-gradient-to-r from-teal-900/40 to-slate-800' 
+            : 'border-teal-100 bg-gradient-to-r from-teal-50 to-white'
+        }`}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center shadow">
+              <Plus size={16} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Add New Word</h2>
-              <p className="text-sm text-gray-500">Add a new word to a category folder</p>
+              <h2 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                Add New Word
+              </h2>
+              <p className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                Add a vocabulary word to a subject
+              </p>
             </div>
           </div>
-          <button onClick={() => { setShowAddModal(false); resetForm(); }} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-500" />
+          <button 
+            onClick={() => { setShowAddModal(false); resetForm(); }} 
+            className={`p-1.5 rounded-lg transition-colors ${
+              isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-gray-100 text-gray-400'
+            }`}
+          >
+            <X size={18} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Word *</label>
+        {/* Body */}
+        <div className="p-5 space-y-4">
+          {/* Word + Dictionary Button */}
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Word <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={formData.word}
                 onChange={(e) => {
                   const newWord = e.target.value.toUpperCase();
-                  setFormData({ ...formData, word: newWord });
-                  if (formData.hint) setFormData(prev => ({ ...prev, hint: '' }));
+                  setFormData(prev => ({ ...prev, word: newWord }));
+                  setDictionaryData(null);
+                  setShowDictionaryPanel(false);
                 }}
                 onBlur={autoGenerateHint}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-                placeholder="Enter the word"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category Folder *</label>
-              <select
-                value={formData.category}
-                onChange={(e) => {
-                  setFormData({ ...formData, category: e.target.value });
-                  if (formData.hint) setFormData(prev => ({ ...prev, hint: '' }));
-                }}
-                onBlur={autoGenerateHint}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-              >
-                <option value="">Select a folder</option>
-                {Object.entries(categoryOptions).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value.emoji} {value.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hint</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={formData.hint}
-                onChange={(e) => setFormData({ ...formData, hint: e.target.value })}
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-                placeholder="AI will generate a hint automatically"
+                className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm font-mono tracking-wide outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 placeholder-gray-400 focus:border-teal-500'
+                }`}
+                placeholder="e.g. FRACTION"
+                autoFocus
               />
               <button
-                onClick={() => generateAIHint(formData.word, formData.category)}
-                disabled={!formData.word || generatingHint}
-                className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                type="button"
+                onClick={() => generateFromDictionary(formData.word)}
+                disabled={!formData.word || isFetchingDictionary}
+                className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
+                  isDarkMode 
+                    ? 'bg-teal-500/80 text-white hover:bg-teal-500' 
+                    : 'bg-teal-500 text-white hover:bg-teal-600'
+                }`}
+                title="Look up word in dictionary"
               >
-                {generatingHint ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Generating...
-                  </>
+                {isFetchingDictionary ? (
+                  <Loader size={14} className="animate-spin" />
                 ) : (
-                  <>
-                    <Wand2 size={16} />
-                    AI Hint
-                  </>
+                  <Wand2 size={14} />
                 )}
+                {isFetchingDictionary ? 'Loading' : 'Lookup'}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-              <select
-                value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+          {/* Subject Selection */}
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Subject <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-4 gap-1.5">
+              {Object.entries(categoryOptions).map(([key, value]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, category: key }));
+                    if (formData.hint) setFormData(prev => ({ ...prev, hint: '' }));
+                  }}
+                  className={`p-2 rounded-lg border-2 text-center transition-all ${
+                    formData.category === key
+                      ? isDarkMode
+                        ? 'border-teal-400 bg-teal-500/20'
+                        : 'border-teal-500 bg-teal-50'
+                      : isDarkMode
+                        ? 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        : 'border-gray-200 hover:border-teal-300 bg-gray-50'
+                  }`}
+                >
+                  <span className="text-lg block">{value.emoji}</span>
+                  <span className={`text-[9px] font-medium block mt-0.5 leading-tight ${
+                    formData.category === key
+                      ? isDarkMode ? 'text-teal-300' : 'text-teal-700'
+                      : isDarkMode ? 'text-slate-400' : 'text-gray-600'
+                  }`}>
+                    {value.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dictionary Info */}
+          {renderDictionaryInfo()}
+
+          {/* Hint */}
+          <div>
+            <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Hint / Clue
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.hint}
+                onChange={(e) => setFormData(prev => ({ ...prev, hint: e.target.value }))}
+                className={`flex-1 px-3 py-2 rounded-lg border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 placeholder-gray-400 focus:border-teal-500'
+                }`}
+                placeholder="Auto-generated or type your own"
+              />
+              <button
+                onClick={() => generateHint(formData.word)}
+                disabled={!formData.word || generatingHint}
+                className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${
+                  isDarkMode 
+                    ? 'bg-teal-500/80 text-white hover:bg-teal-500' 
+                    : 'bg-teal-500 text-white hover:bg-teal-600'
+                }`}
+                title="Generate hint with AI"
               >
-                <option value="easy">🌱 Easy</option>
-                <option value="medium">📘 Medium</option>
-                <option value="hard">🎓 Hard</option>
-              </select>
+                {generatingHint ? (
+                  <Loader size={14} className="animate-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                AI Hint
+              </button>
+            </div>
+          </div>
+
+          {/* Difficulty + Points Row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                Difficulty
+              </label>
+              <div className="flex gap-1.5">
+                {[
+                  { key: 'easy', label: 'Easy', icon: '🟢' },
+                  { key: 'medium', label: 'Med', icon: '🟡' },
+                  { key: 'hard', label: 'Hard', icon: '🔴' }
+                ].map(diff => (
+                  <button
+                    key={diff.key}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, difficulty: diff.key }))}
+                    className={`flex-1 py-1.5 rounded-lg border-2 text-xs font-medium text-center transition-all ${
+                      formData.difficulty === diff.key
+                        ? isDarkMode
+                          ? 'border-teal-400 bg-teal-500/20 text-teal-300'
+                          : 'border-teal-500 bg-teal-50 text-teal-700'
+                        : isDarkMode
+                          ? 'border-slate-600 text-slate-400 hover:border-slate-500'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    {diff.icon} {diff.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
+              <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                Points
+              </label>
               <input
                 type="number"
                 value={formData.points}
-                onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                onChange={(e) => setFormData(prev => ({ ...prev, points: parseInt(e.target.value) || 0 }))}
+                className={`w-full px-3 py-2 rounded-lg border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 focus:border-teal-500'
+                }`}
                 min="1"
                 max="50"
               />
             </div>
           </div>
 
+          {/* Image Upload (compact) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image (Optional)</label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-teal-400 transition-colors">
+            <label className={`block text-xs font-semibold mb-1 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Image <span className={`font-normal ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>(optional)</span>
+            </label>
+            <div className={`border-2 border-solid rounded-lg p-3 text-center transition-colors cursor-pointer ${
+              isDarkMode 
+                ? 'border-slate-600 hover:border-teal-400' 
+                : 'border-gray-200 hover:border-teal-400'
+            }`}>
               <input
                 type="file"
                 accept="image/*"
@@ -853,19 +1245,20 @@ const AdminHangmanManager = () => {
               <label htmlFor="image-upload" className="cursor-pointer block">
                 {imagePreview ? (
                   <div className="relative inline-block">
-                    <img src={imagePreview} alt="Preview" className="max-h-48 rounded-lg shadow-sm" />
+                    <img src={imagePreview} alt="Preview" className="max-h-24 rounded-lg shadow-sm" />
                     <button
                       onClick={(e) => { e.preventDefault(); setImagePreview(null); setSelectedImage(null); }}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+                      className="absolute -top-1.5 -right-1.5 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow"
                     >
-                      <X size={16} />
+                      <X size={10} />
                     </button>
                   </div>
                 ) : (
-                  <div className="py-8">
-                    <Upload size={32} className="mx-auto text-gray-400 mb-3" />
-                    <p className="text-sm text-gray-600 font-medium">Click to upload an image</p>
-                    <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
+                  <div className="flex items-center justify-center gap-2 py-2">
+                    <Upload size={16} className={isDarkMode ? 'text-slate-500' : 'text-gray-400'} />
+                    <span className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                      Click to upload (PNG, JPG up to 5MB)
+                    </span>
                   </div>
                 )}
               </label>
@@ -873,71 +1266,151 @@ const AdminHangmanManager = () => {
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
-          <button
-            onClick={() => { setShowAddModal(false); resetForm(); }}
-            className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleAddWord}
-            disabled={saving}
-            className="px-6 py-2.5 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-medium rounded-xl hover:from-teal-700 hover:to-cyan-700 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Adding...
-              </>
-            ) : (
-              <>
-                <Sparkles size={18} />
-                Add to Folder
-              </>
-            )}
-          </button>
+        {/* Footer */}
+        <div className={`px-5 py-3 border-t flex justify-between items-center ${
+          isDarkMode 
+            ? 'border-teal-400/30 bg-slate-800/80' 
+            : 'border-teal-100 bg-gray-50'
+        }`}>
+          <div className={`text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+            {formData.word && formData.category ? '✓ Ready to save' : 'Fill word + subject'}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setShowAddModal(false); resetForm(); }}
+              className={`px-4 py-2 font-medium rounded-lg transition-colors text-xs ${
+                isDarkMode 
+                  ? 'text-slate-300 hover:bg-slate-700' 
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddWord}
+              disabled={saving || !formData.word || !formData.category}
+              className={`px-5 py-2 text-white font-semibold rounded-lg transition-all shadow flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs ${
+                isDarkMode 
+                  ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400' 
+                  : 'bg-teal-600 hover:bg-teal-700'
+              }`}
+            >
+              {saving ? (
+                <>
+                  <Loader size={14} className="animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus size={14} />
+                  Add Word
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 
-  // Edit Word Modal
+  // Edit Word Modal Component
   const EditWordModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setShowEditModal(false); resetForm(); }}>
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+      isDarkMode ? 'bg-black/80' : 'bg-black/50'
+    } backdrop-blur-sm`} onClick={() => { setShowEditModal(false); resetForm(); }}>
+      <div className={`rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 ${
+        isDarkMode 
+          ? 'bg-slate-800 border-teal-400' 
+          : 'bg-white border-teal-500'
+      }`} onClick={(e) => e.stopPropagation()}>
+        <div className={`sticky top-0 px-6 py-4 border-b flex justify-between items-center rounded-t-2xl ${
+          isDarkMode 
+            ? 'bg-slate-800 border-teal-400/30' 
+            : 'bg-white border-teal-100'
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-md">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+              isDarkMode ? 'bg-teal-500/30' : 'bg-teal-500'
+            }`}>
               <Edit size={20} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Edit Word</h2>
-              <p className="text-sm text-gray-500">Update the word details</p>
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                Edit Word
+              </h2>
+              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                Update the word details
+              </p>
             </div>
           </div>
-          <button onClick={() => { setShowEditModal(false); resetForm(); }} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-500" />
+          <button 
+            onClick={() => { setShowEditModal(false); resetForm(); }} 
+            className={`p-2 rounded-lg transition-colors ${
+              isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100'
+            }`}
+          >
+            <X size={20} className={isDarkMode ? 'text-slate-400' : 'text-gray-500'} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-6 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Word *</label>
-              <input
-                type="text"
-                value={formData.word}
-                onChange={(e) => setFormData({ ...formData, word: e.target.value.toUpperCase() })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-              />
+              <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                Word <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={formData.word}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, word: e.target.value.toUpperCase() }));
+                    setDictionaryData(null);
+                    setShowDictionaryPanel(false);
+                  }}
+                  className={`flex-1 px-4 py-2.5 rounded-xl border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                    isDarkMode 
+                      ? 'bg-slate-700 border-slate-600 text-white focus:border-teal-400' 
+                      : 'bg-white border-gray-200 text-gray-700 focus:border-teal-500'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => generateFromDictionary(formData.word)}
+                  disabled={!formData.word || isFetchingDictionary}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-sm ${
+                    isDarkMode 
+                      ? 'bg-teal-500/80 text-white hover:bg-teal-500' 
+                      : 'bg-teal-500 text-white hover:bg-teal-600'
+                  }`}
+                >
+                  {isFetchingDictionary ? (
+                    <>
+                      <Loader size={16} className="animate-spin" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 size={16} />
+                      <span>Dictionary</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category Folder *</label>
+              <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                Category Folder <span className="text-red-500">*</span>
+              </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                className={`w-full px-4 py-2.5 rounded-xl border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 focus:border-teal-500'
+                }`}
               >
                 <option value="">Select a folder</option>
                 {Object.entries(categoryOptions).map(([key, value]) => (
@@ -949,56 +1422,80 @@ const AdminHangmanManager = () => {
             </div>
           </div>
 
+          {renderDictionaryInfo()}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hint</label>
+            <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Hint
+            </label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={formData.hint}
-                onChange={(e) => setFormData({ ...formData, hint: e.target.value })}
-                className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                onChange={(e) => setFormData(prev => ({ ...prev, hint: e.target.value }))}
+                className={`flex-1 px-4 py-2.5 rounded-xl border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 placeholder-gray-400 focus:border-teal-500'
+                }`}
                 placeholder="Enter a hint for the word"
               />
               <button
-                onClick={() => generateAIHint(formData.word, formData.category)}
+                onClick={() => generateHint(formData.word)}
                 disabled={!formData.word || generatingHint}
-                className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl hover:from-purple-600 hover:to-indigo-600 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-sm ${
+                  isDarkMode 
+                    ? 'bg-teal-500/80 text-white hover:bg-teal-500' 
+                    : 'bg-teal-500 text-white hover:bg-teal-600'
+                }`}
               >
                 {generatingHint ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Generating...
+                    <Loader size={16} className="animate-spin" />
+                    <span>Gen...</span>
                   </>
                 ) : (
                   <>
                     <Wand2 size={16} />
-                    AI Hint
+                    <span>AI Hint</span>
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+              <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                Difficulty
+              </label>
               <select
                 value={formData.difficulty}
-                onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                onChange={(e) => setFormData(prev => ({ ...prev, difficulty: e.target.value }))}
+                className={`w-full px-4 py-2.5 rounded-xl border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 focus:border-teal-500'
+                }`}
               >
-                <option value="easy">🌱 Easy</option>
-                <option value="medium">📘 Medium</option>
-                <option value="hard">🎓 Hard</option>
+                <option value="easy">🟢 Easy</option>
+                <option value="medium">🟡 Medium</option>
+                <option value="hard">🔴 Hard</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
+              <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                Points
+              </label>
               <input
                 type="number"
                 value={formData.points}
-                onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
+                onChange={(e) => setFormData(prev => ({ ...prev, points: parseInt(e.target.value) || 0 }))}
+                className={`w-full px-4 py-2.5 rounded-xl border-2 text-sm outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                  isDarkMode 
+                    ? 'bg-slate-700 border-slate-600 text-white focus:border-teal-400' 
+                    : 'bg-white border-gray-200 text-gray-700 focus:border-teal-500'
+                }`}
                 min="1"
                 max="50"
               />
@@ -1006,8 +1503,14 @@ const AdminHangmanManager = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
-            <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-teal-400 transition-colors">
+            <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Image
+            </label>
+            <div className={`border-2 border-solid rounded-xl p-4 text-center transition-colors cursor-pointer ${
+              isDarkMode 
+                ? 'border-slate-600 hover:border-teal-400' 
+                : 'border-gray-200 hover:border-teal-500'
+            }`}>
               <input
                 type="file"
                 accept="image/*"
@@ -1018,19 +1521,23 @@ const AdminHangmanManager = () => {
               <label htmlFor="edit-image-upload" className="cursor-pointer block">
                 {imagePreview ? (
                   <div className="relative inline-block">
-                    <img src={imagePreview} alt="Preview" className="max-h-48 rounded-lg shadow-sm" />
+                    <img src={imagePreview} alt="Preview" className="max-h-40 rounded-lg shadow-sm" />
                     <button
                       onClick={(e) => { e.preventDefault(); setImagePreview(null); setSelectedImage(null); }}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
+                      className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-md"
                     >
-                      <X size={16} />
+                      <X size={14} />
                     </button>
                   </div>
                 ) : (
-                  <div className="py-8">
-                    <Upload size={32} className="mx-auto text-gray-400 mb-3" />
-                    <p className="text-sm text-gray-600 font-medium">Click to upload a new image</p>
-                    <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
+                  <div className="py-6">
+                    <Upload size={32} className={`mx-auto mb-3 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`} />
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+                      Click to upload a new image
+                    </p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                      PNG, JPG, GIF up to 5MB
+                    </p>
                   </div>
                 )}
               </label>
@@ -1038,26 +1545,38 @@ const AdminHangmanManager = () => {
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
+        <div className={`sticky bottom-0 px-6 py-4 border-t flex justify-end gap-3 rounded-b-2xl ${
+          isDarkMode 
+            ? 'bg-slate-800 border-teal-400/30' 
+            : 'bg-gray-50 border-teal-100'
+        }`}>
           <button
             onClick={() => { setShowEditModal(false); resetForm(); }}
-            className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors"
+            className={`px-5 py-2.5 font-medium rounded-xl transition-colors text-sm ${
+              isDarkMode 
+                ? 'text-slate-300 hover:bg-slate-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
             Cancel
           </button>
           <button
             onClick={handleEditWord}
             disabled={saving}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`px-6 py-2.5 text-white font-semibold rounded-xl transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400' 
+                : 'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600'
+            }`}
           >
             {saving ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <Loader size={16} className="animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save size={18} />
+                <Save size={16} />
                 Update Word
               </>
             )}
@@ -1069,85 +1588,219 @@ const AdminHangmanManager = () => {
 
   // Bulk Import Modal
   const BulkImportModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => { setShowBulkImport(false); setImportFile(null); }}>
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+      isDarkMode ? 'bg-black/80' : 'bg-black/50'
+    } backdrop-blur-sm`} onClick={() => { setShowBulkImport(false); setImportFile(null); setParsedWords([]); setShowPreview(false); }}>
+      <div className={`rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 ${
+        isDarkMode 
+          ? 'bg-slate-800 border-teal-400' 
+          : 'bg-white border-teal-500'
+      }`} onClick={(e) => e.stopPropagation()}>
+        <div className={`sticky top-0 px-6 py-4 border-b flex justify-between items-center rounded-t-2xl ${
+          isDarkMode 
+            ? 'bg-slate-800 border-teal-400/30' 
+            : 'bg-white border-teal-100'
+        }`}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-md">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${
+              isDarkMode ? 'bg-teal-500/30' : 'bg-teal-500'
+            }`}>
               <UploadIcon size={20} className="text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-800">Import Words</h2>
-              <p className="text-sm text-gray-500">Import words into folders from JSON</p>
+              <h2 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                Bulk Import Words
+              </h2>
+              <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                Import words from JSON, CSV, TXT, DOCX, or PDF files
+              </p>
             </div>
           </div>
-          <button onClick={() => { setShowBulkImport(false); setImportFile(null); }} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-500" />
+          <button 
+            onClick={() => { setShowBulkImport(false); setImportFile(null); setParsedWords([]); setShowPreview(false); }} 
+            className={`p-2 rounded-lg transition-colors ${
+              isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100'
+            }`}
+          >
+            <X size={20} className={isDarkMode ? 'text-slate-400' : 'text-gray-500'} />
           </button>
         </div>
 
-        <div className="p-6">
-          <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-purple-400 transition-colors">
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => setImportFile(e.target.files[0])}
-              className="hidden"
-              id="import-file"
-            />
-            <label htmlFor="import-file" className="cursor-pointer block">
-              {importFile ? (
-                <div>
-                  <div className="text-4xl mb-3">📄</div>
-                  <p className="font-medium text-gray-800">{importFile.name}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {(importFile.size / 1024).toFixed(1)} KB
-                  </p>
-                  <button
-                    onClick={(e) => { e.preventDefault(); setImportFile(null); }}
-                    className="mt-2 text-sm text-red-500 hover:text-red-600"
-                  >
-                    Remove file
-                  </button>
-                </div>
-              ) : (
-                <div className="py-4">
-                  <UploadIcon size={40} className="mx-auto text-gray-400 mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">Click to select a JSON file</p>
-                  <p className="text-xs text-gray-400 mt-1">Export format from this manager</p>
-                </div>
-              )}
+        <div className="p-6 space-y-5">
+          <div>
+            <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+              Choose File
             </label>
+            <div className={`border-2 border-solid rounded-xl p-6 text-center transition-colors cursor-pointer ${
+              isDarkMode 
+                ? 'border-slate-600 hover:border-teal-400' 
+                : 'border-gray-200 hover:border-teal-500'
+            }`}>
+              <input
+                type="file"
+                accept=".json,.csv,.txt,.docx,.pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+                id="bulk-import-file"
+              />
+              <label htmlFor="bulk-import-file" className="cursor-pointer block">
+                {importFile ? (
+                  <div>
+                    <div className="text-3xl mb-2">📄</div>
+                    <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {importFile.name}
+                    </p>
+                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                      {(importFile.size / 1024).toFixed(1)} KB
+                    </p>
+                    <div className="flex justify-center gap-2 mt-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        isDarkMode ? 'bg-teal-500/20 text-teal-300' : 'bg-teal-100 text-teal-700'
+                      }`}>
+                        {importFile.name.split('.').pop().toUpperCase()}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        isDarkMode ? 'bg-teal-500/20 text-teal-300' : 'bg-teal-100 text-teal-700'
+                      }`}>
+                        {parsedWords.length} words found
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); setImportFile(null); setParsedWords([]); setShowPreview(false); }}
+                      className="mt-2 text-xs text-red-500 hover:text-red-600"
+                    >
+                      Remove file
+                    </button>
+                  </div>
+                ) : (
+                  <div className="py-6">
+                    <UploadIcon size={48} className={`mx-auto mb-3 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`} />
+                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+                      Click or drag to select a file
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2 mt-3">
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        JSON
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        CSV
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        TXT
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        DOCX
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        PDF
+                      </span>
+                    </div>
+                    <p className={`text-xs mt-2 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                      Max file size: 10MB
+                    </p>
+                  </div>
+                )}
+              </label>
+            </div>
           </div>
 
-          <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
-            <p className="text-xs text-blue-700">
-              💡 Missing hints will be automatically generated
+          <div className={`p-3 rounded-lg border ${
+            isDarkMode 
+              ? 'bg-teal-500/10 border-teal-400/30' 
+              : 'bg-teal-50 border-teal-200'
+          }`}>
+            <p className={`text-xs font-medium ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+              📝 Supported Formats:
             </p>
+            <ul className={`text-xs mt-1 space-y-0.5 ${isDarkMode ? 'text-teal-300/70' : 'text-teal-600'}`}>
+              <li>• <span className="font-mono">JSON</span>: Array of word objects with word, hint, category, difficulty</li>
+              <li>• <span className="font-mono">CSV</span>: word,hint,category,difficulty (one per line)</li>
+              <li>• <span className="font-mono">TXT</span>: word - hint (one per line)</li>
+              <li>• <span className="font-mono">DOCX</span>: Extracts text and parses word-hint pairs</li>
+              <li>• <span className="font-mono">PDF</span>: Extracts text and parses word-hint pairs</li>
+            </ul>
           </div>
+
+          {showPreview && parsedWords.length > 0 && (
+            <div className={`p-3 rounded-lg border ${
+              isDarkMode 
+                ? 'bg-teal-500/10 border-teal-400/30' 
+                : 'bg-teal-50 border-teal-200'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <p className={`text-xs font-medium ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+                  Preview ({parsedWords.length} words)
+                </p>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className={`text-xs ${isDarkMode ? 'text-slate-400 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  Hide
+                </button>
+              </div>
+              <div className="max-h-40 overflow-y-auto space-y-1">
+                {parsedWords.slice(0, 10).map((word, idx) => (
+                  <div key={idx} className={`text-xs flex items-center gap-2 ${
+                    isDarkMode ? 'text-slate-300' : 'text-gray-600'
+                  }`}>
+                    <span className="font-bold">{word.word}</span>
+                    <span className={isDarkMode ? 'text-slate-500' : 'text-gray-400'}>-</span>
+                    <span className="truncate">{word.hint}</span>
+                  </div>
+                ))}
+                {parsedWords.length > 10 && (
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                    ... and {parsedWords.length - 10} more
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+        <div className={`sticky bottom-0 px-6 py-4 border-t flex justify-end gap-3 rounded-b-2xl ${
+          isDarkMode 
+            ? 'bg-slate-800 border-teal-400/30' 
+            : 'bg-gray-50 border-teal-100'
+        }`}>
           <button
-            onClick={() => { setShowBulkImport(false); setImportFile(null); }}
-            className="px-5 py-2.5 text-gray-600 font-medium hover:bg-gray-100 rounded-xl transition-colors"
+            onClick={() => { setShowBulkImport(false); setImportFile(null); setParsedWords([]); setShowPreview(false); }}
+            className={`px-5 py-2.5 font-medium rounded-xl transition-colors text-sm ${
+              isDarkMode 
+                ? 'text-slate-300 hover:bg-slate-700' 
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
           >
             Cancel
           </button>
           <button
-            onClick={importWords}
-            disabled={!importFile || loading}
-            className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={importParsedWords}
+            disabled={!importFile || parsedWords.length === 0 || loading}
+            className={`px-6 py-2.5 text-white font-semibold rounded-xl transition-all shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400' 
+                : 'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600'
+            }`}
           >
             {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <Loader size={16} className="animate-spin" />
                 Importing...
               </>
             ) : (
               <>
-                <Sparkles size={18} />
-                Import into Folders
+                <Sparkles size={16} />
+                Import {parsedWords.length} Words
               </>
             )}
           </button>
@@ -1156,310 +1809,622 @@ const AdminHangmanManager = () => {
     </div>
   );
 
+  // Main Return
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-teal-50/30">
+    <div className={`w-full transition-all duration-500 ${
+      isDarkMode 
+        ? 'bg-transparent' 
+        : 'bg-transparent'
+    }`}>
+      
       {/* Modals */}
       {showAddModal && <AddWordModal />}
       {showEditModal && <EditWordModal />}
       {showBulkImport && <BulkImportModal />}
 
-      {/* Header */}
-      <header className="bg-gradient-to-r from-teal-700 via-teal-600 to-cyan-600 shadow-xl sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate('/admin-dashboard')}
-                className="p-2 hover:bg-white/20 rounded-xl transition-all text-white"
-              >
-                <ArrowLeft size={24} />
-              </button>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <Folder size={22} className="text-white" />
-                </div>
+      <main className="w-full px-0 sm:px-0 lg:px-0 py-4 max-w-full">
+        {/* Stat Cards */}
+        <div className="grid grid-cols-5 gap-2 mb-5 w-full">
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
+            isDarkMode 
+              ? 'bg-teal-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-teal-50 border-teal-500 shadow-md'
+          }`}>
+            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+              Total Words
+            </p>
+            <p className={`text-lg font-bold ${isDarkMode ? 'text-teal-200' : 'text-[#19475B]'}`}>
+              {stats.total}
+            </p>
+          </div>
+
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
+            isDarkMode 
+              ? 'bg-teal-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-teal-50 border-teal-500 shadow-md'
+          }`}>
+            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+              Folders
+            </p>
+            <p className={`text-lg font-bold ${isDarkMode ? 'text-teal-200' : 'text-[#19475B]'}`}>
+              {stats.categories}
+            </p>
+          </div>
+
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
+            isDarkMode 
+              ? 'bg-teal-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-teal-50 border-teal-500 shadow-md'
+          }`}>
+            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+              With Images
+            </p>
+            <p className={`text-lg font-bold ${isDarkMode ? 'text-teal-200' : 'text-[#19475B]'}`}>
+              {stats.withImages}
+            </p>
+          </div>
+
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
+            isDarkMode 
+              ? 'bg-teal-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-teal-50 border-teal-500 shadow-md'
+          }`}>
+            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+              Avg Points
+            </p>
+            <p className={`text-lg font-bold ${isDarkMode ? 'text-teal-200' : 'text-[#19475B]'}`}>
+              {stats.avgPoints}
+            </p>
+          </div>
+
+          <div className={`rounded-lg px-3 py-2 transition-all duration-300 border-2 ${
+            isDarkMode 
+              ? 'bg-teal-900/30 backdrop-blur-sm border-teal-400' 
+              : 'bg-teal-50 border-teal-500 shadow-md'
+          }`}>
+            <p className={`text-[9px] uppercase tracking-wider ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+              With Hints
+            </p>
+            <p className={`text-lg font-bold ${isDarkMode ? 'text-teal-200' : 'text-[#19475B]'}`}>
+              {stats.withHints}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+          
+          {/* Folder View */}
+          <div className={`rounded-2xl transition-all duration-500 overflow-hidden border-2 order-2 lg:order-1 ${
+            isDarkMode 
+              ? 'bg-slate-800/50 backdrop-blur-sm border-teal-400' 
+              : 'bg-white shadow-xl border-teal-500'
+          }`}>
+            <div className={`p-4 border-b ${
+              isDarkMode 
+                ? 'border-teal-400/30 bg-teal-900/20' 
+                : 'border-teal-500/30 bg-gradient-to-r from-teal-50 to-emerald-50'
+            }`}>
+              <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl font-black text-white">Hangman Manager</h1>
-                  <p className="text-xs text-cyan-200 font-medium">Organize words in folders</p>
+                  <h2 className={`text-base font-bold ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+                    Word Folders
+                  </h2>
+                  <p className={`text-[11px] mt-0.5 ${isDarkMode ? 'text-teal-300/70' : 'text-[#19475B]/70'}`}>
+                    Organize and manage hangman words
+                  </p>
+                </div>
+                <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                  isDarkMode 
+                    ? 'bg-teal-500/20 text-teal-300' 
+                    : 'bg-teal-100 text-[#19475B]'
+                }`}>
+                  {words.length} words
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {categories.length > 0 && (
-                <>
-                  <button
-                    onClick={expandAllFolders}
-                    className="px-3 py-2 bg-white/15 text-white rounded-xl text-sm font-medium hover:bg-white/25 transition flex items-center gap-1.5"
+            {/* Search & Filter */}
+            <div className="p-3 border-b border-teal-200 dark:border-teal-700">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex-1 relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-400" />
+                  <input
+                    type="text"
+                    placeholder="Search words or hints..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`w-full pl-9 pr-3 py-1.5 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                      isDarkMode 
+                        ? 'bg-slate-900 border-slate-700 text-white placeholder-slate-500 focus:border-teal-400' 
+                        : 'bg-white border-teal-200 text-[#19475B] placeholder-teal-400 focus:border-teal-500'
+                    }`}
+                  />
+                </div>
+                <div className="sm:w-44">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className={`w-full px-3 py-1.5 text-sm border rounded-lg outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+                      isDarkMode 
+                        ? 'bg-slate-900 border-slate-700 text-white focus:border-teal-400' 
+                        : 'bg-white border-teal-200 text-[#19475B] focus:border-teal-500'
+                    }`}
                   >
-                    <ChevronDown size={16} />
-                    Expand All
-                  </button>
+                    <option value="all">All Folders</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>
+                        {categoryOptions[cat]?.emoji} {categoryOptions[cat]?.name || cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {(searchTerm || selectedCategory !== 'all') && (
                   <button
-                    onClick={collapseAllFolders}
-                    className="px-3 py-2 bg-white/15 text-white rounded-xl text-sm font-medium hover:bg-white/25 transition flex items-center gap-1.5"
+                    onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
+                    className={`px-3 py-1.5 text-sm rounded-lg border transition ${
+                      isDarkMode 
+                        ? 'border-slate-700 text-slate-300 hover:bg-slate-700' 
+                        : 'border-teal-200 text-[#19475B] hover:bg-teal-50'
+                    }`}
                   >
-                    <ChevronRight size={16} />
-                    Collapse All
+                    Clear Filters
                   </button>
-                </>
+                )}
+              </div>
+            </div>
+
+            <div className="p-3 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              {loading ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((item) => (
+                    <div key={item} className={`h-16 rounded-xl animate-pulse ${isDarkMode ? 'bg-slate-700/50' : 'bg-teal-100'}`} />
+                  ))}
+                </div>
+              ) : categories.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-3">📁</div>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+                    No folders yet
+                  </p>
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    Add your first word to create a folder
+                  </p>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className={`mt-3 px-4 py-2 text-white rounded-lg font-medium transition shadow-md text-sm ${
+                      isDarkMode 
+                        ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400' 
+                        : 'bg-teal-600 hover:bg-teal-700'
+                    }`}
+                  >
+                    <Plus size={16} className="inline mr-1" />
+                    Add Word
+                  </button>
+                </div>
+              ) : (
+                // Show only subject folders (all 7 subjects always visible)
+                Object.entries(categoryOptions).map(([categoryKey, categoryInfo]) => {
+                  const categoryWords = wordsByCategory[categoryKey] || [];
+                  const isExpanded = expandedFolders[categoryKey];
+                  
+                  return (
+                    <div key={categoryKey} className={`rounded-xl border overflow-hidden transition-all hover:shadow-md mb-2 ${
+                      isDarkMode 
+                        ? 'bg-slate-800 border-slate-700' 
+                        : 'bg-white border-teal-200'
+                    }`}>
+                      <div
+                        className={`flex items-center justify-between p-3 cursor-pointer transition-colors ${
+                          isDarkMode ? 'hover:bg-slate-700/50' : 'hover:bg-teal-50'
+                        }`}
+                        onClick={() => toggleFolder(categoryKey)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style={{ backgroundColor: '#0d9488' + '20' }}
+                          >
+                            <span className="text-xl">{categoryInfo.emoji}</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                                {categoryInfo.name}
+                              </span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-teal-100 text-teal-600'
+                              }`}>
+                                {categoryWords.length} words
+                              </span>
+                            </div>
+                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                              {categoryInfo.description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData(prev => ({ ...prev, category: categoryKey }));
+                              setShowAddModal(true);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              isDarkMode 
+                                ? 'hover:bg-teal-500/20 text-teal-400' 
+                                : 'hover:bg-teal-100 text-teal-600'
+                            }`}
+                            title="Add word to this subject"
+                          >
+                            <Plus size={18} />
+                          </button>
+                          <span className={isDarkMode ? 'text-slate-500' : 'text-gray-400'}>
+                            {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                          </span>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className={`border-t p-3 ${isDarkMode ? 'border-slate-700' : 'border-teal-100'}`}>
+                          {categoryWords.length === 0 ? (
+                            <div className={`text-center py-4 text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-400'}`}>
+                              No words in this subject yet
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setFormData(prev => ({ ...prev, category: categoryKey }));
+                                  setShowAddModal(true);
+                                }}
+                                className={`ml-1 font-medium ${
+                                  isDarkMode ? 'text-teal-400 hover:text-teal-300' : 'text-teal-600 hover:text-teal-700'
+                                }`}
+                              >
+                                Add one →
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {/* Show word count summary instead of individual cards */}
+                              <div className={`flex items-center justify-between px-3 py-2 rounded-lg ${
+                                isDarkMode ? 'bg-slate-900/50' : 'bg-teal-50/50'
+                              }`}>
+                                <div className="flex items-center gap-4 text-xs">
+                                  <span className={isDarkMode ? 'text-slate-300' : 'text-gray-600'}>
+                                    📝 {categoryWords.length} words
+                                  </span>
+                                  <span className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
+                                    🟢 {categoryWords.filter(w => w.difficulty === 'easy').length} easy
+                                  </span>
+                                  <span className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
+                                    🟡 {categoryWords.filter(w => w.difficulty === 'medium').length} medium
+                                  </span>
+                                  <span className={isDarkMode ? 'text-slate-400' : 'text-gray-500'}>
+                                    🔴 {categoryWords.filter(w => w.difficulty === 'hard').length} hard
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {/* Compact word list - just names, no full cards */}
+                              <div className="flex flex-wrap gap-1.5 px-1">
+                                {categoryWords.map(word => (
+                                  <span
+                                    key={word.id || word._id}
+                                    className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg border cursor-pointer group transition-all hover:shadow-sm ${
+                                      isDarkMode
+                                        ? 'bg-slate-700 border-slate-600 text-slate-200 hover:border-teal-400'
+                                        : 'bg-white border-gray-200 text-gray-700 hover:border-teal-400'
+                                    }`}
+                                    title={word.hint || word.word}
+                                  >
+                                    <span className="font-semibold">{word.word}</span>
+                                    <button
+                                      onClick={() => openEditModal(word)}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity text-teal-500"
+                                      title="Edit"
+                                    >
+                                      <Edit size={10} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteWord(word.id || word._id)}
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity text-red-400"
+                                      title="Delete"
+                                    >
+                                      <Trash2 size={10} />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               )}
+            </div>
+
+            <div className={`p-3 border-t ${
+              isDarkMode 
+                ? 'border-slate-700 bg-slate-900/50' 
+                : 'border-teal-200 bg-teal-50'
+            }`}>
+              <div className="flex justify-between items-center text-[11px]">
+                <div className={`flex items-center gap-4 ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+                  <span className="flex items-center gap-1">
+                    <File size={14} />
+                    {words.length} words
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Folder size={14} />
+                    {categories.length} folders
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Sparkles size={14} className="text-teal-500" />
+                    {stats.withHints} hints
+                  </span>
+                </div>
+                <div className={`text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                  Updated: {new Date().toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className={`rounded-2xl transition-all duration-500 overflow-hidden border-2 order-1 lg:order-2 ${
+            isDarkMode 
+              ? 'bg-slate-800/50 backdrop-blur-sm border-teal-400' 
+              : 'bg-white shadow-xl border-teal-500'
+          }`}>
+            <div className={`p-4 border-b ${
+              isDarkMode 
+                ? 'border-teal-400/30 bg-teal-900/20' 
+                : 'border-teal-500/30 bg-gradient-to-r from-teal-50 to-emerald-50'
+            }`}>
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-md ${
+                  isDarkMode ? 'bg-teal-500/30' : 'bg-teal-500'
+                }`}>
+                  <Sparkles size={16} className="text-white" />
+                </div>
+                <div>
+                  <h3 className={`font-bold text-sm ${isDarkMode ? 'text-teal-300' : 'text-[#19475B]'}`}>
+                    Quick Actions
+                  </h3>
+                  <p className={`text-[11px] ${isDarkMode ? 'text-teal-300/70' : 'text-[#19475B]/70'}`}>
+                    Manage your word collection
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 space-y-2">
               <button
                 onClick={bulkGenerateHints}
                 disabled={loading || words.length === 0}
-                className="px-3 py-2 bg-purple-500/20 text-white rounded-xl text-sm font-medium hover:bg-purple-500/30 transition flex items-center gap-1.5 disabled:opacity-50"
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${
+                  isDarkMode 
+                    ? 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30' 
+                    : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                }`}
               >
                 <Wand2 size={16} />
                 Generate All Hints
               </button>
               <button
-                onClick={addDefaultWords}
-                className="px-3 py-2 bg-white/15 text-white rounded-xl text-sm font-medium hover:bg-white/25 transition flex items-center gap-1.5"
-              >
-                <BookOpen size={16} />
-                Default
-              </button>
-              <button
                 onClick={exportWords}
-                className="px-3 py-2 bg-white/15 text-white rounded-xl text-sm font-medium hover:bg-white/25 transition flex items-center gap-1.5"
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30' 
+                    : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                }`}
               >
                 <Download size={16} />
-                Export
+                Export Words
               </button>
               <button
                 onClick={() => setShowBulkImport(true)}
-                className="px-3 py-2 bg-white/15 text-white rounded-xl text-sm font-medium hover:bg-white/25 transition flex items-center gap-1.5"
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30' 
+                    : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                }`}
               >
                 <UploadIcon size={16} />
-                Import
+                Bulk Import
+              </button>
+              <button
+                onClick={() => setShowPdfImport(true)}
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30' 
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                }`}
+              >
+                <FileText size={16} />
+                Import from PDF
+              </button>
+              <button
+                onClick={expandAllFolders}
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <ChevronDown size={16} />
+                Expand All Folders
+              </button>
+              <button
+                onClick={collapseAllFolders}
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <ChevronRight size={16} />
+                Collapse All Folders
+              </button>
+              <button
+                onClick={fetchWords}
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30' 
+                    : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                }`}
+              >
+                <RefreshCw size={16} />
+                Refresh
               </button>
               <button
                 onClick={() => setShowAddModal(true)}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-teal-400 text-teal-900 rounded-xl font-bold hover:shadow-lg transition flex items-center gap-2"
+                className={`w-full px-3 py-2 rounded-lg text-sm font-medium text-white transition-all shadow-md flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400' 
+                    : 'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-500 hover:to-teal-600'
+                }`}
               >
-                <Plus size={18} />
+                <Plus size={16} />
                 Add Word
               </button>
             </div>
           </div>
         </div>
-      </header>
+      </main>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-teal-100 hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-teal-500 font-bold uppercase tracking-wider">Total Words</p>
-                <p className="text-2xl font-black text-teal-800 mt-1">{stats.total}</p>
-              </div>
-              <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-                <File size={24} className="text-teal-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-purple-100 hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-purple-500 font-bold uppercase tracking-wider">Folders</p>
-                <p className="text-2xl font-black text-purple-800 mt-1">{stats.categories}</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Folder size={24} className="text-purple-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-blue-100 hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-blue-500 font-bold uppercase tracking-wider">With Images</p>
-                <p className="text-2xl font-black text-blue-800 mt-1">{stats.withImages}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Image size={24} className="text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-amber-100 hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-amber-500 font-bold uppercase tracking-wider">Avg Points</p>
-                <p className="text-2xl font-black text-amber-800 mt-1">{stats.avgPoints}</p>
-              </div>
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                <Trophy size={24} className="text-amber-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-purple-100 hover:shadow-md transition-all">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-purple-500 font-bold uppercase tracking-wider">With Hints</p>
-                <p className="text-2xl font-black text-purple-800 mt-1">{stats.withHints}</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <Sparkles size={24} className="text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search words or hints..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-              />
-            </div>
-            <div className="sm:w-48">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-teal-500 focus:ring-2 focus:ring-teal-100 outline-none transition-all"
-              >
-                <option value="all">All Folders</option>
-                {categories.map(cat => (
-                  <option key={cat} value={cat}>
-                    {categoryOptions[cat]?.emoji} {categoryOptions[cat]?.name || cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {(searchTerm || selectedCategory !== 'all') && (
-              <button
-                onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
-                className="px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Folder View */}
-        <div className="space-y-4">
-          {categories.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-              <div className="text-6xl mb-4">📁</div>
-              <p className="text-gray-500 text-lg">No folders yet</p>
-              <p className="text-gray-400 text-sm mt-1">Add your first word to create a folder</p>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="mt-4 px-6 py-2.5 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition shadow-md"
-              >
-                <Plus size={18} className="inline mr-2" />
-                Add Word
-              </button>
-            </div>
-          ) : (
-            categories.map((categoryKey) => {
-              const categoryWords = wordsByCategory[categoryKey] || [];
-              const isExpanded = expandedFolders[categoryKey];
-              const categoryInfo = categoryOptions[categoryKey];
-              
-              return (
-                <div key={categoryKey} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  {/* Folder Header */}
-                  <div
-                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleFolder(categoryKey)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ backgroundColor: categoryInfo?.color + '20' }}
-                      >
-                        {isExpanded ? (
-                          <FolderOpen size={20} style={{ color: categoryInfo?.color }} />
-                        ) : (
-                          <Folder size={20} style={{ color: categoryInfo?.color }} />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-800">
-                            {categoryInfo?.emoji} {categoryInfo?.name || categoryKey}
-                          </span>
-                          <span className="text-xs text-gray-400">({categoryWords.length} words)</span>
-                        </div>
-                        <p className="text-xs text-gray-500">{categoryInfo?.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setFormData({ ...formData, category: categoryKey });
-                          setShowAddModal(true);
-                        }}
-                        className="p-1.5 hover:bg-teal-50 rounded-lg text-teal-600 transition-colors"
-                        title="Add word to this folder"
-                      >
-                        <Plus size={16} />
-                      </button>
-                      <span className="text-gray-400">
-                        {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Folder Content - Word List */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-100 p-3 space-y-2">
-                      {categoryWords.length === 0 ? (
-                        <div className="text-center py-6 text-gray-400 text-sm">
-                          No words in this folder yet
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setFormData({ ...formData, category: categoryKey });
-                              setShowAddModal(true);
-                            }}
-                            className="ml-2 text-teal-600 hover:text-teal-700 font-medium"
-                          >
-                            Add one →
-                          </button>
-                        </div>
-                      ) : (
-                        categoryWords.map((word, index) => (
-                          <WordCard key={word._id} word={word} index={index} />
-                        ))
-                      )}
-                    </div>
-                  )}
+      {/* PDF Import Modal */}
+      {showPdfImport && (
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${isDarkMode ? 'bg-black/80' : 'bg-black/50'} backdrop-blur-sm`}
+          onClick={() => { setShowPdfImport(false); setPdfCategory(''); }}>
+          <div className={`rounded-2xl max-w-md w-full shadow-2xl border-2 ${
+            isDarkMode ? 'bg-slate-800 border-teal-400' : 'bg-white border-teal-500'
+          }`} onClick={e => e.stopPropagation()}>
+            
+            {/* Header */}
+            <div className={`px-5 py-4 border-b flex justify-between items-center ${
+              isDarkMode ? 'border-teal-400/30 bg-teal-900/20' : 'border-teal-100 bg-teal-50'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center shadow">
+                  <FileText size={20} className="text-white" />
                 </div>
-              );
-            })
-          )}
-        </div>
+                <div>
+                  <h2 className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    Import from PDF
+                  </h2>
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                    Extract words and illustrations from a PDF
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => { setShowPdfImport(false); setPdfCategory(''); }}
+                className={`p-2 rounded-lg ${isDarkMode ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-gray-100 text-gray-400'}`}>
+                <X size={18} />
+              </button>
+            </div>
 
-        {/* Footer */}
-        <div className="mt-6 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 flex justify-between items-center text-sm text-gray-500">
-          <span>Total: {words.length} words across {categories.length} folders</span>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-purple-600 flex items-center gap-1">
-              <Sparkles size={12} />
-              {stats.withHints} words have AI hints
-            </span>
-            <button
-              onClick={fetchWords}
-              className="flex items-center gap-1.5 text-teal-600 hover:text-teal-700 transition-colors"
-            >
-              <RefreshCw size={14} />
-              Refresh
-            </button>
+            {/* Body */}
+            <div className="p-5 space-y-4">
+              {/* Subject selector */}
+              <div>
+                <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                  Subject Folder
+                </label>
+                <select
+                  value={pdfCategory}
+                  onChange={e => setPdfCategory(e.target.value)}
+                  className={`w-full px-3 py-2.5 rounded-xl border text-sm ${
+                    isDarkMode 
+                      ? 'bg-slate-900 border-slate-700 text-white' 
+                      : 'bg-white border-gray-200 text-gray-800'
+                  } focus:border-teal-400 outline-none`}
+                >
+                  <option value="">Select a subject...</option>
+                  {Object.entries(categoryOptions).map(([key, cat]) => (
+                    <option key={key} value={key}>{cat.emoji} {cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* File upload */}
+              <div>
+                <label className={`block text-sm font-semibold mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-gray-700'}`}>
+                  PDF File
+                </label>
+                <div className={`border-2 border-solid rounded-xl p-6 text-center transition ${
+                  isDarkMode ? 'border-slate-600 hover:border-teal-400' : 'border-gray-200 hover:border-teal-400'
+                }`}>
+                  <FileText size={32} className={`mx-auto mb-2 ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`} />
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                    Upload a PDF with vocabulary words and illustrations
+                  </p>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={e => {
+                      if (e.target.files[0]) handlePdfImport(e.target.files[0]);
+                    }}
+                    disabled={!pdfCategory || pdfImporting}
+                    className="mt-3 text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-500 file:text-white hover:file:bg-teal-600 file:cursor-pointer disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              {/* What it does */}
+              <div className={`p-3 rounded-xl text-xs space-y-1 ${isDarkMode ? 'bg-slate-900 text-slate-400' : 'bg-gray-50 text-gray-500'}`}>
+                <p className="font-semibold text-teal-600">What this does:</p>
+                <p>1. Extracts text from the PDF</p>
+                <p>2. Uses AI to find vocabulary words and create hints</p>
+                <p>3. Extracts illustrations/images and uploads them</p>
+                <p>4. Links images to matching words</p>
+                <p>5. Saves everything to the selected subject folder</p>
+              </div>
+
+              {/* Loading state */}
+              {pdfImporting && (
+                <div className="flex items-center justify-center gap-3 py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-3 border-teal-500 border-t-transparent" />
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                    Processing PDF... extracting words and images
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out forwards;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+          background: ${isDarkMode ? '#334155' : '#cbd5e1'};
+          borderRadius: '2px';
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: ${isDarkMode ? '#475569' : '#94a3b8'};
+        }
+      `}</style>
     </div>
   );
 };

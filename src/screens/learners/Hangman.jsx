@@ -4,100 +4,37 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import API_URL from '../../config';
+import useVoice from '../../hooks/useVoice';
 import { 
   ArrowLeft, RefreshCw, Award, Clock, 
   Zap, Trophy, X, Check, HelpCircle, BookOpen,
-  Shirt, Briefcase, Globe, GraduationCap, Music,
-  Utensils, Car, Home, Activity, Gamepad2, Bell,
-  Brain, Sparkles, Volume2, VolumeX, Mic, MicOff
+  Globe, GraduationCap, Music,
+  Activity, Brain, Sparkles, Volume2, VolumeX, Mic, MicOff
 } from 'lucide-react';
 
-// Fallback words in case API fails
-const FALLBACK_WORDS = {
-  clothes: ['JACKET', 'TROUSERS', 'SHIRT', 'DRESS', 'SKIRT', 'JEANS', 'SWEATER', 'COAT', 'BLOUSE', 'TIE', 'SUIT', 'SHORTS', 'SOCKS', 'SCARF', 'GLOVES', 'BOOTS', 'SANDALS', 'HAT', 'CAP', 'BELT'],
-  careers: ['TEACHER', 'DOCTOR', 'ENGINEER', 'NURSE', 'PILOT', 'ARCHITECT', 'CHEF', 'DENTIST', 'PHARMACIST', 'VETERINARIAN', 'JOURNALIST', 'LAWYER', 'SCIENTIST', 'PROFESSOR', 'ACCOUNTANT', 'PHOTOGRAPHER', 'MECHANIC', 'PLUMBER', 'ELECTRICIAN'],
-  countries: ['MALAWI', 'ZAMBIA', 'TANZANIA', 'MOZAMBIQUE', 'SOUTHAFRICA', 'KENYA', 'UGANDA', 'RWANDA', 'BOTSWANA', 'ZIMBABWE', 'NIGERIA', 'GHANA', 'EGYPT', 'ETHIOPIA', 'CAMEROON', 'ANGOLA', 'NAMIBIA', 'SENEGAL', 'MALI', 'SUDAN'],
-  classroom: ['TEACHER', 'STUDENT', 'DESK', 'CHAIR', 'BOARD', 'BOOK', 'PENCIL', 'PEN', 'RULER', 'ERASER', 'SHARPENER', 'BACKPACK', 'NOTEBOOK', 'CALCULATOR', 'DICTIONARY', 'ATLAS', 'GLOBE', 'MAP', 'CHALK', 'DOOR', 'WINDOW', 'CLOCK'],
-  music: ['GUITAR', 'PIANO', 'DRUMS', 'VIOLIN', 'FLUTE', 'TRUMPET', 'SAXOPHONE', 'KEYBOARD', 'HARP', 'CELLO', 'TROMBONE', 'CLARINET', 'BASS', 'UKULELE', 'ACCORDION', 'ORGAN', 'XYLOPHONE', 'MARACAS', 'TAMBOURINE'],
-  food: ['PIZZA', 'BURGER', 'PASTA', 'SUSHI', 'TACOS', 'SALAD', 'SOUP', 'SANDWICH', 'BREAD', 'CAKE', 'COOKIE', 'CHOCOLATE', 'VANILLA', 'STRAWBERRY', 'BANANA', 'APPLE', 'ORANGE', 'WATERMELON', 'GRAPES'],
-  vehicles: ['BICYCLE', 'MOTORCYCLE', 'CAR', 'BUS', 'TRUCK', 'TRAIN', 'PLANE', 'SHIP', 'BOAT', 'HELICOPTER', 'TAXI', 'AMBULANCE', 'TRACTOR', 'SUBWAY', 'FERRY', 'SAILBOAT', 'JET', 'ROCKET'],
-  home: ['KITCHEN', 'BATHROOM', 'BEDROOM', 'LIVINGROOM', 'DININGROOM', 'WINDOW', 'DOOR', 'FLOOR', 'CEILING', 'WALL', 'ROOF', 'GARDEN', 'GARAGE', 'ATTIC', 'BASEMENT', 'CLOSET', 'CABINET', 'FURNITURE'],
-  sports: ['FOOTBALL', 'BASKETBALL', 'TENNIS', 'SWIMMING', 'RUNNING', 'CYCLING', 'BOXING', 'WRESTLING', 'GYMNASTICS', 'DIVING', 'SKATING', 'SKIING', 'SURFING', 'SAILING', 'FENCING', 'JUDO'],
-  gaming: ['MINECRAFT', 'FORTNITE', 'ROBLOX', 'MARIO', 'ZELDA', 'SONIC', 'POKEMON', 'AMONGUS', 'FIFA', 'MADDEN', 'GTA', 'REDDEAD', 'CYBERPUNK', 'HALO', 'COD', 'BATTLEFIELD']
-};
-
-// Fallback hints for words (used when admin hasn't set a hint)
-const FALLBACK_HINTS = {
-  MALAWI: 'The Warm Heart of Africa',
-  ZAMBIA: 'Home to Victoria Falls',
-  TANZANIA: 'Home to Mount Kilimanjaro',
-  KENYA: 'Known for its wildlife safaris',
-  NIGERIA: 'The Giant of Africa',
-  GHANA: 'The Gold Coast of Africa',
-  EGYPT: 'Home to the ancient pyramids',
-  'SOUTH AFRICA': 'The Rainbow Nation',
-  TEACHER: 'Helps students learn and grow',
-  DOCTOR: 'Treats patients and saves lives',
-  ENGINEER: 'Builds and designs structures',
-  NURSE: 'Cares for patients in hospitals',
-  GUITAR: 'A stringed musical instrument with six strings',
-  PIANO: 'A keyboard instrument with black and white keys',
-  DRUMS: 'Percussion instrument played with sticks',
-  VIOLIN: 'String instrument played with a bow',
-  PIZZA: 'Italian dish with cheese and toppings',
-  BURGER: 'Served between two buns with a patty',
-  PASTA: 'Italian noodle dish',
-  SUSHI: 'Japanese rice dish with raw fish',
-  BICYCLE: 'Two-wheeled pedal-powered vehicle',
-  CAR: 'Four-wheeled motor vehicle for transportation',
-  KITCHEN: 'Room where food is prepared and cooked',
-  BATHROOM: 'Room for personal hygiene and bathing',
-  BEDROOM: 'Room where you sleep and rest',
-  FOOTBALL: 'Most popular sport played with a round ball',
-  BASKETBALL: 'Sport played with a hoop and ball',
-  TENNIS: 'Racket sport played on a court',
-  SWIMMING: 'Moving through water using limbs',
-  MINECRAFT: 'Popular block-building video game',
-  FORTNITE: 'Popular battle royale video game',
-  MARIO: 'Famous plumber video game character',
-  ZELDA: 'Adventure video game series',
-  HANGMAN: 'A classic word guessing game',
-  JACKET: 'A piece of clothing worn on the upper body for warmth',
-  TROUSERS: 'A garment worn on the legs, also called pants',
-  SHIRT: 'A garment worn on the upper torso',
-  DRESS: 'A one-piece garment for women',
-  SKIRT: 'A garment that hangs from the waist',
-  JEANS: 'Denim pants for casual wear',
-  SWEATER: 'A knitted garment for warmth',
-  SCARF: 'Worn around the neck for warmth or style',
-  GLOVES: 'Hand coverings for warmth or protection',
-  BOOTS: 'Footwear that covers the ankle and foot',
-  SANDALS: 'Open footwear with straps',
-  HAT: 'Headwear for fashion or protection from sun',
-  BELT: 'A strap worn around the waist to hold up pants'
+// Subject-based categories with icons and colors
+const categoryMetadata = {
+  'mathematics': { name: 'Mathematics', icon: <Brain size={18} />, color: '#6366f1', bgColor: 'bg-indigo-50' },
+  'english': { name: 'English', icon: <BookOpen size={18} />, color: '#3b82f6', bgColor: 'bg-blue-50' },
+  'primary-science': { name: 'Science', icon: <Activity size={18} />, color: '#8b5cf6', bgColor: 'bg-purple-50' },
+  'social-studies': { name: 'Social Studies', icon: <Globe size={18} />, color: '#10b981', bgColor: 'bg-emerald-50' },
+  'bible-knowledge': { name: 'Bible Knowledge', icon: <BookOpen size={18} />, color: '#f59e0b', bgColor: 'bg-amber-50' },
+  'arts-life-skills': { name: 'Arts & Life Skills', icon: <Music size={18} />, color: '#f97316', bgColor: 'bg-orange-50' },
+  'chichewa': { name: 'Chichewa', icon: <GraduationCap size={18} />, color: '#ef4444', bgColor: 'bg-red-50' }
 };
 
 const Hangman = () => {
   const navigate = useNavigate();
+  const { speak: speakVoice, stop: stopVoice } = useVoice();
   
-  // Categories with icons and colors
-  const categoryMetadata = {
-    clothes: { name: 'Clothes', icon: <Shirt size={20} />, color: 'from-pink-500 to-rose-500', bgColor: 'bg-pink-50' },
-    careers: { name: 'Careers', icon: <Briefcase size={20} />, color: 'from-blue-500 to-indigo-500', bgColor: 'bg-blue-50' },
-    countries: { name: 'Countries', icon: <Globe size={20} />, color: 'from-emerald-500 to-teal-500', bgColor: 'bg-emerald-50' },
-    classroom: { name: 'Classroom', icon: <GraduationCap size={20} />, color: 'from-purple-500 to-violet-500', bgColor: 'bg-purple-50' },
-    music: { name: 'Music', icon: <Music size={20} />, color: 'from-rose-500 to-pink-500', bgColor: 'bg-rose-50' },
-    food: { name: 'Food', icon: <Utensils size={20} />, color: 'from-orange-500 to-amber-500', bgColor: 'bg-orange-50' },
-    vehicles: { name: 'Vehicles', icon: <Car size={20} />, color: 'from-cyan-500 to-blue-500', bgColor: 'bg-cyan-50' },
-    home: { name: 'Home', icon: <Home size={20} />, color: 'from-teal-500 to-cyan-500', bgColor: 'bg-teal-50' },
-    sports: { name: 'Sports', icon: <Activity size={20} />, color: 'from-red-500 to-orange-500', bgColor: 'bg-red-50' },
-    gaming: { name: 'Gaming', icon: <Gamepad2 size={20} />, color: 'from-indigo-500 to-purple-500', bgColor: 'bg-indigo-50' }
-  };
-
   // Audio refs
   const audioContext = useRef(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('portal-theme');
+    return savedTheme ? savedTheme === 'dark' : false;
+  });
   const speechSynth = useRef(null);
 
   // Initialize Audio Context
@@ -203,39 +140,11 @@ const Hangman = () => {
     }
   };
 
-  // Voice feedback using Web Speech API
+  // Voice feedback — uses ElevenLabs cloned voice, falls back to browser TTS
   const speak = (message, options = {}) => {
     if (!voiceEnabled) return;
-    
-    try {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
-      
-      if (!speechSynth.current) {
-        speechSynth.current = window.speechSynthesis;
-      }
-      
-      const utterance = new SpeechSynthesisUtterance(message);
-      
-      utterance.rate = options.rate || 0.9;
-      utterance.pitch = options.pitch || 1.0;
-      utterance.volume = options.volume || 0.8;
-      utterance.lang = options.lang || 'en-US';
-      
-      const voices = speechSynth.current.getVoices();
-      const preferredVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || 
-                            voices.find(v => v.lang.startsWith('en')) || 
-                            voices[0];
-      
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-      }
-      
-      speechSynth.current.speak(utterance);
-    } catch (error) {
-      console.log('Voice feedback not available');
-    }
+    // Use the cloned voice hook (which falls back to browser automatically)
+    speakVoice(message);
   };
 
   // Load voices
@@ -247,6 +156,12 @@ const Hangman = () => {
       };
     }
   }, []);
+
+  // Theme toggle effect
+  useEffect(() => {
+    localStorage.setItem('portal-theme', isDarkMode ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', isDarkMode);
+  }, [isDarkMode]);
 
   // Toggle sound
   const toggleSound = () => {
@@ -262,6 +177,11 @@ const Hangman = () => {
     if (!voiceEnabled) {
       setTimeout(() => speak('Voice feedback enabled'), 100);
     }
+  };
+
+  // Toggle theme
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
   };
 
   // Game State
@@ -288,13 +208,13 @@ const Hangman = () => {
   const [categoryWords, setCategoryWords] = useState([]);
   const [trackingAttempt, setTrackingAttempt] = useState(false);
   const [error, setError] = useState(null);
-  const [usingFallback, setUsingFallback] = useState(false);
   const [lifelineUsed, setLifelineUsed] = useState(false);
   const [removedLetters, setRemovedLetters] = useState([]);
   const [currentHint, setCurrentHint] = useState('');
 
   const maxAttempts = 6;
-  const POINTS_PER_WORD = 2;
+
+  // Points are dynamic based on word difficulty (2-5 points)
 
   // Fetch categories and words
   useEffect(() => {
@@ -305,82 +225,108 @@ const Hangman = () => {
     try {
       setLoading(true);
       setError(null);
-      setUsingFallback(false);
       const token = localStorage.getItem('token');
       
       if (!token) {
-        loadFallbackWords();
+        toast.error('Please login to play', {
+          duration: 3000,
+          position: 'top-center',
+        });
+        setLoading(false);
         return;
       }
 
       try {
-        const response = await axios.get(`${API_URL}/api/admin/hangman/words`, {
+        // Fetch subjects (categories) for hangman
+        const subjectsResponse = await axios.get(`${API_URL}/api/hangman/subjects`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        if (response.data.success && response.data.words && response.data.words.length > 0) {
-          const allWords = response.data.words;
-          setWords(allWords);
-          const uniqueCategories = [...new Set(allWords.map(w => w.category))];
-          setCategories(uniqueCategories);
-          toast.success(`Loaded ${allWords.length} words from database!`);
+        if (subjectsResponse.data.success && subjectsResponse.data.subjects) {
+          const subjects = subjectsResponse.data.subjects;
+          setCategories(subjects.map(s => s.id));
+        }
+
+        // Fetch all existing words
+        const response = await axios.get(`${API_URL}/api/hangman/words`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.data.success && response.data.words) {
+          setWords(response.data.words);
         } else {
-          loadFallbackWords();
-          toast.info('Using default word list. Admin can add more words.');
+          setWords([]);
         }
       } catch (apiError) {
-        console.error('API error, using fallback words:', apiError);
-        loadFallbackWords();
-        toast.info('Using default word list. Admin can add more words.');
+        console.error('API error:', apiError);
+        // Use default subjects even if API fails
+        setCategories(['mathematics', 'english', 'primary-science', 'social-studies', 'bible-knowledge', 'arts-life-skills', 'chichewa']);
+        setWords([]);
       }
     } catch (error) {
       console.error('Error fetching words:', error);
-      loadFallbackWords();
+      setCategories(['mathematics', 'english', 'primary-science', 'social-studies', 'bible-knowledge', 'arts-life-skills', 'chichewa']);
+      setWords([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadFallbackWords = () => {
-    setUsingFallback(true);
-    const fallbackWordsList = [];
-    const categoriesList = [];
-    
-    Object.entries(FALLBACK_WORDS).forEach(([category, wordList]) => {
-      categoriesList.push(category);
-      wordList.forEach(word => {
-        const hint = FALLBACK_HINTS[word] || `A word from ${categoryMetadata[category]?.name || category}`;
-        fallbackWordsList.push({
-          id: `fallback-${category}-${word}`,
-          word: word,
-          category: category,
-          hint: hint,
-          difficulty: 'medium',
-          points: POINTS_PER_WORD,
-          image_url: null,
-          is_active: true
-        });
-      });
-    });
-    
-    setWords(fallbackWordsList);
-    setCategories(categoriesList);
-    setError(null);
   };
 
   const getWordHint = (wordData) => {
     if (wordData?.hint && wordData.hint.trim().length > 0) {
       return wordData.hint;
     }
-    const fallbackHint = FALLBACK_HINTS[wordData?.word] || `Word with ${wordData?.word?.length || 'unknown'} letters`;
-    return fallbackHint;
+    return `Word with ${wordData?.word?.length || 'unknown'} letters`;
   };
 
-  const initializeCategory = (categoryKey) => {
+  const initializeCategory = async (categoryKey) => {
+    const token = localStorage.getItem('token');
+    
+    // First try to generate/fetch words for this subject dynamically
+    try {
+      const generateResponse = await axios.post(`${API_URL}/api/hangman/generate-words`, 
+        { subject: categoryKey, count: 15 },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (generateResponse.data.success && generateResponse.data.words && generateResponse.data.words.length > 0) {
+        const subjectWords = generateResponse.data.words;
+        setWords(prev => {
+          // Merge new words with existing, avoiding duplicates
+          const existingIds = new Set(prev.map(w => w.id));
+          const newWords = subjectWords.filter(w => !existingIds.has(w.id));
+          return [...prev, ...newWords];
+        });
+        
+        setSelectedCategory(categoryKey);
+        setCategoryWords(subjectWords);
+        setUsedWords([]);
+        setGuessedLetters([]);
+        setIncorrectGuesses([]);
+        setWrongAttempts(0);
+        setGameOver(false);
+        setGameWon(false);
+        setHintUsed(false);
+        setShowHint(false);
+        setTimeElapsed(0);
+        setTimerActive(false);
+        setGamesPlayed(prev => prev + 1);
+        setLifelineUsed(false);
+        setRemovedLetters([]);
+        setCurrentHint('');
+
+        selectNewWord(subjectWords, []);
+        return;
+      }
+    } catch (genError) {
+      console.error('Error generating words for subject:', genError);
+    }
+
+    // Fallback: use any existing words for this category
     const categoryWords = words.filter(w => w.category === categoryKey);
     
     if (categoryWords.length === 0) {
-      toast.error('No words available in this category');
+      toast.error('No words available for this subject. Please try again.');
       return;
     }
 
@@ -470,7 +416,7 @@ const Hangman = () => {
       setTimerActive(false);
       setStreak(prev => prev + 1);
       
-      const pointsEarned = POINTS_PER_WORD;
+      const pointsEarned = currentWordData?.points || 2;
       setScore(prev => prev + pointsEarned);
       
       trackWordAttempt(currentWordData?.id, true);
@@ -479,14 +425,17 @@ const Hangman = () => {
       const congratulationsMessages = [
         'Congratulations! You solved the word!',
         `Excellent! You guessed ${currentWord} correctly!`,
-        'Well done! You earned 2 points!',
+        `Well done! You earned ${pointsEarned} points!`,
         `Fantastic! You got ${currentWord}!`,
         'Outstanding! You cracked the code!'
       ];
       const randomMessage = congratulationsMessages[Math.floor(Math.random() * congratulationsMessages.length)];
       speak(randomMessage, { rate: 0.85, pitch: 1.1 });
       
-      toast.success(`🎉 You got it! +${pointsEarned} points!`);
+      toast.success(`🎉 You got it! +${pointsEarned} points!`, {
+        duration: 3000,
+        position: 'top-center',
+      });
     }
   }, [displayWord, gameOver, currentWordData]);
 
@@ -500,7 +449,7 @@ const Hangman = () => {
   }, [gameOver, currentWordData]);
 
   const trackWordAttempt = async (wordId, correct) => {
-    if (!wordId || trackingAttempt || usingFallback) return;
+    if (!wordId || trackingAttempt) return;
     
     try {
       setTrackingAttempt(true);
@@ -523,7 +472,10 @@ const Hangman = () => {
   const handleKeyPress = useCallback((letter) => {
     if (gameOver || gameWon) return;
     if (guessedLetters.includes(letter) || incorrectGuesses.includes(letter) || removedLetters.includes(letter)) {
-      toast.error('You already guessed that letter!');
+      toast.error('You already guessed that letter!', {
+        duration: 2000,
+        position: 'top-center',
+      });
       return;
     }
 
@@ -553,7 +505,10 @@ const Hangman = () => {
         setGameOver(true);
         setTimerActive(false);
         setStreak(0);
-        toast.error(`😢 Game Over! The word was: ${currentWord}`);
+        toast.error(`😢 Game Over! The word was: ${currentWord}`, {
+          duration: 4000,
+          position: 'top-center',
+        });
       }
     }
   }, [currentWord, displayWord, gameOver, gameWon, guessedLetters, incorrectGuesses, wrongAttempts, removedLetters]);
@@ -572,7 +527,10 @@ const Hangman = () => {
 
   const getHint = () => {
     if (hintUsed) {
-      toast.info('Hint already used for this word!');
+      toast('Hint already used for this word!', {
+        duration: 2000,
+        position: 'top-center',
+      });
       return;
     }
     if (currentWord && currentHint) {
@@ -580,14 +538,20 @@ const Hangman = () => {
       setHintUsed(true);
       playSound('hint');
       speak(`Here is a hint: ${currentHint}`, { rate: 0.8, pitch: 1.0 });
-      toast.success(`💡 ${currentHint}`);
+      toast.success(`💡 ${currentHint}`, {
+        duration: 4000,
+        position: 'top-center',
+      });
     } else if (currentWord) {
       const fallbackHint = `The word starts with "${currentWord[0]}" and has ${currentWord.length} letters`;
       setShowHint(true);
       setHintUsed(true);
       playSound('hint');
       speak(fallbackHint, { rate: 0.8, pitch: 1.0 });
-      toast.success(`💡 ${fallbackHint}`);
+      toast.success(`💡 ${fallbackHint}`, {
+        duration: 4000,
+        position: 'top-center',
+      });
     }
   };
 
@@ -596,7 +560,10 @@ const Hangman = () => {
       setStreak(0);
       playSound('click');
       speak(`Skipping the word. The word was ${currentWord}`, { rate: 0.8, pitch: 0.9 });
-      toast.info(`⏭️ Skipped! The word was: ${currentWord}`);
+      toast(`⏭️ Skipped! The word was: ${currentWord}`, {
+        duration: 3000,
+        position: 'top-center',
+      });
       selectNewWord(categoryWords, usedWords);
     }
   };
@@ -627,7 +594,7 @@ const Hangman = () => {
     const parts = wrongAttempts;
     
     return (
-      <svg viewBox="0 0 200 220" className="w-full h-full max-h-[28vh] drop-shadow-md">
+      <svg viewBox="0 0 200 220" className="w-full h-full drop-shadow-md">
         <style>{`
           @keyframes ropeSwing {
             0% { transform: rotate(-2deg); }
@@ -657,13 +624,11 @@ const Hangman = () => {
           }
         `}</style>
 
-        {/* Gallows structure */}
         <path d="M 60 200 L 160 200" stroke="#78350f" strokeWidth="8" strokeLinecap="round" />
         <path d="M 140 200 L 140 30" stroke="#78350f" strokeWidth="8" strokeLinecap="round" />
         <path d="M 140 30 L 90 30" stroke="#78350f" strokeWidth="8" strokeLinecap="round" />
         <path d="M 140 60 L 115 30" stroke="#78350f" strokeWidth="4" strokeLinecap="round" />
         
-        {/* Animated Rope Assembly */}
         <g className="rope-swinger">
           <path d="M 90 30 L 90 56" stroke="#451a03" strokeWidth="3" strokeLinecap="round" strokeDasharray="1.5,1.5" />
           
@@ -675,9 +640,7 @@ const Hangman = () => {
             <path d="M 80 14 A 10 6 0 0 0 100 14" fill="none" stroke="#451a03" strokeWidth="3" />
           </g>
 
-          {/* Character Figure Group */}
           <g className="body-bouncer">
-            {/* Head - Black African Skin Tone */}
             {parts > 0 && (
               <g>
                 <circle cx="90" cy="68" r="14" fill="#5C3A21" stroke="#2B1A0F" strokeWidth="3" />
@@ -701,7 +664,6 @@ const Hangman = () => {
               </g>
             )}
 
-            {/* Torso - Teal */}
             {parts > 1 && (
               <g>
                 <rect x="74" y="82" width="32" height="40" rx="6" fill="#008080" stroke="#006666" strokeWidth="3" />
@@ -709,7 +671,6 @@ const Hangman = () => {
               </g>
             )}
 
-            {/* Left Arm - Teal */}
             {parts > 2 && (
               <g>
                 <path d="M 72 86 L 56 120" stroke="#008080" strokeWidth="8" strokeLinecap="round" />
@@ -717,7 +678,6 @@ const Hangman = () => {
               </g>
             )}
 
-            {/* Right Arm - Teal */}
             {parts > 3 && (
               <g>
                 <path d="M 108 86 L 124 120" stroke="#008080" strokeWidth="8" strokeLinecap="round" />
@@ -725,7 +685,6 @@ const Hangman = () => {
               </g>
             )}
 
-            {/* Left Leg - Teal */}
             {parts > 4 && (
               <g>
                 <path d="M 80 122 L 70 165" stroke="#008080" strokeWidth="8" strokeLinecap="round" />
@@ -733,7 +692,6 @@ const Hangman = () => {
               </g>
             )}
 
-            {/* Right Leg - Teal */}
             {parts > 5 && (
               <g>
                 <path d="M 100 122 L 110 165" stroke="#008080" strokeWidth="8" strokeLinecap="round" />
@@ -748,90 +706,155 @@ const Hangman = () => {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen bg-teal-50 flex items-center justify-center overflow-hidden font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <div className="absolute inset-0 bg-teal-500 rounded-full blur-xl opacity-30 animate-pulse"></div>
-            <Brain className="text-teal-600 animate-bounce relative z-10" size={40} />
-          </div>
-          <p className="text-teal-600 text-sm font-medium font-sans">Loading hangman words...</p>
+      <div className={`min-h-screen flex items-center justify-center ${
+        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+      }`}>
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+            Loading hangman words...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (categories.length === 0 && !loading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${
+        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+      }`}>
+        <div className="text-center max-w-md px-4">
+          <div className="text-6xl mb-4">📝</div>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#19475F]'}`}>
+            No Subjects Available
+          </h2>
+          <p className={`mt-2 ${isDarkMode ? 'text-slate-400' : 'text-[#19475F]/70'}`}>
+            Unable to load subjects. Please check your connection and try again.
+          </p>
+          <button
+            onClick={() => navigate('/learner-dashboard')}
+            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded-lg font-bold hover:bg-teal-600 transition shadow-md"
+          >
+            Go Back to Dashboard
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen w-screen bg-teal-50 flex flex-col font-sans antialiased overflow-hidden">
+    <div className={`learner-themed min-h-screen w-full max-w-full transition-all duration-500 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
+        : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+    }`}>
       <Toaster position="top-center" />
       
-      {/* Header Segment */}
-      <div className="bg-teal-700 shadow-md border-b-2 border-teal-500 flex-none">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 sm:py-3">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2.5">
-              <button 
-                onClick={() => navigate('/learner-dashboard')}
-                className="p-1.5 hover:bg-teal-600 rounded-xl transition-all text-white"
-                title="Back to Dashboard"
-              >
-                <ArrowLeft size={22} />
-              </button>
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-teal-600 rounded-xl">
-                  <Brain size={20} className="text-white" />
-                </div>
+      {/* Header - AdminRewards Style */}
+      <header className="shadow-2xl border-b border-black/10 sticky top-0 z-50" style={{ backgroundColor: 'var(--learner-header-bg, #19475F)' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/logo.png" 
+                  alt="Logo" 
+                  className="w-12 h-12 object-contain drop-shadow-lg"
+                  loading="eager"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/48x48?text=LE';
+                  }}
+                />
                 <div>
-                  <h1 className="text-lg font-bold text-white leading-none font-sans tracking-wide">Hangman</h1>
-                  <p className="text-[10px] text-teal-200 font-medium mt-0.5 font-sans">Word Challenge</p>
+                  <h1 className="text-xl font-black tracking-tighter text-white" style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
+                    LearnEarn
+                  </h1>
+                  <p className="text-[10px] text-white/80 font-semibold uppercase tracking-wider">Hangman</p>
                 </div>
               </div>
             </div>
 
-            {/* Stats Row with Sound & Voice Toggle */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-4">
               <button
                 onClick={toggleVoice}
-                className="p-1.5 hover:bg-teal-600 rounded-xl transition-all text-white"
-                title={voiceEnabled ? 'Mute Voice' : 'Unmute Voice'}
+                className={`p-2 rounded-lg transition-all ${
+                  voiceEnabled 
+                    ? 'bg-teal-500 text-white shadow-lg' 
+                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
+                title={voiceEnabled ? 'Voice On' : 'Voice Off'}
               >
                 {voiceEnabled ? <Mic size={18} /> : <MicOff size={18} />}
               </button>
               <button
                 onClick={toggleSound}
-                className="p-1.5 hover:bg-teal-600 rounded-xl transition-all text-white"
-                title={soundEnabled ? 'Mute Sound' : 'Unmute Sound'}
+                className={`p-2 rounded-lg transition-all ${
+                  soundEnabled 
+                    ? 'bg-teal-500 text-white shadow-lg' 
+                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
+                title={soundEnabled ? 'Sound On' : 'Sound Off'}
               >
                 {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
               </button>
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-teal-600 rounded-full">
-                <Trophy size={14} className="text-yellow-300" />
-                <span className="text-white font-bold text-xs font-sans">{score}</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-teal-600 rounded-full">
-                <Zap size={14} className="text-teal-200" />
-                <span className="text-white font-bold text-xs font-sans">{streak}🔥</span>
-              </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-teal-600 rounded-full">
-                <Clock size={14} className="text-teal-200" />
-                <span className="text-white font-bold text-xs font-sans">{formatTime(timeElapsed)}</span>
-              </div>
+              <button
+                onClick={toggleTheme}
+                className={`p-2 rounded-lg transition-all ${
+                  isDarkMode 
+                    ? 'bg-white/20 text-yellow-400' 
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+                title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              >
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              <button
+                onClick={() => navigate('/learner-dashboard')}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-500 text-white hover:bg-teal-600 transition shadow-md"
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Bar - AdminRewards Style */}
+          <div className="grid grid-cols-4 gap-2 py-2 border-t border-white/20">
+            <div className="text-center">
+              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Score</p>
+              <p className="text-sm font-bold text-white">{score}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Streak</p>
+              <p className="text-sm font-bold text-white">{streak}🔥</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Attempts</p>
+              <p className="text-sm font-bold text-white">{wrongAttempts}/{maxAttempts}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Time</p>
+              <p className="text-sm font-bold text-white">{formatTime(timeElapsed)}</p>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Body Grid Viewport Sizing */}
-      <div className="flex-1 overflow-hidden p-3 md:p-4 max-w-4xl mx-auto w-full flex flex-col justify-between items-center space-y-2">
-        
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {!selectedCategory ? (
-          <div className="w-full h-full overflow-y-auto py-4 space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-teal-800 font-sans tracking-wide">Choose a Category</h2>
-              <p className="text-teal-600 text-sm mt-1 font-sans">Select a topic to start playing</p>
-              <p className="text-xs text-teal-500 mt-0.5 font-sans">Earn <span className="font-bold">2 points</span> for each word you guess correctly!</p>
-            </div>
+          <div className="text-center">
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+              Choose a Subject
+            </h2>
+            <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+              Select a subject to start playing
+            </p>
+            <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-[#19475B]/50'}`}>
+              Earn <span className="font-bold text-teal-500">2-5 points</span> for each word!
+            </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
               {categories.map((categoryKey) => {
                 const meta = categoryMetadata[categoryKey];
                 const wordCount = getWordCount(categoryKey);
@@ -842,142 +865,175 @@ const Hangman = () => {
                       initializeCategory(categoryKey);
                       playSound('click');
                     }}
-                    className="p-4 rounded-2xl bg-white shadow-sm hover:shadow-md transition-all border border-teal-200 flex flex-col items-center hover:border-teal-400"
+                    className={`p-4 rounded-xl transition-all duration-300 border-2 hover:shadow-lg hover:scale-[1.02] ${
+                      isDarkMode 
+                        ? 'bg-slate-800/50 border-slate-700 hover:border-teal-400/50 hover:bg-slate-700/50' 
+                        : 'bg-white border-gray-200 hover:border-teal-500 hover:shadow-md'
+                    }`}
                   >
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${meta?.color || 'from-gray-400 to-gray-500'} flex items-center justify-center text-white mb-2`}>
+                    <div 
+                      className="w-12 h-12 rounded-lg flex items-center justify-center text-white mb-2 mx-auto"
+                      style={{ backgroundColor: meta?.color || '#6b7280' }}
+                    >
                       {meta?.icon || <BookOpen size={20} />}
                     </div>
-                    <h3 className="font-bold text-teal-800 text-sm text-center font-sans">{meta?.name || categoryKey}</h3>
-                    <p className="text-[11px] text-teal-500 mt-0.5 font-sans">{wordCount} words</p>
+                    <h3 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+                      {meta?.name || categoryKey}
+                    </h3>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/50'}`}>
+                      {wordCount > 0 ? `${wordCount} words` : 'Dynamic'}
+                    </p>
                   </button>
                 );
               })}
             </div>
           </div>
         ) : (
-          <>
-            {/* Word Slots Row */}
-            <div className="w-full flex-none flex flex-wrap items-center justify-center gap-x-3 gap-y-1 py-2 px-4 bg-white rounded-xl shadow-sm border border-teal-200">
-              {displayWord.map((letter, index) => {
-                const revealed = guessedLetters.includes(letter) || gameOver;
-                return (
-                  <div key={index} className="flex flex-col items-center w-5 sm:w-7">
-                    <span className={`text-lg sm:text-2xl font-bold uppercase transition-all tracking-wider ${revealed ? 'text-teal-800' : 'opacity-0'} font-sans`}>
-                      {letter}
-                    </span>
-                    <div className={`w-full h-[2.5px] mt-0.5 ${revealed && gameOver && !guessedLetters.includes(letter) ? 'bg-red-500' : 'bg-teal-500'}`}></div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Render 3D Canvas Box */}
-            <div className="w-full flex-1 min-h-[140px] flex items-center justify-center p-3 bg-white rounded-2xl border border-teal-200 shadow-inner max-w-md relative">
-              {renderHangmanSVG()}
-
-              {/* Status Alert Overlay Modal */}
-              {(gameOver || gameWon) && (
-                <div className="absolute inset-0 bg-white/95 rounded-2xl border border-teal-300 p-4 flex flex-col items-center justify-center space-y-3 text-center animate-fade-in z-20">
-                  <h3 className={`text-xl font-bold font-sans uppercase tracking-wider ${gameWon ? 'text-teal-600' : 'text-red-600'}`}>
-                    {gameWon ? '🎉 Level Cleared!' : '💥 Game Over'}
-                  </h3>
-                  <p className="text-xs text-gray-600 max-w-[260px] font-sans">
-                    {gameWon 
-                      ? `Excellent deductions! You earned +${POINTS_PER_WORD} points!` 
-                      : `The correct word was: ${currentWord}`}
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={resetGame}
-                      className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-[11px] font-bold font-sans uppercase transition-all"
-                    >
-                      Replay
-                    </button>
-                    <button
-                      onClick={() => {
-                        selectNewWord(categoryWords, usedWords);
-                        playSound('click');
-                      }}
-                      className="px-3 py-1.5 bg-teal-600 text-white hover:bg-teal-700 rounded-lg text-[11px] font-bold font-sans uppercase transition-all shadow-sm"
-                    >
-                      Next Word
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Hint & Strategic Lifeline Panel */}
-            <div className="w-full flex-none bg-white rounded-xl p-2.5 border border-teal-200 shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-left overflow-hidden flex-1">
-                  <span className="font-sans font-bold uppercase text-[10px] tracking-wider text-teal-600 block flex items-center gap-1">
-                    💡 Clue:
-                    {currentHint && !showHint && (
-                      <span className="text-[8px] text-purple-500 font-normal flex items-center gap-0.5">
-                        <Sparkles size={10} />
-                        (click hint button)
-                      </span>
-                    )}
-                  </span>
-                  <p className="text-xs sm:text-sm font-semibold text-teal-800 truncate font-sans">
-                    {showHint ? currentHint : 'Click "Hint" to reveal'}
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleRemoveFourLetters}
-                  disabled={lifelineUsed || gameOver || gameWon}
-                  className={`px-3 py-1.5 bg-teal-600 text-white font-bold font-sans text-[11px] uppercase tracking-wide rounded-xl transition-all shadow-sm hover:bg-teal-700 whitespace-nowrap ${
-                    (lifelineUsed || gameOver || gameWon) && 'opacity-40 cursor-not-allowed'
-                  }`}
-                >
-                  {lifelineUsed ? '✓ Used' : '🎯 Remove 4'}
-                </button>
+          <div className="space-y-3">
+            {/* Word Display - Boxes with teal borders */}
+            <div className="text-center py-2">
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {displayWord.map((letter, index) => {
+                  const revealed = guessedLetters.includes(letter) || gameOver;
+                  return (
+                    <div key={index} className="flex flex-col items-center">
+                      <div className={`w-10 h-12 sm:w-12 sm:h-14 flex items-center justify-center border-2 rounded-md ${
+                        revealed && !gameOver
+                          ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+                          : gameOver && !guessedLetters.includes(letter)
+                          ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                          : 'border-teal-500 bg-white dark:bg-slate-800'
+                      } transition-all duration-300`}>
+                        <span className={`text-xl sm:text-2xl font-bold uppercase ${
+                          revealed ? 'text-[#19475F] dark:text-white' : 'text-transparent'
+                        }`}>
+                          {letter}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Integrated Alphanumeric Virtual Keyboard */}
-            <div className="w-full flex-none bg-white rounded-xl shadow-md border border-teal-200 p-2.5 max-w-xl space-y-1.5">
-              {keyboardRows.map((row, rowIndex) => (
-                <div key={rowIndex} className="flex justify-center items-center gap-1">
-                  {row.map((char) => {
-                    const isGuessed = guessedLetters.includes(char);
-                    const isIncorrect = incorrectGuesses.includes(char);
-                    const isEliminated = removedLetters.includes(char);
-                    const isCorrect = isGuessed && currentWord.includes(char);
-
-                    let btnStyle = "bg-teal-50 text-teal-700 border-b-2 border-teal-200 hover:bg-teal-100";
-                    if (isCorrect) btnStyle = "bg-teal-600 text-white border-b-2 border-teal-700 font-bold";
-                    if (isIncorrect) btnStyle = "bg-red-100 text-red-600 border-b-2 border-red-300 line-through opacity-70";
-                    if (isEliminated) btnStyle = "bg-gray-100 text-gray-400 cursor-not-allowed opacity-40 border-none pointer-events-none";
-
-                    return (
-                      <button
-                        key={char}
-                        onClick={() => {
-                          handleKeyPress(char);
-                          if (!isGuessed && !isIncorrect && !isEliminated && !gameOver && !gameWon) {
-                            playSound('click');
-                          }
-                        }}
-                        disabled={isGuessed || isIncorrect || isEliminated || gameOver || gameWon}
-                        className={`w-7 h-9 sm:w-9 sm:h-11 rounded-md flex items-center justify-center font-sans font-bold text-xs sm:text-sm shadow-xs transition-all uppercase ${btnStyle}`}
-                      >
-                        {char}
-                      </button>
-                    );
-                  })}
+            {/* Double Column: Hangman (Left) + Keyboard (Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Left Column - Hangman SVG */}
+              <div className="flex items-center justify-center relative" style={{ minHeight: '220px' }}>
+                <div className="w-full max-w-xs">
+                  {renderHangmanSVG()}
                 </div>
-              ))}
+
+                {/* Game Over / Win Overlay */}
+                {(gameOver || gameWon) && (
+                  <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center ${
+                    isDarkMode ? 'bg-slate-900/95' : 'bg-white/95'
+                  } p-4 text-center`}>
+                    <h3 className={`text-2xl font-bold ${gameWon ? 'text-teal-500' : 'text-red-500'}`}>
+                      {gameWon ? '🎉 Level Cleared!' : '💥 Game Over'}
+                    </h3>
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+                      {gameWon 
+                        ? `Excellent! You earned +${currentWordData?.points || 2} points!` 
+                        : `The word was: ${currentWord}`}
+                    </p>
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={resetGame}
+                        className="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-gray-300 dark:hover:bg-slate-600 transition"
+                      >
+                        Replay
+                      </button>
+                      <button
+                        onClick={() => {
+                          selectNewWord(categoryWords, usedWords);
+                          playSound('click');
+                        }}
+                        className="px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-bold hover:bg-teal-600 transition shadow-md"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column - Keyboard and Hint Panel (Same Width, Right Aligned) */}
+              <div className="flex flex-col space-y-3">
+                {/* Keyboard - Larger Size with rounded top corners only */}
+                <div className={`border-2 border-teal-500 p-3 w-full rounded-t-xl ${
+                  isDarkMode 
+                    ? 'bg-slate-800/50 border-teal-400' 
+                    : 'bg-white shadow-sm border-teal-500'
+                }`}>
+                  {keyboardRows.map((row, rowIndex) => (
+                    <div key={rowIndex} className="flex justify-center items-center gap-1 mb-1 last:mb-0">
+                      {row.map((char) => {
+                        const isGuessed = guessedLetters.includes(char);
+                        const isIncorrect = incorrectGuesses.includes(char);
+                        const isEliminated = removedLetters.includes(char);
+                        const isCorrect = isGuessed && currentWord.includes(char);
+
+                        let btnStyle = "bg-teal-50 text-[#19475F] dark:bg-slate-700 dark:text-white border-b border-[#19475F]/20 dark:border-slate-600 hover:bg-teal-100 dark:hover:bg-slate-600";
+                        if (isCorrect) btnStyle = "bg-teal-500 text-white border-b border-teal-600 font-bold";
+                        if (isIncorrect) btnStyle = "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 border-b border-red-300 line-through opacity-70";
+                        if (isEliminated) btnStyle = "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed opacity-40 border-none pointer-events-none";
+
+                        return (
+                          <button
+                            key={char}
+                            onClick={() => {
+                              handleKeyPress(char);
+                              if (!isGuessed && !isIncorrect && !isEliminated && !gameOver && !gameWon) {
+                                playSound('click');
+                              }
+                            }}
+                            disabled={isGuessed || isIncorrect || isEliminated || gameOver || gameWon}
+                            className={`flex-1 min-w-[32px] max-w-[52px] h-11 sm:h-14 rounded-lg flex items-center justify-center font-bold text-sm sm:text-base shadow-sm transition-all uppercase ${btnStyle}`}
+                          >
+                            {char}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Hint Panel - Teal Outline, No Radius */}
+                <div className={`border-2 border-teal-500 w-full flex items-center justify-between gap-3 p-2.5 ${
+                  isDarkMode 
+                    ? 'bg-slate-800/50 border-teal-400' 
+                    : 'bg-white border-teal-500'
+                }`}>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-[10px] font-semibold ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+                      💡 Clue:
+                    </p>
+                    <p className={`text-xs sm:text-sm font-medium truncate ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+                      {showHint ? currentHint : 'Click "Hint" to reveal'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRemoveFourLetters}
+                    disabled={lifelineUsed || gameOver || gameWon}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                      (lifelineUsed || gameOver || gameWon)
+                        ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
+                        : 'bg-purple-500 text-white hover:bg-purple-600 shadow-md'
+                    }`}
+                  >
+                    {lifelineUsed ? '✓ Used' : '🎯 Remove 4'}
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Action Control Bar */}
-            <div className="w-full flex-none flex justify-center gap-2 pb-1">
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-2">
               <button
                 onClick={getHint}
                 disabled={hintUsed || gameOver || gameWon}
-                className="px-3.5 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs rounded-xl font-bold hover:from-purple-600 hover:to-indigo-600 transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm font-sans"
+                className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg font-bold hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md"
               >
                 <Sparkles size={14} />
                 {hintUsed ? 'Hint Used' : 'Hint'}
@@ -986,7 +1042,7 @@ const Hangman = () => {
               <button
                 onClick={skipWord}
                 disabled={gameOver || gameWon}
-                className="px-3.5 py-2 bg-cyan-600 text-white text-xs rounded-xl font-bold hover:bg-cyan-700 transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-sm font-sans"
+                className="px-3 py-1.5 bg-cyan-600 text-white text-xs rounded-lg font-bold hover:bg-cyan-700 transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md"
               >
                 <RefreshCw size={14} />
                 Skip
@@ -998,15 +1054,32 @@ const Hangman = () => {
                   setGamesPlayed(0);
                   playSound('click');
                 }}
-                className="px-3.5 py-2 bg-purple-600 text-white text-xs rounded-xl font-bold hover:bg-purple-700 transition-all flex items-center gap-1.5 shadow-sm font-sans"
+                className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg font-bold hover:bg-purple-700 transition-all flex items-center gap-1.5 shadow-md"
               >
                 <BookOpen size={14} />
-                Category
+                Subjects
               </button>
             </div>
-          </>
+          </div>
         )}
-      </div>
+      </main>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out forwards;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 };
