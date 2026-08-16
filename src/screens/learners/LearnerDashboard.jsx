@@ -1002,8 +1002,8 @@ const LearnerDashboard = () => {
         )}
       </div>
 
-      {/* Quiz Cards Grid - 4 columns on mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-6xl mx-auto">
+      {/* Quiz Cards Grid - 2x2 on both computer and mobile */}
+      <div className="grid grid-cols-2 gap-4 max-w-4xl mx-auto">
         {quizGames.map((game) => {
           const isHovered = hoveredCardId === game.id;
           
@@ -1011,13 +1011,13 @@ const LearnerDashboard = () => {
             <div
               key={game.id}
               className="relative cursor-pointer transition-all duration-300"
-              style={{ height: '160px' }}
+              style={{ height: '220px' }}
               onMouseEnter={() => setHoveredCardId(game.id)}
               onMouseLeave={() => setHoveredCardId(null)}
               onClick={() => handleCardClick(game.path, game.params)}
             >
               <div 
-                className={`w-full h-full rounded-2xl p-3 flex flex-col border-2 shadow-lg overflow-hidden transition-all duration-300 ${isHovered ? 'shadow-xl scale-105' : 'shadow-lg'}`}
+                className={`w-full h-full rounded-2xl p-4 flex flex-col border-2 shadow-lg overflow-hidden transition-all duration-300 ${isHovered ? 'shadow-xl scale-105' : 'shadow-lg'}`}
                 style={{
                   backgroundColor: isHovered ? '#0a4f4b' : '#075351',
                   borderColor: isHovered ? '#0f6b66' : '#0a4f4b',
@@ -1028,27 +1028,27 @@ const LearnerDashboard = () => {
                   <img 
                     src={game.image}
                     alt={game.title}
-                    className={`w-auto h-full max-h-[90px] object-contain transition-all duration-300 ${
+                    className={`w-auto h-full max-h-[140px] object-contain transition-all duration-300 ${
                       isHovered ? 'scale-110' : 'hover:scale-105'
                     } drop-shadow-lg`}
                   />
                 </div>
-                <div className="flex flex-wrap justify-between items-center mt-1 flex-shrink-0 transition-all duration-300 gap-0.5">
-                  <div className={`rounded-full px-1.5 py-0.5 inline-block transition-all duration-300 ${
+                <div className="flex flex-wrap justify-between items-center mt-1 flex-shrink-0 transition-all duration-300 gap-1">
+                  <div className={`rounded-full px-2 py-0.5 inline-block transition-all duration-300 ${
                     isHovered ? 'bg-white/30' : 'bg-white/20'
                   }`}>
-                    <span className={`text-white text-[7px] sm:text-[9px] font-semibold transition-all duration-300 ${
+                    <span className={`text-white text-[8px] sm:text-[10px] font-semibold transition-all duration-300 ${
                       isHovered ? 'text-white' : ''
                     }`}>
                       {isSecondaryStudent ? 'Browse' : 'Play'}
                     </span>
                   </div>
-                  <div className={`text-white font-black text-[10px] sm:text-xs tracking-wider transition-all duration-300 ${
+                  <div className={`text-white font-black text-xs sm:text-sm tracking-wider transition-all duration-300 ${
                     isHovered ? 'text-white' : ''
                   }`}>
                     {game.title}
                   </div>
-                  <div className={`text-yellow-300 font-bold text-[10px] sm:text-xs transition-all duration-300 ${
+                  <div className={`text-yellow-300 font-bold text-xs sm:text-sm transition-all duration-300 ${
                     isHovered ? 'text-yellow-200' : ''
                   }`}>
                     +50
@@ -1245,7 +1245,7 @@ const LearnerDashboard = () => {
             )}
           </div>
 
-          {/* Rewards Grid - 4 columns on mobile */}
+          {/* Rewards Grid */}
           <div
             className="rounded-[26px] border-2 overflow-hidden border-slate-200 bg-white/40 shadow-[0_20px_45px_-28px_rgba(15,23,42,0.45)]"
             style={{ backgroundColor: 'rgba(255,255,255,0.72)', borderColor: `${accentColor}30` }}
@@ -1540,7 +1540,7 @@ const LearnerDashboard = () => {
         fontFamily: `${fontFamily || 'Inter'}, sans-serif`,
       }}
     >
-      {/* Mobile Menu Toggle - Transparent background with white 3 lines */}
+      {/* Mobile Menu Toggle - White 3 lines on transparent background */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         className="lg:hidden fixed top-3 left-3 z-50 p-2.5 rounded-xl shadow-lg"
@@ -1654,11 +1654,16 @@ const LearnerDashboard = () => {
           })}
         </nav>
 
+        {/* Logout Button - White bordered with white font */}
         <div className="px-3 py-2.5 border-t flex-shrink-0 bg-white/50 backdrop-blur-sm" style={{ backgroundColor: `${cardBg}80`, borderColor: `${accentColor}60` }}>
           <button
             onClick={handleLogout}
-            className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all border"
-            style={{ backgroundColor: 'rgba(135, 206, 235, 0.12)', color: '#cbd5e1', borderColor: '#87CEEB' }}
+            className="w-full py-2 rounded-lg text-sm font-semibold transition-all border-2"
+            style={{ 
+              backgroundColor: 'transparent',
+              color: '#ffffff',
+              borderColor: '#ffffff',
+            }}
           >
             Sign Out
           </button>
