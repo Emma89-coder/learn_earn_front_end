@@ -6,19 +6,19 @@ import API_URL from '../../config';
 
 // UPDATED: Match subject IDs with Quiz Manager
 const SUBJECTS = [
-  { id: 'mathematics', name: 'Mathematics', icon: '📁', color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700', folderColor: '#3B82F6' },
-  { id: 'english', name: 'English', icon: '📁', color: 'green', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700', folderColor: '#22C55E' },
-  { id: 'primary-science', name: 'Primary Science', icon: '📁', color: 'purple', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700', folderColor: '#A855F7' },  // CHANGED: 'science' to 'primary-science'
-  { id: 'social-studies', name: 'Social Studies', icon: '📁', color: 'orange', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', folderColor: '#F97316' },
-  { id: 'bible-knowledge', name: 'Bible Knowledge', icon: '📁', color: 'yellow', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700', folderColor: '#EAB308' },
-  { id: 'arts-life-skills', name: 'Arts & Life Skills', icon: '📁', color: 'pink', bgColor: 'bg-pink-50', borderColor: 'border-pink-200', textColor: 'text-pink-700', folderColor: '#EC4899' },
-  { id: 'chichewa', name: 'Chichewa', icon: '📁', color: 'red', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700', folderColor: '#EF4444' }
+  { id: 'mathematics', name: 'Mathematics', icon: '📁', color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-200', textColor: 'text-blue-700', folderColor: '#14B8A6' }, // Changed to teal
+  { id: 'english', name: 'English', icon: '📁', color: 'green', bgColor: 'bg-green-50', borderColor: 'border-green-200', textColor: 'text-green-700', folderColor: '#14B8A6' }, // Changed to teal
+  { id: 'primary-science', name: 'Primary Science', icon: '📁', color: 'purple', bgColor: 'bg-purple-50', borderColor: 'border-purple-200', textColor: 'text-purple-700', folderColor: '#14B8A6' }, // Changed to teal
+  { id: 'social-studies', name: 'Social Studies', icon: '📁', color: 'orange', bgColor: 'bg-orange-50', borderColor: 'border-orange-200', textColor: 'text-orange-700', folderColor: '#14B8A6' }, // Changed to teal
+  { id: 'bible-knowledge', name: 'Bible Knowledge', icon: '📁', color: 'yellow', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200', textColor: 'text-yellow-700', folderColor: '#14B8A6' }, // Changed to teal
+  { id: 'arts-life-skills', name: 'Arts & Life Skills', icon: '📁', color: 'pink', bgColor: 'bg-pink-50', borderColor: 'border-pink-200', textColor: 'text-pink-700', folderColor: '#14B8A6' }, // Changed to teal
+  { id: 'chichewa', name: 'Chichewa', icon: '📁', color: 'red', bgColor: 'bg-red-50', borderColor: 'border-red-200', textColor: 'text-red-700', folderColor: '#14B8A6' } // Changed to teal
 ];
 
 const DIFFICULTIES = [
   { id: 'beginner', name: 'Beginner', icon: '🌱', color: 'bg-green-500', textColor: 'text-green-700', bgLight: 'bg-green-50' },
-  { id: 'intermediate', name: 'Intermediate', icon: '📘', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50' },  // CHANGED: 'easy' to 'intermediate'
-  { id: 'advanced', name: 'Advanced', icon: '📚', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },  // CHANGED: 'medium' to 'advanced'
+  { id: 'intermediate', name: 'Intermediate', icon: '📘', color: 'bg-blue-500', textColor: 'text-blue-700', bgLight: 'bg-blue-50' },
+  { id: 'advanced', name: 'Advanced', icon: '📚', color: 'bg-yellow-500', textColor: 'text-yellow-700', bgLight: 'bg-yellow-50' },
   { id: 'expert', name: 'Expert', icon: '🏆', color: 'bg-red-500', textColor: 'text-red-700', bgLight: 'bg-red-50' }
 ];
 
@@ -354,7 +354,7 @@ const QuestionBank = () => {
   const FolderItem = ({ subject }) => {
     const subjectInfo = SUBJECTS.find(s => s.id === subject.id);
     const quizCount = getSubjectQuizCount(subject.id);
-    const folderColor = subjectInfo ? subjectInfo.folderColor : '#6B7280';
+    const folderColor = subjectInfo ? subjectInfo.folderColor : '#14B8A6'; // Default to teal
     const [isHovered, setIsHovered] = useState(false);
     
     return (
@@ -365,7 +365,7 @@ const QuestionBank = () => {
         className="group cursor-pointer"
       >
         <div className={`flex flex-col items-center p-4 rounded-xl border transition-all ${
-          isHovered ? 'bg-gray-50 border-gray-300 shadow-md transform scale-105' : 'bg-white border-gray-200'
+          isHovered ? 'bg-gray-50 border-teal-300 shadow-md transform scale-105' : 'bg-white border-gray-200'
         }`}>
           <div className="text-5xl mb-2" style={{ color: folderColor }}>
             📁
@@ -519,7 +519,7 @@ const QuestionBank = () => {
                   {/* Folder Header */}
                   <div className="mb-4 pb-3 border-b border-gray-200">
                     <div className="flex items-center gap-3">
-                      <span className="text-3xl" style={{ color: SUBJECTS.find(s => s.id === currentFolder)?.folderColor }}>📂</span>
+                      <span className="text-3xl" style={{ color: SUBJECTS.find(s => s.id === currentFolder)?.folderColor || '#14B8A6' }}>📂</span>
                       <div>
                         <h2 className="text-lg font-semibold text-gray-800">{SUBJECTS.find(s => s.id === currentFolder)?.name}</h2>
                         <p className="text-xs text-gray-500">{currentFolderQuizzes.length} items</p>

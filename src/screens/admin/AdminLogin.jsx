@@ -67,7 +67,7 @@ const AdminLogin = () => {
         <SchoolBranding />
 
         {/* Form Card */}
-        <div className="w-full bg-white rounded-3xl shadow-lg border border-slate-200 p-6">
+        <div className="w-full bg-white rounded-lg shadow-lg border border-slate-200 p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             
             {/* Username Field */}
@@ -86,7 +86,7 @@ const AdminLogin = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="Enter your admin username"
                 />
               </div>
@@ -108,7 +108,7 @@ const AdminLogin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="Enter your password"
                 />
               </div>
@@ -118,7 +118,7 @@ const AdminLogin = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2.5 bg-[#008080] text-white font-bold rounded-2xl shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm group"
+              className="w-full mt-2 py-2.5 bg-[#008080] text-white font-bold rounded-md shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm group"
             >
               {loading ? (
                 <>
@@ -141,7 +141,7 @@ const AdminLogin = () => {
 
           {/* Error Message */}
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-2xl">
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
               <div className="flex items-center gap-2 text-red-700 text-sm">
                 <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

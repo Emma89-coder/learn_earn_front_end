@@ -27,10 +27,10 @@ const renderFormattedText = (text) => {
 
 // Only Standards 5-8
 const LEVELS = [
-  { id: 'standard-5', name: 'Standard 5', icon: '🎓', color: 'from-green-500 to-teal-500' },
-  { id: 'standard-6', name: 'Standard 6', icon: '🏆', color: 'from-blue-500 to-cyan-500' },
-  { id: 'standard-7', name: 'Standard 7', icon: '🎯', color: 'from-purple-500 to-pink-500' },
-  { id: 'standard-8', name: 'Standard 8', icon: '⚡', color: 'from-orange-500 to-red-500' }
+  { id: 'standard-5', name: 'Standard 5', icon: '🎓' },
+  { id: 'standard-6', name: 'Standard 6', icon: '🏆' },
+  { id: 'standard-7', name: 'Standard 7', icon: '🎯' },
+  { id: 'standard-8', name: 'Standard 8', icon: '⚡' }
 ];
 
 const QuizPage = () => {
@@ -50,17 +50,24 @@ const QuizPage = () => {
     return savedSoundSetting ? savedSoundSetting === 'true' : true;
   });
   
-  const [learnerProgress, setLearnerProgress] = useState(null);
+  const [learnerProgress, setLearnerProgress] = useState({
+    current_level: 'standard-5',
+    class_level: 'standard-5',
+    completed_levels: [],
+    unlocked_levels: ['standard-5'],
+    locked_levels: ['standard-6', 'standard-7', 'standard-8'],
+    all_levels: ['standard-5', 'standard-6', 'standard-7', 'standard-8']
+  });
   const [isLoadingProgress, setIsLoadingProgress] = useState(true);
-  const [currentLearnerLevel, setCurrentLearnerLevel] = useState(null);
+  const [currentLearnerLevel, setCurrentLearnerLevel] = useState('standard-5');
 
   const subjects = [
-    { id: 'social-studies', name: 'SOCIAL STUDIES', icon: '🌍📖', iconBg: 'from-emerald-500 to-teal-500', combined: true },
-    { id: 'english', name: 'ENGLISH', icon: '📚', iconBg: 'from-blue-500 to-cyan-500' },
-    { id: 'primary-science', name: 'PRIMARY SCIENCE', icon: '🔬', iconBg: 'from-purple-500 to-pink-500' },
-    { id: 'arts-life-skills', name: 'ARTS & LIFE SKILLS', icon: '🎨', iconBg: 'from-orange-500 to-red-500' },
-    { id: 'mathematics', name: 'MATHEMATICS', icon: '🔢', iconBg: 'from-indigo-500 to-blue-500' },
-    { id: 'chichewa', name: 'CHICHEWA', icon: '🇲🇼', iconBg: 'from-green-500 to-emerald-500' }
+    { id: 'social-studies', name: 'SOCIAL STUDIES', icon: '🌍📖', iconBg: 'bg-emerald-500', combined: true },
+    { id: 'english', name: 'ENGLISH', icon: '📚', iconBg: 'bg-blue-500' },
+    { id: 'primary-science', name: 'PRIMARY SCIENCE', icon: '🔬', iconBg: 'bg-purple-500' },
+    { id: 'arts-life-skills', name: 'ARTS & LIFE SKILLS', icon: '🎨', iconBg: 'bg-orange-500' },
+    { id: 'mathematics', name: 'MATHEMATICS', icon: '🔢', iconBg: 'bg-indigo-500' },
+    { id: 'chichewa', name: 'CHICHEWA', icon: '🇲🇼', iconBg: 'bg-green-500' }
   ];
 
   useEffect(() => {
@@ -71,15 +78,53 @@ const QuizPage = () => {
   const fetchLearnerProgress = async () => {
     try {
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.warn('No token found, using default progress');
+        setIsLoadingProgress(false);
+        return;
+      }
+
+      // Try the main endpoint
       const response = await axios.get(`${API_URL}/api/learner/progress`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
       if (response.data.success) {
-        setLearnerProgress(response.data.progress);
-        setCurrentLearnerLevel(response.data.progress.current_level);
+        const progressData = response.data.progress;
+        setLearnerProgress(progressData);
+        setCurrentLearnerLevel(progressData.current_level || 'standard-5');
       }
     } catch (error) {
       console.error('Error fetching progress:', error);
+      
+      // Handle different error types
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        
+        if (error.response.status === 404) {
+          console.warn('Progress endpoint not found. Using default values.');
+        } else if (error.response.status === 401) {
+          toast.error('Session expired. Please login again.');
+          navigate('/learner-login');
+        } else if (error.response.status === 400) {
+          console.warn('Bad request. Using default values.');
+        }
+      } else if (error.request) {
+        console.warn('No response from server. Using default values.');
+      }
+      
+      // Use default progress values
+      setLearnerProgress({
+        current_level: 'standard-5',
+        class_level: 'standard-5',
+        completed_levels: [],
+        unlocked_levels: ['standard-5'],
+        locked_levels: ['standard-6', 'standard-7', 'standard-8'],
+        all_levels: ['standard-5', 'standard-6', 'standard-7', 'standard-8']
+      });
+      setCurrentLearnerLevel('standard-5');
     } finally {
       setIsLoadingProgress(false);
     }
@@ -89,6 +134,13 @@ const QuizPage = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        toast.error('Please login again.');
+        navigate('/learner-login');
+        return;
+      }
+      
       const response = await axios.get(`${API_URL}/api/learner/quizzes`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -97,12 +149,18 @@ const QuizPage = () => {
         setQuizzes(response.data.quizzes || []);
         if (response.data.learner_progress) {
           setLearnerProgress(response.data.learner_progress);
-          setCurrentLearnerLevel(response.data.learner_progress.current_level);
+          setCurrentLearnerLevel(response.data.learner_progress.current_level || 'standard-5');
         }
       }
     } catch (error) {
       console.error('Error fetching quizzes:', error);
-      toast.error('Failed to load quizzes');
+      
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        navigate('/learner-login');
+      } else {
+        toast.error('Failed to load quizzes');
+      }
     } finally {
       setLoading(false);
     }
@@ -222,7 +280,9 @@ const QuizPage = () => {
       <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-darkblue-950' : 'bg-ice-50'}`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={`text-sm ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>Loading quizzes...</p>
+          <p className={`text-sm ${isDarkMode ? 'text-ice-400' : 'text-darkblue-500'}`}>
+            {isLoadingProgress ? 'Loading progress...' : 'Loading quizzes...'}
+          </p>
         </div>
       </div>
     );
@@ -551,7 +611,7 @@ const QuizPage = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-t-2xl px-6 py-4">
+            <div className="bg-teal-500 rounded-t-2xl px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
@@ -669,7 +729,7 @@ const QuizPage = () => {
           >
             {/* Hero Section */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-teal-500 to-teal-600 rounded-t-2xl"></div>
+              <div className="absolute inset-0 bg-teal-500 rounded-t-2xl"></div>
               <div className="relative p-6 text-center">
                 <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                   <span className="text-4xl">📋</span>

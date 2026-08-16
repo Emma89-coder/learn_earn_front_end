@@ -13,19 +13,47 @@ import Leaderboard from './screens/learners/Leaderboard';
 import TakeQuiz from './screens/learners/TakeQuiz';
 import RewardsStore from './screens/learners/RewardsStore';
 import LearnerBadges from './screens/learners/LearnerBadges';
+import SpellingBee from './screens/learners/SpellingBee';
+import Hangman from './screens/learners/Hangman';
+
+// Admin Screens
 import AdminLogin from './screens/admin/AdminLogin';
 import AdminDashboard from './screens/admin/AdminDashboard';
 import AdminRewards from './screens/admin/AdminRewards';
 import AdminQuizzes from './screens/admin/AdminQuizzes';
 import AdminBadges from './screens/admin/AdminBadges';
 import AdminLearners from './screens/admin/AdminLearners';
-import QuestionBank from './screens/admin/QuestionBank'; // ADD THIS LINE
+import AdminSpellingBee from './screens/admin/AdminSpellingBee';
+import AdminHangmanManager from './screens/admin/AdminHangmanManager';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-right" />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#4ade80',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 4000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomeScreen />} />
@@ -48,7 +76,6 @@ function App() {
               <QuizPage />
             </PrivateRoute>
           } />
-          {/* Take Quiz Route */}
           <Route path="/quiz/:quizId" element={
             <PrivateRoute allowedRoles={['learner']}>
               <TakeQuiz />
@@ -67,6 +94,25 @@ function App() {
           <Route path="/badges" element={
             <PrivateRoute allowedRoles={['learner']}>
               <LearnerBadges />
+            </PrivateRoute>
+          } />
+          
+          {/* Hangman Routes */}
+          <Route path="/hangman" element={
+            <PrivateRoute allowedRoles={['learner']}>
+              <Hangman />
+            </PrivateRoute>
+          } />
+          <Route path="/hangman/:category" element={
+            <PrivateRoute allowedRoles={['learner']}>
+              <Hangman />
+            </PrivateRoute>
+          } />
+          
+          {/* Spelling Bee Routes */}
+          <Route path="/spelling-bee" element={
+            <PrivateRoute allowedRoles={['learner']}>
+              <SpellingBee />
             </PrivateRoute>
           } />
           
@@ -96,11 +142,14 @@ function App() {
               <AdminLearners />
             </PrivateRoute>
           } />
-          
-          {/* ADD THIS ROUTE - Question Bank */}
-          <Route path="/admin/question-bank" element={
+          <Route path="/admin-spelling-bee" element={
             <PrivateRoute allowedRoles={['admin']}>
-              <QuestionBank />
+              <AdminSpellingBee />
+            </PrivateRoute>
+          } />
+          <Route path="/admin-hangman" element={
+            <PrivateRoute allowedRoles={['admin']}>
+              <AdminHangmanManager />
             </PrivateRoute>
           } />
           

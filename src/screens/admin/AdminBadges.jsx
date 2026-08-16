@@ -5,16 +5,16 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import API_URL from '../../config';
 
-// Badge trigger types for automation
+// Badge trigger types for automation - Removed icons
 const BADGE_TRIGGERS = [
-  { id: 'quiz_completed', name: 'Quiz Completed', icon: '📚', color: 'azure', description: 'When a learner completes any quiz', thresholdHint: 'Number of quizzes' },
-  { id: 'quiz_perfect_score', name: 'Perfect Score', icon: '⭐', color: 'azure', description: 'When a learner gets 100% on a quiz', thresholdHint: 'Times achieved' },
-  { id: 'quiz_streak', name: 'Quiz Streak', icon: '🔥', color: 'teal', description: 'When a learner completes quizzes on consecutive days', thresholdHint: 'Days in a row' },
-  { id: 'points_milestone', name: 'Points Milestone', icon: '🏆', color: 'darkblue', description: 'When a learner reaches a points threshold', thresholdHint: 'Total points' },
-  { id: 'daily_login_streak', name: 'Login Streak', icon: '📅', color: 'teal', description: 'When a learner logs in consecutively', thresholdHint: 'Days in a row' },
-  { id: 'questions_correct', name: 'Questions Correct', icon: '✅', color: 'azure', description: 'When a learner answers questions correctly', thresholdHint: 'Total correct answers' },
-  { id: 'speed_demon', name: 'Speed Demon', icon: '⚡', color: 'darkblue', description: 'Quick completion with high score', thresholdHint: 'Time in seconds' },
-  { id: 'subject_expert', name: 'Subject Expert', icon: '🎓', color: 'teal', description: 'When a learner masters a subject', thresholdHint: 'Subjects mastered' }
+  { id: 'quiz_completed', name: 'Quiz Completed', color: 'azure', description: 'When a learner completes any quiz', thresholdHint: 'Number of quizzes' },
+  { id: 'quiz_perfect_score', name: 'Perfect Score', color: 'azure', description: 'When a learner gets 100% on a quiz', thresholdHint: 'Times achieved' },
+  { id: 'quiz_streak', name: 'Quiz Streak', color: 'teal', description: 'When a learner completes quizzes on consecutive days', thresholdHint: 'Days in a row' },
+  { id: 'points_milestone', name: 'Points Milestone', color: 'darkblue', description: 'When a learner reaches a points threshold', thresholdHint: 'Total points' },
+  { id: 'daily_login_streak', name: 'Login Streak', color: 'teal', description: 'When a learner logs in consecutively', thresholdHint: 'Days in a row' },
+  { id: 'questions_correct', name: 'Questions Correct', color: 'azure', description: 'When a learner answers questions correctly', thresholdHint: 'Total correct answers' },
+  { id: 'speed_demon', name: 'Speed Demon', color: 'darkblue', description: 'Quick completion with high score', thresholdHint: 'Time in seconds' },
+  { id: 'subject_expert', name: 'Subject Expert', color: 'teal', description: 'When a learner masters a subject', thresholdHint: 'Subjects mastered' }
 ];
 
 const CONDITION_OPERATORS = [
@@ -124,6 +124,24 @@ const CheckIcon = () => (
   </svg>
 );
 
+const UserPlusIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const MedalIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+  </svg>
+);
+
 const AdminBadges = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -131,11 +149,18 @@ const AdminBadges = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [assigning, setAssigning] = useState(false);
   const [badges, setBadges] = useState([]);
   const [learners, setLearners] = useState([]);
   const [selectedBadge, setSelectedBadge] = useState(null);
   const [showAutomation, setShowAutomation] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignBadgeId, setAssignBadgeId] = useState(null);
+  const [assignLearnerId, setAssignLearnerId] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredLearners, setFilteredLearners] = useState([]);
+  
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -153,18 +178,77 @@ const AdminBadges = () => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      const filtered = learners.filter(learner =>
+        learner.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        learner.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredLearners(filtered);
+    } else {
+      setFilteredLearners(learners);
+    }
+  }, [searchTerm, learners]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      // Fix: Use correct API endpoints
       const [badgesRes, learnersRes] = await Promise.all([
-        axios.get(`${API_URL}/api/admin/badges`),
-        axios.get(`${API_URL}/api/admin/learners`)
+        axios.get(`${API_URL}/api/admin/badges`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/api/admin/learners`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
       ]);
-      setBadges(badgesRes.data.badges || []);
-      setLearners(learnersRes.data.learners || []);
+      
+      // Handle different response structures
+      let badgesData = [];
+      if (badgesRes.data && badgesRes.data.success) {
+        badgesData = badgesRes.data.badges || [];
+      } else if (badgesRes.data && Array.isArray(badgesRes.data)) {
+        badgesData = badgesRes.data;
+      } else if (badgesRes.data && badgesRes.data.data && Array.isArray(badgesRes.data.data)) {
+        badgesData = badgesRes.data.data;
+      } else if (badgesRes.data && typeof badgesRes.data === 'object') {
+        const possibleArrays = Object.values(badgesRes.data).filter(val => Array.isArray(val));
+        if (possibleArrays.length > 0) {
+          badgesData = possibleArrays[0];
+        }
+      }
+      
+      let learnersData = [];
+      if (learnersRes.data && learnersRes.data.success) {
+        learnersData = learnersRes.data.learners || [];
+      } else if (learnersRes.data && Array.isArray(learnersRes.data)) {
+        learnersData = learnersRes.data;
+      } else if (learnersRes.data && learnersRes.data.data && Array.isArray(learnersRes.data.data)) {
+        learnersData = learnersRes.data.data;
+      } else if (learnersRes.data && typeof learnersRes.data === 'object') {
+        const possibleArrays = Object.values(learnersRes.data).filter(val => Array.isArray(val));
+        if (possibleArrays.length > 0) {
+          learnersData = possibleArrays[0];
+        }
+      }
+      
+      console.log('Loaded badges:', badgesData.length);
+      console.log('Loaded learners:', learnersData.length);
+      
+      setBadges(badgesData);
+      setLearners(learnersData);
+      setFilteredLearners(learnersData);
     } catch (error) {
       console.error('Fetch badge data error:', error);
-      toast.error('Could not load badges or learners.');
+      // Don't show error toast if it's just a 404 - the badges endpoint might not exist yet
+      if (error.response?.status !== 404) {
+        toast.error('Could not load badges or learners.');
+      }
+      setBadges([]);
+      setLearners([]);
+      setFilteredLearners([]);
     } finally {
       setLoading(false);
     }
@@ -192,6 +276,7 @@ const AdminBadges = () => {
   };
 
   const handleEdit = (badge) => {
+    if (!badge) return;
     setSelectedBadge(badge);
     setForm({
       name: badge.name || '',
@@ -209,10 +294,14 @@ const AdminBadges = () => {
   };
 
   const handleDelete = async (badgeId) => {
+    if (!badgeId) return;
     if (!window.confirm('Delete this badge?')) return;
 
     try {
-      await axios.delete(`${API_URL}/api/admin/badges/${badgeId}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/api/admin/badges/${badgeId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       toast.success('Badge deleted.');
       setBadges((prev) => prev.filter((badge) => badge.id !== badgeId));
       if (selectedBadge?.id === badgeId) resetForm();
@@ -333,6 +422,8 @@ const AdminBadges = () => {
 
     try {
       setSaving(true);
+      const token = localStorage.getItem('token');
+      
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -342,15 +433,20 @@ const AdminBadges = () => {
         automation_enabled: form.automation_enabled,
         automation_trigger: form.automation_trigger,
         automation_condition: form.automation_condition,
-        automation_threshold: parseInt(form.automation_threshold),
+        automation_threshold: parseInt(form.automation_threshold) || 0,
         automation_points_reward: parseInt(form.automation_points_reward) || 0
       };
 
+      let response;
       if (selectedBadge) {
-        await axios.put(`${API_URL}/api/admin/badges/${selectedBadge.id}`, payload);
+        response = await axios.put(`${API_URL}/api/admin/badges/${selectedBadge.id}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         toast.success('Badge updated successfully.');
       } else {
-        await axios.post(`${API_URL}/api/admin/badges`, payload);
+        response = await axios.post(`${API_URL}/api/admin/badges`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         toast.success('Badge created successfully.');
       }
 
@@ -361,6 +457,35 @@ const AdminBadges = () => {
       toast.error(error.response?.data?.error || 'Could not save badge.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAssignBadge = async () => {
+    if (!assignBadgeId || !assignLearnerId) {
+      toast.error('Please select both a badge and a learner.');
+      return;
+    }
+
+    try {
+      setAssigning(true);
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/api/admin/badges/assign`, {
+        badgeId: assignBadgeId,
+        learnerId: assignLearnerId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Badge assigned successfully!');
+      setShowAssignModal(false);
+      setAssignBadgeId(null);
+      setAssignLearnerId('');
+      setSearchTerm('');
+      fetchData();
+    } catch (error) {
+      console.error('Assign badge error:', error);
+      toast.error(error.response?.data?.error || 'Could not assign badge.');
+    } finally {
+      setAssigning(false);
     }
   };
 
@@ -379,11 +504,15 @@ const AdminBadges = () => {
     return operator ? operator.symbol : '≥';
   };
 
+  // BadgeCard component
   const BadgeCard = ({ badge }) => {
     const [isHovered, setIsHovered] = useState(false);
     
+    if (!badge) return null;
+    
     return (
       <div 
+        key={badge.id || Math.random().toString()}
         className="group relative bg-white rounded-2xl border border-[#00B0FF]/20 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -395,7 +524,7 @@ const AdminBadges = () => {
             <div className="relative">
               <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#00B0FF]/10 to-[#008080]/10 flex items-center justify-center overflow-hidden shadow-sm">
                 {badge.icon_url ? (
-                  <img src={badge.icon_url} alt={badge.name} className="w-full h-full object-cover" />
+                  <img src={badge.icon_url} alt={badge.name || 'Badge'} className="w-full h-full object-cover" />
                 ) : (
                   <AwardIcon />
                 )}
@@ -422,16 +551,16 @@ const AdminBadges = () => {
             </div>
           </div>
           
-          <h3 className="font-bold text-[#1A237E] text-lg mb-1">{badge.name}</h3>
+          <h3 className="font-bold text-[#1A237E] text-lg mb-1">{badge.name || 'Unnamed Badge'}</h3>
           <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{badge.description || 'No description provided'}</p>
           
           <div className="mt-4 flex items-center gap-2 flex-wrap">
-            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.is_active ? 'bg-[#008080]/10 text-[#008080]' : 'bg-slate-100 text-slate-500'}`}>
-              {badge.is_active ? 'Active' : 'Inactive'}
+            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${badge.is_active !== false ? 'bg-[#008080]/10 text-[#008080]' : 'bg-slate-100 text-slate-500'}`}>
+              {badge.is_active !== false ? 'Active' : 'Inactive'}
             </span>
             {badge.automation_enabled && badge.automation_trigger && (
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${getTriggerColor(badge.automation_trigger)}`}>
-                🤖 Auto
+                Auto
               </span>
             )}
           </div>
@@ -440,11 +569,167 @@ const AdminBadges = () => {
             <div className="mt-3 pt-3 border-t border-[#00B0FF]/20">
               <div className="flex items-center gap-1 text-xs text-slate-500">
                 <TargetIcon />
-                <span>{BADGE_TRIGGERS.find(t => t.id === badge.automation_trigger)?.name}</span>
+                <span>{BADGE_TRIGGERS.find(t => t.id === badge.automation_trigger)?.name || badge.automation_trigger}</span>
                 <span className="font-medium text-[#00B0FF]">{getOperatorSymbol(badge.automation_condition)} {badge.automation_threshold}</span>
               </div>
             </div>
           )}
+
+          <button
+            onClick={() => {
+              setAssignBadgeId(badge.id);
+              setShowAssignModal(true);
+            }}
+            className="mt-3 w-full py-2 px-3 bg-gradient-to-r from-[#00B0FF] to-[#008080] text-white text-xs font-medium rounded-xl hover:shadow-lg transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100"
+          >
+            <UserPlusIcon />
+            Assign to Student
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Assignment Modal
+  const AssignModal = () => {
+    const selectedBadge = badges.find(b => b.id === assignBadgeId);
+
+    if (!selectedBadge) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+          <div className="p-6 border-b border-[#00B0FF]/20 bg-gradient-to-r from-[#00B0FF]/5 to-[#008080]/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#00B0FF]/20 to-[#008080]/20 flex items-center justify-center">
+                  <MedalIcon />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[#1A237E]">Assign Badge</h3>
+                  <p className="text-sm text-slate-500">
+                    Award <span className="font-semibold text-[#00B0FF]">{selectedBadge?.name || 'Badge'}</span> to an outstanding student
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAssignModal(false);
+                  setAssignBadgeId(null);
+                  setAssignLearnerId('');
+                  setSearchTerm('');
+                }}
+                className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-all"
+              >
+                <XIcon />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+            <div className="bg-gradient-to-r from-[#00B0FF]/5 to-[#008080]/5 rounded-xl p-4 border border-[#00B0FF]/20">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center overflow-hidden shadow-sm">
+                  {selectedBadge?.icon_url ? (
+                    <img src={selectedBadge.icon_url} alt={selectedBadge.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <AwardIcon />
+                  )}
+                </div>
+                <div>
+                  <h4 className="font-semibold text-[#1A237E]">{selectedBadge?.name || 'Badge'}</h4>
+                  <p className="text-xs text-slate-500">{selectedBadge?.description || 'No description'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Select Student <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <UserIcon />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search students by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-[#00B0FF]/30 focus:ring-2 focus:ring-[#00B0FF]/20 focus:border-[#00B0FF] outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="border border-[#00B0FF]/20 rounded-xl overflow-hidden">
+              {filteredLearners.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">
+                  <UserIcon />
+                  <p className="mt-2 text-sm">No students found</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#00B0FF]/10 max-h-60 overflow-y-auto">
+                  {filteredLearners.map((learner) => (
+                    <button
+                      key={learner.id || Math.random().toString()}
+                      onClick={() => setAssignLearnerId(learner.id)}
+                      className={`w-full px-4 py-3 flex items-center justify-between hover:bg-[#00B0FF]/5 transition-all ${
+                        assignLearnerId === learner.id ? 'bg-[#00B0FF]/10 border-l-4 border-[#00B0FF]' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#00B0FF]/20 to-[#008080]/20 flex items-center justify-center text-[#1A237E] font-semibold">
+                          {learner.name?.charAt(0).toUpperCase() || 'S'}
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium text-[#1A237E] text-sm">{learner.name || 'Unnamed'}</p>
+                          <p className="text-xs text-slate-500">{learner.email || 'No email'}</p>
+                        </div>
+                      </div>
+                      {assignLearnerId === learner.id && (
+                        <div className="w-6 h-6 rounded-full bg-[#008080] flex items-center justify-center">
+                          <CheckIcon />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {assignLearnerId && (
+              <div className="bg-[#00B0FF]/5 rounded-xl p-4 border border-[#00B0FF]/20">
+                <div className="flex items-center gap-3">
+                  <TrophyIcon />
+                  <span className="text-sm text-slate-600">
+                    This student has <span className="font-bold text-[#1A237E]">0</span> badges
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 border-t border-[#00B0FF]/20 bg-slate-50 flex gap-3">
+            <button
+              onClick={() => {
+                setShowAssignModal(false);
+                setAssignBadgeId(null);
+                setAssignLearnerId('');
+                setSearchTerm('');
+              }}
+              className="flex-1 px-4 py-3 border border-[#00B0FF]/30 rounded-xl hover:bg-[#00B0FF]/10 transition-all text-slate-600"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAssignBadge}
+              disabled={!assignLearnerId || assigning}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-[#00B0FF] to-[#008080] text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {assigning ? <LoaderIcon /> : <UserPlusIcon />}
+              Assign Badge
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -499,7 +784,7 @@ const AdminBadges = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-[#1A237E]">Badge Studio</h1>
-                <p className="text-sm text-slate-500">Design, automate, and manage achievement badges</p>
+                <p className="text-sm text-slate-500">Design, automate, and manually assign achievement badges</p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -532,7 +817,7 @@ const AdminBadges = () => {
                   Badge Catalog
                   <span className="ml-2 px-2 py-0.5 bg-[#00B0FF]/10 text-[#00B0FF] text-xs rounded-full">{badges.length} badges</span>
                 </h2>
-                <p className="text-sm text-slate-500 mt-1">Review and manage all badge templates</p>
+                <p className="text-sm text-slate-500 mt-1">Review, manage, and award badges to students</p>
               </div>
             </div>
 
@@ -543,7 +828,7 @@ const AdminBadges = () => {
             ) : (
               <div className="grid sm:grid-cols-2 gap-5">
                 {badges.map((badge) => (
-                  <BadgeCard key={badge.id} badge={badge} />
+                  <BadgeCard key={badge.id || Math.random().toString()} badge={badge} />
                 ))}
               </div>
             )}
@@ -696,7 +981,7 @@ const AdminBadges = () => {
                         <option value="">Select a trigger event</option>
                         {BADGE_TRIGGERS.map((trigger) => (
                           <option key={trigger.id} value={trigger.id}>
-                            {trigger.icon} {trigger.name} - {trigger.description}
+                            {trigger.name} - {trigger.description}
                           </option>
                         ))}
                       </select>
@@ -808,6 +1093,9 @@ const AdminBadges = () => {
           </aside>
         </div>
       </main>
+
+      {/* Assignment Modal */}
+      {showAssignModal && <AssignModal />}
     </div>
   );
 };

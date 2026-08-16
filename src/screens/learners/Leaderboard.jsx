@@ -28,6 +28,12 @@ const AlertIcon = () => (
   </svg>
 );
 
+const CrownIcon = () => (
+  <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+    <path d="M10 1l2.5 5h5l-4 4 1.5 5-5-2.5-5 2.5 1.5-5-4-4h5l2.5-5z" />
+  </svg>
+);
+
 // ==========================================
 // MAIN LEADERBOARD COMPONENT
 // ==========================================
@@ -79,55 +85,62 @@ const Leaderboard = () => {
 
   const colors = useMemo(() => ({
     bg: isDarkMode ? 'bg-[#0B132B]' : 'bg-[#F4F7F6]',
-    card: isDarkMode ? 'bg-[#1C2541] border border-slate-700/60 shadow-xl' : 'bg-white border border-slate-200 shadow-sm',
+    card: isDarkMode ? 'bg-[#1C2541] border border-teal-500/20 shadow-xl' : 'bg-white border border-teal-200/50 shadow-sm',
     textMain: isDarkMode ? 'text-white' : 'text-[#0B132B]',
     textMuted: isDarkMode ? 'text-slate-400' : 'text-slate-600',
-    tableHeaderBg: isDarkMode ? 'bg-[#0B132B]/50' : 'bg-slate-100',
-    tableRowEven: isDarkMode ? 'bg-slate-800/20' : 'bg-slate-50/50',
+    tableHeaderBg: isDarkMode ? 'bg-[#0B132B]/50' : 'bg-teal-50/50',
+    tableRowEven: isDarkMode ? 'bg-slate-800/20' : 'bg-teal-50/30',
     border: isDarkMode ? 'border-slate-800' : 'border-slate-200'
   }), [isDarkMode]);
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${colors.bg}`}>
       
-      {/* Top Navigation Header */}
-      <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-md transition-colors ${
-        isDarkMode ? 'bg-[#0B132B]/90 border-slate-800' : 'bg-white/90 border-slate-200'
-      }`}>
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#00B0FF]" aria-label="Module context">
-              Performance System
-            </span>
-            <h1 className={`text-2xl font-bold mt-0.5 ${colors.textMain}`}>
-              Leaderboard <span className="text-[#00B0FF]">Standings</span>
-            </h1>
-          </div>
+      {/* Top Navigation Header - Teal Themed */}
+      <header className={`sticky top-0 z-40 w-full bg-gradient-to-r from-teal-600 to-teal-700 shadow-lg transition-colors`}>
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 h-20">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="relative w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl">🏆</span>
+                </div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-white">
+                  Leaderboard <span className="text-teal-200">Standings</span>
+                </h1>
+                <p className="text-xs text-teal-100/80">
+                  Top performers across all modules
+                </p>
+              </div>
+            </div>
 
-          <nav className="flex flex-wrap items-center gap-3" aria-label="Page actions">
-            <button
-              type="button"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-2.5 rounded-xl border border-[#00B0FF]/40 text-[#00B0FF] hover:bg-[#00B0FF]/10 transition-all focus:outline-none focus:ring-2 focus:ring-[#00B0FF] focus:ring-offset-2 dark:focus:ring-offset-[#0B132B]"
-              aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {isDarkMode ? <SunIcon /> : <MoonIcon />}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/learner-dashboard')}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold border border-[#00B0FF]/40 hover:bg-[#00B0FF]/10 transition-all focus:outline-none focus:ring-2 focus:ring-[#00B0FF] focus:ring-offset-2 dark:focus:ring-offset-[#0B132B] ${colors.textMain}`}
-            >
-              Dashboard
-            </button>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-xl text-sm font-semibold bg-[#008080] text-white hover:bg-[#006666] shadow transition-all focus:outline-none focus:ring-2 focus:ring-[#008080] focus:ring-offset-2 dark:focus:ring-offset-[#0B132B]"
-            >
-              Logout
-            </button>
-          </nav>
+            <nav className="flex flex-wrap items-center gap-3" aria-label="Page actions">
+              <button
+                type="button"
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2.5 rounded-xl border border-white/20 text-white hover:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
+                aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {isDarkMode ? <SunIcon /> : <MoonIcon />}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/learner-dashboard')}
+                className="px-4 py-2 rounded-xl text-sm font-semibold border border-white/20 text-white hover:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                Dashboard
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="px-4 py-2 rounded-xl text-sm font-semibold bg-white/20 text-white hover:bg-white/30 shadow transition-all focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                Logout
+              </button>
+            </nav>
+          </div>
         </div>
       </header>
 
@@ -159,7 +172,7 @@ const Leaderboard = () => {
         </section>
 
         <section className={`rounded-2xl overflow-hidden transition-all shadow-sm ${colors.card}`}>
-          <div className="p-6 border-b border-slate-700/30">
+          <div className="p-6 border-b border-teal-500/20">
             <h2 className={`text-lg font-bold ${colors.textMain}`}>Full Directory</h2>
             <p className={`text-xs ${colors.textMuted}`}>Comprehensive roster ordered by total historical points</p>
           </div>
@@ -200,30 +213,33 @@ const PodiumSection = memo(({ loading, leaderboard, colors, isDarkMode }) => {
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between border-b pb-4 border-slate-700/30">
+      <div className="mb-6 flex items-center justify-between border-b pb-4 border-teal-500/20">
         <div>
           <h2 className={`text-lg font-bold ${colors.textMain}`}>Current Champion</h2>
           <p className={`text-xs ${colors.textMuted}`}>Top performers across all modules</p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-[#00B0FF]/10 text-[#00B0FF] uppercase tracking-wider">
+        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-500 uppercase tracking-wider">
           Top 3
         </span>
       </div>
 
       <div className="space-y-4">
         {champion && (
-          <div className="rounded-xl border border-[#00B0FF]/30 bg-[#00B0FF]/5 p-5 relative overflow-hidden group hover:border-[#00B0FF]/60 transition-all cursor-default">
-            <div className="absolute right-4 top-4 text-4xl opacity-20 font-black select-none text-[#00B0FF] group-hover:scale-110 transition-transform">
-              #1
+          <div className="rounded-xl border border-teal-500/30 bg-teal-500/5 p-5 relative overflow-hidden group hover:border-teal-500/60 transition-all cursor-default">
+            <div className="absolute right-4 top-4 flex items-center gap-1">
+              <CrownIcon />
+              <span className="text-2xl font-black text-yellow-400/30 group-hover:scale-110 transition-transform">
+                #1
+              </span>
             </div>
-            <p className="text-xs font-bold text-[#00B0FF] uppercase tracking-wider">
+            <p className="text-xs font-bold text-teal-500 uppercase tracking-wider">
               {champion.class_level || 'General'}
             </p>
             <h3 className={`mt-1 text-xl font-bold ${colors.textMain}`}>
               {champion.full_name || champion.username}
             </h3>
             <div className="mt-4 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-[#00B0FF]">{formatXP(champion.lifetime_points)}</span>
+              <span className="text-2xl font-black text-teal-500">{formatXP(champion.lifetime_points)}</span>
               <span className={`text-xs font-medium ${colors.textMuted}`}>Lifetime XP</span>
             </div>
           </div>
@@ -235,17 +251,17 @@ const PodiumSection = memo(({ loading, leaderboard, colors, isDarkMode }) => {
               <div 
                 key={learner.id || idx} 
                 className={`rounded-xl p-4 border transition-all hover:shadow-md ${
-                  isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-slate-200 bg-slate-50'
+                  isDarkMode ? 'border-slate-800 bg-slate-900/40' : 'border-teal-200/50 bg-teal-50/30'
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-slate-400 uppercase">Rank #{learner.rank || idx + 2}</span>
-                  <span className="text-[10px] font-medium text-[#008080]">{learner.class_level || 'General'}</span>
+                  <span className="text-[10px] font-medium text-teal-500">{learner.class_level || 'General'}</span>
                 </div>
                 <h4 className={`mt-2 font-bold text-sm truncate ${colors.textMain}`}>
                   {learner.full_name || learner.username}
                 </h4>
-                <p className="text-xs text-[#00B0FF] font-semibold mt-3">{formatXP(learner.lifetime_points)} XP</p>
+                <p className="text-xs text-teal-500 font-semibold mt-3">{formatXP(learner.lifetime_points)} XP</p>
               </div>
             ))}
           </div>
@@ -257,23 +273,23 @@ const PodiumSection = memo(({ loading, leaderboard, colors, isDarkMode }) => {
 
 const UserSnapshot = memo(({ user, colors, isDarkMode }) => (
   <>
-    <div className="mb-6 border-b pb-4 border-slate-700/30">
+    <div className="mb-6 border-b pb-4 border-teal-500/20">
       <h2 className={`text-lg font-bold ${colors.textMain}`}>Your Position</h2>
       <p className={`text-xs ${colors.textMuted}`}>Personal tracking and standing status</p>
     </div>
 
-    <div className={`rounded-xl p-5 border ${isDarkMode ? 'bg-[#0B132B] border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-      <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-slate-500/10 text-slate-400 uppercase">
+    <div className={`rounded-xl p-5 border ${isDarkMode ? 'bg-[#0B132B] border-teal-500/20' : 'bg-teal-50/50 border-teal-200/50'}`}>
+      <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-teal-500/10 text-teal-500 uppercase">
         Active Session
       </span>
       <h3 className={`mt-3 text-lg font-bold truncate ${colors.textMain}`}>
         {user?.fullName || user?.username || 'Guest Profile'}
       </h3>
-      <p className="text-xs text-[#008080] font-medium mt-1">
+      <p className="text-xs text-teal-500 font-medium mt-1">
         {user?.classLevel || user?.class_level || 'No Class Assigned'}
       </p>
 
-      <div className="mt-5 grid grid-cols-2 gap-4 border-t pt-4 border-slate-700/30">
+      <div className="mt-5 grid grid-cols-2 gap-4 border-t pt-4 border-teal-500/20">
         <div>
           <p className="text-[11px] uppercase font-bold tracking-wide text-slate-400">Lifetime Score</p>
           <p className={`text-lg font-bold mt-0.5 ${colors.textMain}`}>
@@ -334,20 +350,20 @@ const LeaderboardTable = memo(({ loading, leaderboard, user, colors }) => (
             return (
               <tr
                 key={learner.id || idx}
-                className={`transition-colors text-sm hover:bg-slate-500/5 ${
+                className={`transition-colors text-sm hover:bg-teal-500/5 ${
                   isCurrentUser 
-                    ? 'bg-[#00B0FF]/15 border-y border-[#00B0FF]/30 font-semibold' 
+                    ? 'bg-teal-500/15 border-y border-teal-500/30 font-semibold' 
                     : isEvenRow ? colors.tableRowEven : 'bg-transparent'
                 }`}
               >
-                <td className="px-6 py-4 font-bold text-[#00B0FF]">
+                <td className="px-6 py-4 font-bold text-teal-500">
                   #{learner.rank || idx + 1}
                 </td>
-                <td className={`px-6 py-4 font-medium ${isCurrentUser ? 'text-[#00B0FF] font-bold' : colors.textMain}`}>
+                <td className={`px-6 py-4 font-medium ${isCurrentUser ? 'text-teal-500 font-bold' : colors.textMain}`}>
                   <div className="flex items-center gap-2">
                     <span>{learner.full_name || learner.username}</span>
                     {isCurrentUser && (
-                      <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[#00B0FF]/20 text-[#00B0FF]" title="This is your account">
+                      <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-teal-500/20 text-teal-500" title="This is your account">
                         You
                       </span>
                     )}

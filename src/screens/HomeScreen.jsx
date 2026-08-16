@@ -4,41 +4,77 @@ import { useNavigate } from 'react-router-dom';
 const HomeScreen = () => {
   const navigate = useNavigate();
 
+  const SchoolBranding = () => (
+    <div className="w-full flex flex-col items-center text-center mb-8">
+      <div className="relative transform transition-all duration-500 hover:scale-105">
+        <img 
+          src="logo.png" 
+          alt="Learn & Earn Logo" 
+          className="relative w-44 h-44 object-contain drop-shadow-2xl"
+          loading="eager"
+        />
+      </div>
+      
+      <h1 className="text-3xl font-bold text-teal-700 -mt-2">
+        Learn & Earn
+      </h1>
+      
+      <div className="flex items-center gap-2 mt-1">
+        <div className="w-8 h-0.5 bg-teal-600 rounded-full"></div>
+        <span className="text-xs font-medium text-slate-500 tracking-wider">LEARNING PLATFORM</span>
+        <div className="w-8 h-0.5 bg-teal-600 rounded-full"></div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-gray-50">
-      <div className="container mx-auto px-4 py-16">
+    <div className="min-h-screen bg-teal-50">
+      <div className="container mx-auto px-4 py-8">
         <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-navy/5 rounded-2xl mb-6 mx-auto">
-            <svg className="w-12 h-12 text-azure" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
           
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">
-            <span className="text-navy">Learn & </span>
-            <span className="text-azure">Earn</span>
-          </h1>
+          <SchoolBranding />
           
-          <div className="w-20 h-1 bg-gold mx-auto mb-6"></div>
-          
-          <p className="text-gray-600 text-lg mb-12 max-w-2xl mx-auto">
+          <p className="text-gray-600 text-lg mb-10 max-w-2xl mx-auto">
             Gamified learning platform for Malawian students. Earn points, win rewards, and excel in your studies!
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate('/learner-login')}
-              className="px-8 py-3 bg-azure text-white font-semibold rounded-xl hover:bg-opacity-90 transition shadow-lg"
+              className="px-8 py-3 bg-teal-500 text-white font-semibold rounded-xl hover:bg-teal-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              🎓 Student Login
+              Student Login
             </button>
             
             <button
               onClick={() => navigate('/admin-login')}
-              className="px-8 py-3 border-2 border-navy text-navy font-semibold rounded-xl hover:bg-navy hover:text-white transition"
+              className="px-8 py-3 bg-cyan-500 text-white font-semibold rounded-xl hover:bg-cyan-600 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              👨‍💼 Admin Login
+              Admin Login
             </button>
+          </div>
+
+          {/* Decorative elements */}
+          <div className="mt-12 flex justify-center gap-6">
+            <div className="w-2 h-2 bg-teal-400 rounded-full"></div>
+            <div className="w-2 h-2 bg-cyan-400 rounded-full"></div>
+            <div className="w-2 h-2 bg-azure-400 rounded-full"></div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-10 pt-4 border-t border-teal-200">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
+              <span className="flex items-center gap-1.5 font-medium text-slate-500 hover:text-teal-700 transition-colors cursor-pointer">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6-4h12a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Secure Platform
+              </span>
+              <div className="w-1 h-1 bg-teal-300 rounded-full"></div>
+              <span className="text-slate-500 hover:text-teal-700 transition-colors cursor-pointer font-medium">Earn Points</span>
+              <div className="w-1 h-1 bg-teal-300 rounded-full"></div>
+              <span className="text-slate-500 hover:text-teal-700 transition-colors cursor-pointer font-medium">Get Rewards</span>
+            </div>
           </div>
         </div>
       </div>

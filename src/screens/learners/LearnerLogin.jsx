@@ -49,7 +49,7 @@ const LearnerLogin = ({ serverStatus }) => {
           localStorage.removeItem('rememberLearner');
         }
 
-        toast.success(`Welcome back, ${result.user?.fullName || result.user?.username || username}! 🎉`);
+        toast.success(`Welcome back, ${result.user?.fullName || result.user?.username || username}!`);
         navigate('/learner-dashboard');
       } else {
         setError(result.error || 'Invalid credentials');
@@ -95,7 +95,7 @@ const LearnerLogin = ({ serverStatus }) => {
         <SchoolBranding />
 
         {/* Form Card */}
-        <div className="w-full bg-white rounded-3xl shadow-lg border border-slate-200 p-6">
+        <div className="w-full bg-white rounded-lg shadow-lg border border-slate-200 p-6">
           <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
             
             {/* Username Field */}
@@ -114,7 +114,7 @@ const LearnerLogin = ({ serverStatus }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-2xl text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="Enter your username"
                 />
               </div>
@@ -136,7 +136,7 @@ const LearnerLogin = ({ serverStatus }) => {
                   value={registrationNumber}
                   onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
                   disabled={loading}
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-2xl text-slate-800 font-mono text-sm uppercase placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
+                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 font-mono text-sm uppercase placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="e.g., 24-0123"
                 />
               </div>
@@ -161,30 +161,15 @@ const LearnerLogin = ({ serverStatus }) => {
             <button
               type="submit"
               disabled={loading || serverStatus?.status === 'offline'}
-              className="w-full mt-2 py-2.5 bg-[#008080] text-white font-bold rounded-2xl shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2 text-sm group"
+              className="w-full mt-2 py-2.5 bg-[#008080] text-white font-bold rounded-md shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign In</span>
-                  <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </>
-              )}
+              Sign In
             </button>
           </form>
 
           {/* Error Message */}
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-2xl">
+            <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-md">
               <div className="flex items-center gap-2 text-red-700 text-sm">
                 <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -196,9 +181,9 @@ const LearnerLogin = ({ serverStatus }) => {
 
           {/* Server Offline Alert */}
           {serverStatus?.status === 'offline' && (
-            <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-2xl">
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-100 rounded-md">
               <div className="flex items-center gap-2 text-amber-700 text-sm">
-                <span className="text-base">⚠️</span>
+                <span className="text-base">⚠</span>
                 <span className="font-medium">Server is offline. Please check your connection.</span>
               </div>
             </div>
