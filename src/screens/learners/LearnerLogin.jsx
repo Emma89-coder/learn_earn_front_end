@@ -65,39 +65,37 @@ const LearnerLogin = ({ serverStatus }) => {
   };
 
   const SchoolBranding = () => (
-    <div className="w-full flex flex-col items-center text-center mb-6">
+    <div className="w-full flex flex-col items-center text-center mb-5 sm:mb-6">
       <div className="relative transform transition-all duration-500 hover:scale-105">
         <img 
           src="logo.png" 
           alt="Learn & Earn Logo" 
-          className="relative w-44 h-44 object-contain drop-shadow-2xl"
+          className="relative w-28 h-28 object-contain drop-shadow-2xl sm:w-36 sm:h-36"
           loading="eager"
         />
       </div>
       
-      <h1 className="text-2xl font-bold text-[#1A237E] -mt-2">
+      <h1 className="text-xl font-bold text-[#1A237E] -mt-2 sm:text-2xl">
         Learn & Earn
       </h1>
       
       <div className="flex items-center gap-2 mt-1">
-        <div className="w-8 h-0.5 bg-[#1A237E] rounded-full"></div>
-        <span className="text-xs font-medium text-slate-500 tracking-wider">LEARNER PORTAL</span>
-        <div className="w-8 h-0.5 bg-[#1A237E] rounded-full"></div>
+        <div className="w-6 h-0.5 bg-[#1A237E] rounded-full sm:w-8"></div>
+        <span className="text-[10px] font-medium text-slate-500 tracking-wider sm:text-xs">LEARNER PORTAL</span>
+        <div className="w-6 h-0.5 bg-[#1A237E] rounded-full sm:w-8"></div>
       </div>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 w-full h-full flex items-center justify-center p-4 bg-white overflow-hidden">
-      
+    <div className="min-h-screen w-full flex items-center justify-center bg-white px-4 py-6 sm:px-6 lg:px-8 overflow-y-auto">
       <div className="relative w-full max-w-md mx-auto">
-        
         <SchoolBranding />
 
         {/* Form Card */}
-        <div className="w-full bg-white rounded-lg shadow-lg border border-slate-200 p-6">
-          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
-            
+        <div className="w-full bg-white rounded-lg shadow-lg border border-slate-200 p-4 sm:p-6">
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-3 sm:space-y-4">
+             
             {/* Username Field */}
             <div className="space-y-1.5">
               <label className="block text-slate-700 text-sm font-semibold ml-1">
@@ -114,7 +112,7 @@ const LearnerLogin = ({ serverStatus }) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={loading}
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
+                  className="w-full pl-10 pr-3 py-3 sm:py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="Enter your username"
                 />
               </div>
@@ -136,7 +134,7 @@ const LearnerLogin = ({ serverStatus }) => {
                   value={registrationNumber}
                   onChange={(e) => setRegistrationNumber(e.target.value.toUpperCase())}
                   disabled={loading}
-                  className="w-full pl-10 pr-3 py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 font-mono text-sm uppercase placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
+                  className="w-full pl-10 pr-3 py-3 sm:py-2.5 bg-white border-2 border-slate-200 rounded-md text-slate-800 font-mono text-sm uppercase placeholder-slate-400 focus:outline-none focus:border-[#008080] focus:ring-2 focus:ring-[#008080]/10 transition-all duration-200"
                   placeholder="e.g., 24-0123"
                 />
               </div>
@@ -161,7 +159,7 @@ const LearnerLogin = ({ serverStatus }) => {
             <button
               type="submit"
               disabled={loading || serverStatus?.status === 'offline'}
-              className="w-full mt-2 py-2.5 bg-[#008080] text-white font-bold rounded-md shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
+              className="w-full mt-2 py-3 sm:py-2.5 bg-[#008080] text-white font-bold rounded-md shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm"
             >
               Sign In
             </button>
