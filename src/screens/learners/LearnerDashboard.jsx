@@ -1002,8 +1002,8 @@ const LearnerDashboard = () => {
         )}
       </div>
 
-      {/* Quiz Cards Grid - 4 columns on mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-6xl mx-auto">
+      {/* Quiz Cards Grid - 4 columns on mobile, stays consistent on rotation */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-6xl mx-auto">
         {quizGames.map((game) => {
           const isHovered = hoveredCardId === game.id;
           
@@ -1011,13 +1011,13 @@ const LearnerDashboard = () => {
             <div
               key={game.id}
               className="relative cursor-pointer transition-all duration-300"
-              style={{ height: '160px' }}
+              style={{ height: '150px' }}
               onMouseEnter={() => setHoveredCardId(game.id)}
               onMouseLeave={() => setHoveredCardId(null)}
               onClick={() => handleCardClick(game.path, game.params)}
             >
               <div 
-                className={`w-full h-full rounded-2xl p-3 flex flex-col border-2 shadow-lg overflow-hidden transition-all duration-300 ${
+                className={`w-full h-full rounded-2xl p-2 flex flex-col border-2 shadow-lg overflow-hidden transition-all duration-300 ${
                   isHovered ? 'shadow-xl scale-105' : 'shadow-lg'
                 }`}
                 style={{
@@ -1030,27 +1030,27 @@ const LearnerDashboard = () => {
                   <img 
                     src={game.image}
                     alt={game.title}
-                    className={`w-auto h-full max-h-[90px] object-contain transition-all duration-300 ${
+                    className={`w-auto h-full max-h-[85px] object-contain transition-all duration-300 ${
                       isHovered ? 'scale-110' : 'hover:scale-105'
                     } drop-shadow-lg`}
                   />
                 </div>
-                <div className="flex flex-wrap justify-between items-center mt-1 flex-shrink-0 transition-all duration-300 gap-0.5">
-                  <div className={`rounded-full px-1.5 py-0.5 inline-block transition-all duration-300 ${
+                <div className="flex flex-wrap justify-between items-center mt-0.5 flex-shrink-0 transition-all duration-300 gap-0">
+                  <div className={`rounded-full px-1 py-0.5 inline-block transition-all duration-300 ${
                     isHovered ? 'bg-white/30' : 'bg-white/20'
                   }`}>
-                    <span className={`text-white text-[7px] sm:text-[9px] font-semibold transition-all duration-300 ${
+                    <span className={`text-white text-[6px] sm:text-[8px] font-semibold transition-all duration-300 ${
                       isHovered ? 'text-white' : ''
                     }`}>
                       {isSecondaryStudent ? 'Browse' : 'Play'}
                     </span>
                   </div>
-                  <div className={`text-white font-black text-[10px] sm:text-xs tracking-wider transition-all duration-300 ${
+                  <div className={`text-white font-black text-[8px] sm:text-[10px] tracking-wider transition-all duration-300 ${
                     isHovered ? 'text-white' : ''
                   }`}>
                     {game.title}
                   </div>
-                  <div className={`text-yellow-300 font-bold text-[10px] sm:text-xs transition-all duration-300 ${
+                  <div className={`text-yellow-300 font-bold text-[8px] sm:text-[10px] transition-all duration-300 ${
                     isHovered ? 'text-yellow-200' : ''
                   }`}>
                     +50
@@ -1542,13 +1542,22 @@ const LearnerDashboard = () => {
         fontFamily: `${fontFamily || 'Inter'}, sans-serif`,
       }}
     >
-      {/* Mobile Menu Toggle */}
+      {/* Mobile Menu Toggle - White boundary with 3 white lines */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-xl bg-white border border-teal-300/40 text-[#19475B] shadow-lg"
-        style={{ backgroundColor: cardBg, borderColor: `${accentColor}40`, color: headingColor }}
+        className="lg:hidden fixed top-3 left-3 z-50 p-2 rounded-lg bg-white shadow-lg border-2 border-white"
+        style={{ 
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          borderColor: '#ffffff',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}
+        aria-label="Toggle menu"
       >
-        <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
+        <div className="w-6 h-5 flex flex-col justify-between">
+          <span className="block w-full h-0.5 bg-[#075351] rounded"></span>
+          <span className="block w-full h-0.5 bg-[#075351] rounded"></span>
+          <span className="block w-full h-0.5 bg-[#075351] rounded"></span>
+        </div>
       </button>
 
       {/* Sidebar */}
@@ -1647,11 +1656,17 @@ const LearnerDashboard = () => {
           })}
         </nav>
 
-        <div className="px-3 py-2.5 border-t flex-shrink-0 bg-white/50 backdrop-blur-sm" style={{ backgroundColor: `${cardBg}80`, borderColor: `${accentColor}60` }}>
+        {/* Logout Button - White boundary with white font */}
+        <div className="px-3 py-2.5 border-t flex-shrink-0" style={{ backgroundColor: `${cardBg}80`, borderColor: `${accentColor}60` }}>
           <button
             onClick={handleLogout}
-            className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all border"
-            style={{ backgroundColor: 'rgba(135, 206, 235, 0.12)', color: '#cbd5e1', borderColor: '#87CEEB' }}
+            className="w-full py-2 rounded-lg text-sm font-semibold transition-all border-2"
+            style={{ 
+              backgroundColor: 'transparent',
+              color: '#ffffff',
+              borderColor: '#ffffff',
+              background: 'rgba(255,255,255,0.1)'
+            }}
           >
             Sign Out
           </button>
@@ -1897,6 +1912,11 @@ const LearnerDashboard = () => {
           .sidebar-item {
             min-height: 48px;
           }
+        }
+
+        /* Consistent grid on mobile rotation */
+        .grid-cols-4 {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
         }
       `}</style>
     </div>
