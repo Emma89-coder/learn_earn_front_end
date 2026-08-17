@@ -16,9 +16,8 @@ const renderFormattedText = (text) => {
     .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
 };
 
-const normalizeSentenceCase = (text) => {
+const normalizeLowerCase = (text) => {
   if (!text) return '';
-  // Convert to lowercase
   return String(text).toLowerCase();
 };
 
@@ -277,16 +276,16 @@ const TakeQuiz = () => {
 
       const randomizedQuestions = questions.map((q, idx) => {
         const opts = (q.options || []).map(o => ({
-          text: normalizeSentenceCase(sanitizeValue(o)),
+          text: normalizeLowerCase(sanitizeValue(o)),
           isCorrect: normalizeValue(o) === normalizeValue(q.correctAnswer),
         }));
         const shuffled = shuffleArray(opts);
         return {
           ...q,
           id: q.id || idx,
-          question: normalizeSentenceCase(sanitizeValue(q.question)) || 'no question text',
+          question: normalizeLowerCase(sanitizeValue(q.question)) || 'no question text',
           options: shuffled.map(o => o.text),
-          correctAnswer: normalizeSentenceCase(sanitizeValue(shuffled.find(o => o.isCorrect)?.text || q.correctAnswer)),
+          correctAnswer: normalizeLowerCase(sanitizeValue(shuffled.find(o => o.isCorrect)?.text || q.correctAnswer)),
           questionImage: q.questionImage && q.questionImage.trim() !== '' &&
             q.questionImage !== 'null' && q.questionImage !== 'NULL' ? q.questionImage : null,
         };
@@ -301,7 +300,7 @@ const TakeQuiz = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error fetching quiz:', err);
-      toast.error('Quiz unavailable');
+      toast.error('quiz unavailable');
       navigate('/quizzes');
     }
   };
@@ -585,7 +584,7 @@ const TakeQuiz = () => {
     );
   });
 
-  // ── action bar (prev / next / submit) ───────────────────────────────────
+  // ── action bar ───────────────────────────────────────────────────────────
   const renderActionBar = () => (
     <div className="flex gap-3 mt-4 sm:mt-6">
       <button
@@ -624,7 +623,7 @@ const TakeQuiz = () => {
     </div>
   );
 
-  // ── question navigator sidebar (desktop only) ───────────────────────────
+  // ── question navigator sidebar ──────────────────────────────────────────
   const renderNavSidebar = () => (
     <div className="rounded-2xl shadow-lg p-4 flex flex-col gap-3 w-full bg-white border border-slate-200">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -777,7 +776,7 @@ const TakeQuiz = () => {
               </div>
             </div>
 
-            {/* Question + options */}
+            {/* Question + options - ALL TEXT IS LOWERCASE */}
             {hasImage ? (
               <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden pt-6 sm:pt-8">
                 <div className="md:w-1/2 p-3 sm:p-5 flex items-center justify-center overflow-hidden bg-sky-50 border-r border-slate-200">
@@ -785,7 +784,7 @@ const TakeQuiz = () => {
                     <div className="rounded-xl p-2 sm:p-3 shadow-md bg-white">
                       <img src={currentQ.questionImage} alt="question" className="max-w-full max-h-40 sm:max-h-56 object-contain mx-auto" />
                     </div>
-                    <p className="font-bold mt-2 sm:mt-3 text-xs sm:text-sm px-2 text-slate-800"
+                    <p className="font-bold mt-2 sm:mt-3 text-xs sm:text-sm px-2 text-slate-800 lowercase"
                        dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQ.question) }} />
                   </div>
                 </div>
@@ -797,7 +796,7 @@ const TakeQuiz = () => {
             ) : (
               <div className="flex-1 min-h-0 p-4 sm:p-6 pt-6 sm:pt-8 flex flex-col justify-between overflow-hidden">
                 <div className="rounded-xl p-3 sm:p-4 text-center flex-shrink-0 bg-sky-50 border border-slate-200">
-                  <h2 className="text-sm sm:text-lg font-bold leading-relaxed text-slate-800"
+                  <h2 className="text-sm sm:text-lg font-bold leading-relaxed text-slate-800 lowercase"
                       dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQ.question) }} />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:gap-2 flex-1 justify-center my-2 sm:my-3">
@@ -808,11 +807,6 @@ const TakeQuiz = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Mobile navigator - hidden on mobile */}
-          <div className="hidden lg:hidden mt-3 overflow-y-auto max-h-48">
-            {renderNavSidebar()}
           </div>
         </div>
 
@@ -866,7 +860,7 @@ const TakeQuiz = () => {
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
           <div className={`rounded-xl shadow-2xl px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 ${isAnswerCorrect ? 'bg-green-500' : 'bg-red-500'}`}>
             <span className="text-white text-base sm:text-lg">{isAnswerCorrect ? '🎉' : '💡'}</span>
-            <p className="text-white font-semibold text-xs sm:text-sm">{feedbackMessage}</p>
+            <p className="text-white font-semibold text-xs sm:text-sm lowercase">{feedbackMessage}</p>
           </div>
         </div>
       )}
