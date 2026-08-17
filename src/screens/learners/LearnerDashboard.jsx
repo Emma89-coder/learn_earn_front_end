@@ -790,6 +790,7 @@ const LearnerDashboard = () => {
     );
   };
 
+  // ─── UPDATED RewardDialog with Ice White & Teal Theme ───
   const RewardDialog = () => {
     if (!showRewardDialog || !selectedReward) return null;
     const reward = selectedReward;
@@ -797,117 +798,175 @@ const LearnerDashboard = () => {
     const isOutOfStock = reward.stock_quantity !== undefined && reward.stock_quantity <= 0;
     const canRedeem = !isOutOfStock && points.current >= reward.points_required;
 
+    // Theme colors
+    const teal = '#075351';
+    const iceWhite = '#f7fbff';
+    const lightTeal = '#ccf5eb';
+    const mutedTeal = '#2f6b64';
+
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl" onClick={closeRewardDialog}>
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" 
+        onClick={closeRewardDialog}
+      >
         <div 
-          className="relative max-w-md w-full rounded-3xl overflow-hidden shadow-2xl border"
+          className="relative max-w-md w-full overflow-hidden shadow-2xl"
           style={{
-            background: isDarkMode
-              ? 'linear-gradient(180deg, #0f172a 0%, #08111f 100%)'
-              : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(236,253,245,0.96) 100%)',
-            borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)',
-            borderRadius: `${borderRadius}px`
+            backgroundColor: '#ffffff',
+            borderRadius: '6px',
+            border: `1px solid ${lightTeal}`,
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-5 border-b" style={{
-            background: isDarkMode
-              ? 'linear-gradient(135deg, rgba(20,184,166,0.18), rgba(15,23,42,0.05))'
-              : 'linear-gradient(135deg, rgba(204,251,241,0.95), rgba(236,253,245,0.98))',
-            borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'
-          }}>
+          {/* Header */}
+          <div 
+            className="p-5 border-b"
+            style={{
+              backgroundColor: lightTeal,
+              borderColor: lightTeal,
+            }}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md" style={{
-                  background: `linear-gradient(135deg, ${accentColor} 0%, #0f766e 100%)`
-                }}>
+                <div 
+                  className="w-11 h-11 rounded flex items-center justify-center shadow-sm"
+                  style={{
+                    backgroundColor: teal,
+                  }}
+                >
                   <Gift className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-1"
+                  <div 
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-1"
                     style={{
-                      backgroundColor: isDarkMode ? 'rgba(45,212,191,0.12)' : 'rgba(20,184,166,0.10)',
-                      color: isDarkMode ? '#5eead4' : '#0f766e',
-                      border: `1px solid ${isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'}`
-                    }}>
+                      backgroundColor: 'rgba(7, 83, 81, 0.10)',
+                      color: teal,
+                      border: `1px solid rgba(7, 83, 81, 0.15)`,
+                    }}
+                  >
                     <Sparkles className="w-3 h-3" />
                     redeem reward
                   </div>
-                  <h3 className="font-black text-lg tracking-tight" style={{ color: headingColor }}>
+                  <h3 
+                    className="font-bold text-lg tracking-tight"
+                    style={{ color: teal }}
+                  >
                     {reward.name}
                   </h3>
-                  <p className="text-sm" style={{ color: bodyColor }}>
+                  <p 
+                    className="text-sm"
+                    style={{ color: mutedTeal }}
+                  >
                     {reward.description || 'Redeem your points for this reward!'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={closeRewardDialog}
-                className="p-2 rounded-full transition border" style={{
-                  borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
-                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.85)'
+                className="p-2 rounded transition hover:bg-black/5"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.8)',
                 }}
               >
-                <X size={18} style={{ color: bodyColor }} />
+                <X size={18} style={{ color: mutedTeal }} />
               </button>
             </div>
           </div>
 
+          {/* Body */}
           <div className="p-5 space-y-4">
-            <div className="w-full h-44 rounded-3xl overflow-hidden flex items-center justify-center border relative" style={{
-              background: isDarkMode
-                ? 'linear-gradient(135deg, rgba(15,118,110,0.18), rgba(15,23,42,0.95))'
-                : 'linear-gradient(135deg, rgba(204,251,241,0.95), rgba(240,253,250,0.98))',
-              borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'
-            }}>
-              <div className="absolute inset-0 opacity-35 pointer-events-none" style={{
-                background: isDarkMode
-                  ? 'radial-gradient(circle at 20% 20%, rgba(45,212,191,0.30), transparent 30%), radial-gradient(circle at 80% 0%, rgba(20,184,166,0.18), transparent 28%)'
-                  : 'radial-gradient(circle at 20% 20%, rgba(20,184,166,0.18), transparent 30%), radial-gradient(circle at 80% 0%, rgba(15,118,110,0.12), transparent 28%)'
-              }} />
-              <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
+            {/* Image */}
+            <div 
+              className="w-full h-44 overflow-hidden flex items-center justify-center relative"
+              style={{
+                backgroundColor: lightTeal,
+                borderRadius: '6px',
+              }}
+            >
+              <div className="w-full h-full flex items-center justify-center p-3">
                 {renderRewardImage(reward, 'w-full h-full object-contain p-4')}
               </div>
               {reward.stock_quantity !== undefined && (
-                <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white shadow-lg ${isOutOfStock ? 'bg-red-600' : reward.stock_quantity < 10 ? 'bg-amber-600' : 'bg-teal-600'}`} style={!isOutOfStock && reward.stock_quantity >= 10 ? { backgroundColor: accentColor } : {}}>
-                  {isOutOfStock ? '❌ Out of Stock' : reward.stock_quantity < 10 ? `⚠️ ${reward.stock_quantity} left` : `✓ ${reward.stock_quantity} available`}
+                <div 
+                  className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white shadow-lg ${
+                    isOutOfStock ? 'bg-red-600' : 
+                    reward.stock_quantity < 10 ? 'bg-amber-600' : 
+                    'bg-teal-600'
+                  }`}
+                  style={!isOutOfStock && reward.stock_quantity >= 10 ? { backgroundColor: teal } : {}}
+                >
+                  {isOutOfStock ? '❌ Out of Stock' : 
+                   reward.stock_quantity < 10 ? `⚠️ ${reward.stock_quantity} left` : 
+                   `✓ ${reward.stock_quantity} available`}
                 </div>
               )}
             </div>
 
-            <div className="p-4 rounded-2xl border" style={{
-              backgroundColor: isDarkMode ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.9)',
-              borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)'
-            }}>
+            {/* Points Info */}
+            <div 
+              className="p-4 rounded"
+              style={{
+                backgroundColor: iceWhite,
+                border: `1px solid ${lightTeal}`,
+                borderRadius: '6px',
+              }}
+            >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center border" style={{
-                    borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
-                    backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(236,253,245,0.95)'
-                  }}>
-                    <Wallet className="w-5 h-5" style={{ color: accentColor }} />
+                  <div 
+                    className="w-10 h-10 rounded flex items-center justify-center"
+                    style={{
+                      backgroundColor: 'rgba(7, 83, 81, 0.08)',
+                      border: `1px solid ${lightTeal}`,
+                    }}
+                  >
+                    <Wallet className="w-5 h-5" style={{ color: teal }} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: bodyColor }}>Points Required</p>
-                    <p className="font-black text-lg leading-none" style={{ color: headingColor }}>{reward.points_required.toLocaleString()}</p>
+                    <p 
+                      className="text-[10px] font-semibold uppercase tracking-widest"
+                      style={{ color: mutedTeal }}
+                    >
+                      Points Required
+                    </p>
+                    <p 
+                      className="font-bold text-lg leading-none"
+                      style={{ color: teal }}
+                    >
+                      {reward.points_required.toLocaleString()}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: bodyColor }}>Your Balance</p>
-                  <p className="font-black text-lg leading-none" style={{ color: points.current >= reward.points_required ? accentColor : '#f87171' }}>
+                  <p 
+                    className="text-[10px] font-semibold uppercase tracking-widest"
+                    style={{ color: mutedTeal }}
+                  >
+                    Your Balance
+                  </p>
+                  <p 
+                    className="font-bold text-lg leading-none"
+                    style={{ 
+                      color: points.current >= reward.points_required ? teal : '#dc2626' 
+                    }}
+                  >
                     {points.current.toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
               <button
                 onClick={closeRewardDialog}
-                className="flex-1 px-4 py-3 rounded-2xl font-semibold text-sm transition border-2 hover:-translate-y-0.5 active:translate-y-0" style={{
-                  borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
-                  color: bodyColor,
-                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(241,245,249,0.9)'
+                className="flex-1 px-4 py-3 font-semibold text-sm transition border"
+                style={{
+                  borderColor: lightTeal,
+                  color: mutedTeal,
+                  backgroundColor: '#ffffff',
+                  borderRadius: '6px',
                 }}
               >
                 Cancel
@@ -915,17 +974,21 @@ const LearnerDashboard = () => {
               <button
                 disabled={!canRedeem || redeemingId === reward.id}
                 onClick={() => handleRedeemItem(reward)}
-                className={`flex-1 px-4 py-3 rounded-2xl font-bold text-sm transition border-2 text-white flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 ${!canRedeem ? 'opacity-50 cursor-not-allowed' : ''}`}
-                style={canRedeem
-                  ? { background: `linear-gradient(135deg, #14b8a6 0%, ${accentColor} 55%, #0f766e 100%)`, borderColor: accentColor, boxShadow: `0 10px 24px ${accentColor}35` }
-                  : { backgroundColor: 'rgb(107 114 128)', borderColor: 'rgb(107 114 128)' }}
+                className={`flex-1 px-4 py-3 font-bold text-sm transition text-white flex items-center justify-center gap-2 ${
+                  !canRedeem ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
+                }`}
+                style={{
+                  backgroundColor: canRedeem ? teal : '#9ca3af',
+                  borderRadius: '6px',
+                  border: 'none',
+                }}
               >
                 {redeemingId === reward.id ? (
                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                 ) : isOutOfStock ? (
                   'Out of Stock'
                 ) : points.current < reward.points_required ? (
-                  `Need ${reward.points_required - points.current} more`
+                  `Need ${(reward.points_required - points.current).toLocaleString()} more`
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
@@ -1319,7 +1382,7 @@ const LearnerDashboard = () => {
               </div>
             </div>
 
-            {/* Main Content Body - No scrolling */}
+            {/* Main Content Body */}
             <div className="p-3 sm:p-4">
               {loadingRewards ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
