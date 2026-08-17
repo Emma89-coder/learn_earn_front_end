@@ -416,38 +416,59 @@ const RewardsStore = () => {
 
     return (
       <div
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-xl"
         onClick={() => { setShowDialog(false); setSelectedReward(null); }}
       >
         <div
-          className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl"
-          style={{ backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }}
+          className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl border"
+          style={{
+            background: isDarkMode
+              ? 'linear-gradient(180deg, #0f172a 0%, #0b1220 100%)'
+              : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(236,253,245,0.96) 100%)',
+            borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-0 sm:hidden">
-            <div className="w-9 h-1 rounded-full bg-white/20" />
+            <div className="w-10 h-1 rounded-full bg-teal-400/35" />
           </div>
 
           {/* Hero banner with gradient overlay */}
-          <div className="relative w-full h-52 sm:h-48 overflow-hidden"
-               style={{ background: isDarkMode ? 'linear-gradient(135deg,#1e293b 0%,#0f2a35 100%)' : 'linear-gradient(135deg,#e0f2fe 0%,#d1fae5 100%)' }}>
-            {renderRewardImage(reward, 'w-full h-full object-contain p-8')}
-            {/* Bottom fade */}
-            <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none"
-                 style={{ background: isDarkMode ? 'linear-gradient(to top,#0f172a,transparent)' : 'linear-gradient(to top,#f8fafc,transparent)' }} />
+          <div
+            className="relative w-full h-52 sm:h-48 overflow-hidden"
+            style={{
+              background: isDarkMode
+                ? 'linear-gradient(135deg, #0f766e 0%, #0f172a 58%, #062e2b 100%)'
+                : 'linear-gradient(135deg, #ccfbf1 0%, #e6fffb 45%, #ecfeff 100%)'
+            }}
+          >
+            <div className="absolute inset-0 opacity-40 pointer-events-none" style={{
+              background: isDarkMode
+                ? 'radial-gradient(circle at 20% 20%, rgba(45,212,191,0.35), transparent 34%), radial-gradient(circle at 80% 0%, rgba(20,184,166,0.22), transparent 28%)'
+                : 'radial-gradient(circle at 20% 20%, rgba(20,184,166,0.22), transparent 32%), radial-gradient(circle at 80% 0%, rgba(15,118,110,0.14), transparent 28%)'
+            }} />
+            <div className="absolute inset-x-0 top-0 h-14 pointer-events-none bg-gradient-to-b from-black/15 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-20 pointer-events-none"
+                 style={{ background: isDarkMode ? 'linear-gradient(to top,#0f172a,transparent)' : 'linear-gradient(to top,rgba(248,250,252,0.98),transparent)' }} />
+
+            <div className="relative z-10 w-full h-full flex items-center justify-center p-6">
+              <div className="w-full h-full flex items-center justify-center rounded-3xl border border-white/15 bg-white/5 shadow-inner backdrop-blur-sm">
+                {renderRewardImage(reward, 'w-full h-full object-contain p-8')}
+              </div>
+            </div>
 
             {/* Close */}
             <button
               onClick={() => { setShowDialog(false); setSelectedReward(null); }}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-black/40 hover:bg-black/60 transition backdrop-blur-sm"
+              className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-slate-950/35 hover:bg-slate-950/55 transition backdrop-blur-sm border border-white/10"
             >
               <X size={14} className="text-white" />
             </button>
 
             {/* Stock pill */}
             {reward.stock_quantity !== undefined && (
-              <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-bold text-white shadow-lg ${
+              <span className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[11px] font-bold text-white shadow-lg border border-white/10 ${
                 isOutOfStock ? 'bg-red-500' : stockLow ? 'bg-amber-500' : 'bg-emerald-500'
               }`}>
                 {isOutOfStock ? '✕ Out of stock' : stockLow ? `⚠ ${reward.stock_quantity} left` : `✓ ${reward.stock_quantity} in stock`}
@@ -456,15 +477,34 @@ const RewardsStore = () => {
           </div>
 
           {/* Body */}
-          <div className="px-5 pt-3 pb-5 space-y-4">
+          <div className="px-5 pt-4 pb-5 space-y-4">
 
             {/* Name + description */}
-            <div>
-              <h3 className="text-xl font-black tracking-tight" style={{ color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
+                  style={{
+                    backgroundColor: isDarkMode ? 'rgba(45,212,191,0.12)' : 'rgba(20,184,166,0.12)',
+                    color: isDarkMode ? '#5eead4' : '#0f766e',
+                    border: `1px solid ${isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'}`
+                  }}>
+                  <Award className="w-3 h-3" />
+                  redeem reward
+                </div>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                  style={{
+                    backgroundColor: isDarkMode ? 'rgba(15,118,110,0.18)' : 'rgba(20,184,166,0.10)',
+                    color: isDarkMode ? '#99f6e4' : '#0f766e'
+                  }}>
+                  {formatPoints(points.current)} pts available
+                </span>
+              </div>
+
+              <h3 className="text-xl font-black tracking-tight" style={{ color: isDarkMode ? '#f8fafc' : '#0f172a' }}>
                 {reward.name}
               </h3>
               {reward.description && (
-                <p className="mt-1 text-sm leading-relaxed opacity-75" style={{ color: isDarkMode ? '#cbd5e1' : '#334155' }}>
+                <p className="text-sm leading-relaxed" style={{ color: isDarkMode ? '#cbd5e1' : '#475569' }}>
                   {reward.description}
                 </p>
               )}
@@ -473,38 +513,46 @@ const RewardsStore = () => {
             {/* Points summary cards */}
             <div className="grid grid-cols-2 gap-2">
               {/* Cost */}
-              <div className="rounded-2xl p-3 text-center"
-                   style={{ backgroundColor: isDarkMode ? '#1e293b' : '#fff', border: isDarkMode ? '1px solid #334155' : '1px solid #e2e8f0' }}>
+              <div className="rounded-2xl p-3 text-center border"
+                   style={{
+                     backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.9)',
+                     borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(148,163,184,0.25)'
+                   }}>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-1"
-                   style={{ color: isDarkMode ? '#64748b' : '#94a3b8' }}>Cost</p>
+                   style={{ color: isDarkMode ? '#64748b' : '#64748b' }}>Cost</p>
                 <p className="text-2xl font-black leading-none" style={{ color: accentColor }}>
                   {reward.points_required.toLocaleString()}
                 </p>
-                <p className="text-[10px] mt-0.5" style={{ color: isDarkMode ? '#64748b' : '#94a3b8' }}>points</p>
+                <p className="text-[10px] mt-0.5" style={{ color: isDarkMode ? '#94a3b8' : '#64748b' }}>points</p>
               </div>
 
               {/* Balance */}
-              <div className="rounded-2xl p-3 text-center"
+              <div className="rounded-2xl p-3 text-center border"
                    style={{
-                     backgroundColor: isDarkMode ? '#1e293b' : '#fff',
-                     border: `1px solid ${affordable ? (isDarkMode ? '#166534' : '#bbf7d0') : (isDarkMode ? '#7f1d1d' : '#fecaca')}`
+                     backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.9)',
+                     borderColor: affordable
+                       ? (isDarkMode ? 'rgba(20,184,166,0.6)' : 'rgba(20,184,166,0.28)')
+                       : (isDarkMode ? 'rgba(248,113,113,0.45)' : 'rgba(248,113,113,0.28)')
                    }}>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mb-1"
-                   style={{ color: isDarkMode ? '#64748b' : '#94a3b8' }}>Your Balance</p>
+                   style={{ color: isDarkMode ? '#64748b' : '#64748b' }}>Your Balance</p>
                 <p className="text-2xl font-black leading-none"
-                   style={{ color: affordable ? '#34d399' : '#f87171' }}>
+                   style={{ color: affordable ? '#14b8a6' : '#f87171' }}>
                   {points.current.toLocaleString()}
                 </p>
-                <p className="text-[10px] mt-0.5" style={{ color: isDarkMode ? '#64748b' : '#94a3b8' }}>points</p>
+                <p className="text-[10px] mt-0.5" style={{ color: isDarkMode ? '#94a3b8' : '#64748b' }}>points</p>
               </div>
             </div>
 
             {/* Deficit notice */}
             {!canRedeem && !isOutOfStock && (
-              <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl"
-                   style={{ backgroundColor: isDarkMode ? 'rgba(239,68,68,0.12)' : '#fef2f2', border: '1px solid rgba(239,68,68,0.3)' }}>
-                <AlertCircle size={15} className="text-red-400 flex-shrink-0" />
-                <p className="text-sm" style={{ color: isDarkMode ? '#fca5a5' : '#dc2626' }}>
+              <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-xl border"
+                   style={{
+                     backgroundColor: isDarkMode ? 'rgba(15,118,110,0.10)' : 'rgba(240,253,250,0.95)',
+                     borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'
+                   }}>
+                <AlertCircle size={15} className="text-teal-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm" style={{ color: isDarkMode ? '#99f6e4' : '#0f766e' }}>
                   You need <span className="font-bold">{deficit.toLocaleString()} more points</span> to redeem this reward.
                 </p>
               </div>
@@ -514,11 +562,11 @@ const RewardsStore = () => {
             <div className="flex gap-2.5 pt-1">
               <button
                 onClick={() => { setShowDialog(false); setSelectedReward(null); }}
-                className="flex-1 py-3 rounded-2xl font-semibold text-sm transition-all hover:opacity-80"
+                className="flex-1 py-3 rounded-2xl font-semibold text-sm transition-all hover:-translate-y-0.5 active:translate-y-0"
                 style={{
-                  backgroundColor: isDarkMode ? '#1e293b' : '#f1f5f9',
-                  color: isDarkMode ? '#94a3b8' : '#64748b',
-                  border: isDarkMode ? '1px solid #334155' : '1px solid #e2e8f0'
+                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(241,245,249,0.95)',
+                  color: isDarkMode ? '#cbd5e1' : '#475569',
+                  border: isDarkMode ? '1px solid rgba(51,65,85,0.95)' : '1px solid rgba(226,232,240,1)'
                 }}
               >
                 Cancel
@@ -526,12 +574,12 @@ const RewardsStore = () => {
               <button
                 disabled={!canRedeem || redeemingId === reward.id}
                 onClick={() => handleRedeem(reward)}
-                className="flex-[2] py-3 rounded-2xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-95"
+                className="flex-[2] py-3 rounded-2xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-0.5 active:translate-y-0"
                 style={{
                   background: canRedeem
-                    ? `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}cc 100%)`
+                    ? `linear-gradient(135deg, #14b8a6 0%, ${accentColor} 55%, #0f766e 100%)`
                     : 'linear-gradient(135deg, #475569 0%, #334155 100%)',
-                  boxShadow: canRedeem ? `0 4px 20px ${accentColor}50` : 'none'
+                  boxShadow: canRedeem ? `0 10px 24px ${accentColor}35` : 'none'
                 }}
               >
                 {redeemingId === reward.id ? (
