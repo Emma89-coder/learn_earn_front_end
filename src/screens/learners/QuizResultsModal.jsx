@@ -147,7 +147,7 @@ const QuizResultsModal = ({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-medium text-slate-700 truncate">
-                        q{idx + 1}: {ans.questionText}
+                        q{idx + 1}: {String(ans.questionText || '').toLowerCase()}
                       </p>
                       <div className="flex items-center gap-3 mt-0.5 text-[10px]">
                         <span className="text-slate-500">your answer: <span className={ans.isCorrect ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>{ans.selectedOption || '—'}</span></span>

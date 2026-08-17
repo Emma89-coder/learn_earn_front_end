@@ -397,7 +397,7 @@ const QuizHistory = () => {
                                 <span className="font-bold text-gray-500">Q{i + 1}</span>
                                 <span>{ans.isCorrect ? '✅' : '❌'}</span>
                               </div>
-                              {ans.questionText && <p className="text-gray-600 line-clamp-2">{ans.questionText}</p>}
+                              {ans.questionText && <p className="text-gray-600 line-clamp-2">{String(ans.questionText).toLowerCase()}</p>}
                               <p className="text-emerald-700 font-semibold mt-1">✓ {ans.correctAnswer}</p>
                               {!ans.isCorrect && ans.selectedOption && (
                                 <p className="text-red-500 font-medium">✗ {ans.selectedOption}</p>

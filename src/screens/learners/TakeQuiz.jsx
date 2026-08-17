@@ -592,6 +592,7 @@ const TakeQuiz = () => {
   const currentQ     = quiz.questions[currentQuestion];
   const optionsToShow = filteredOptions || currentQ.options;
   const hasImage     = !!currentQ.questionImage;
+  const currentQuestionText = normalizeLowerCase(currentQ.question);
   const answeredCount = answersRef.current.filter(a => a !== '').length;
   const levelColor   = LEVEL_COLORS[quizGameLevel] || 'bg-teal-500';
 
@@ -821,7 +822,7 @@ const TakeQuiz = () => {
                       <img src={currentQ.questionImage} alt="question" className="max-w-full max-h-40 sm:max-h-56 object-contain mx-auto" />
                     </div>
                     <p className="font-bold mt-2 sm:mt-3 text-xs sm:text-sm px-2 text-slate-800 lowercase"
-                       dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQ.question) }} />
+                        dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQuestionText) }} />
                   </div>
                 </div>
                 <div className="md:w-1/2 p-3 sm:p-5 flex flex-col justify-between overflow-hidden">
@@ -833,7 +834,7 @@ const TakeQuiz = () => {
               <div className="flex-1 min-h-0 p-4 sm:p-6 pt-6 sm:pt-8 flex flex-col justify-between overflow-hidden">
                 <div className="rounded-xl p-3 sm:p-4 text-center flex-shrink-0 bg-sky-50 border border-slate-200">
                   <h2 className="text-sm sm:text-lg font-bold leading-relaxed text-slate-800 lowercase"
-                      dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQ.question) }} />
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQuestionText) }} />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:gap-2 flex-1 justify-center my-2 sm:my-3">
                   {renderOptions()}

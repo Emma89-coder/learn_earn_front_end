@@ -596,9 +596,9 @@ const RewardsStore = () => {
               >
                 {showBalance ? <Eye className="w-4 h-4 text-white" /> : <EyeOff className="w-4 h-4 text-white" />}
               </button>
-              <div className="px-3 py-2 rounded-xl border border-white/20 bg-white/10 shadow-inner">
-                <span className="text-yellow-300 text-xs">⭐</span>
-                <span className="text-white text-xs font-semibold ml-1">
+              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-white/20 bg-white/10 shadow-inner">
+                <Star className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+                <span className="text-white text-xs font-bold tabular-nums">
                   {showBalance ? formatPoints(points.current) : '••••'}
                 </span>
               </div>
@@ -618,34 +618,27 @@ const RewardsStore = () => {
 
         {/* ─── Stats Bar ─── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div className="rounded-2xl p-3.5 text-center border shadow-sm" style={{
-            backgroundColor: isDarkMode ? 'rgb(30 41 59 / 0.85)' : 'rgba(255,255,255,0.88)',
-            borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`
-          }}>
-            <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: isDarkMode ? '#94a3b8' : bodyColor }}>Points</p>
-            <p className="text-lg font-bold" style={{ color: isDarkMode ? '#f1f5f9' : headingColor }}>{formatPoints(points.current)}</p>
-          </div>
-          <div className="rounded-2xl p-3.5 text-center border shadow-sm" style={{
-            backgroundColor: isDarkMode ? 'rgb(30 41 59 / 0.85)' : 'rgba(255,255,255,0.88)',
-            borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`
-          }}>
-            <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: isDarkMode ? '#94a3b8' : bodyColor }}>Available</p>
-            <p className="text-lg font-bold" style={{ color: isDarkMode ? '#f1f5f9' : headingColor }}>{stats.available}</p>
-          </div>
-          <div className="rounded-2xl p-3.5 text-center border shadow-sm" style={{
-            backgroundColor: isDarkMode ? 'rgb(30 41 59 / 0.85)' : 'rgba(255,255,255,0.88)',
-            borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`
-          }}>
-            <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: isDarkMode ? '#94a3b8' : bodyColor }}>Total Rewards</p>
-            <p className="text-lg font-bold" style={{ color: isDarkMode ? '#f1f5f9' : headingColor }}>{stats.total}</p>
-          </div>
-          <div className="rounded-2xl p-3.5 text-center border shadow-sm" style={{
-            backgroundColor: isDarkMode ? 'rgb(30 41 59 / 0.85)' : 'rgba(255,255,255,0.88)',
-            borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`
-          }}>
-            <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: isDarkMode ? '#94a3b8' : bodyColor }}>Lifetime</p>
-            <p className="text-lg font-bold" style={{ color: isDarkMode ? '#f1f5f9' : headingColor }}>{formatPoints(points.lifetime)}</p>
-          </div>
+          {[
+            { label: 'Points', value: formatPoints(points.current), icon: Wallet },
+            { label: 'Available', value: stats.available, icon: ShoppingBag },
+            { label: 'Total Rewards', value: stats.total, icon: Gift },
+            { label: 'Lifetime', value: formatPoints(points.lifetime), icon: History },
+          ].map(({ label, value, icon: Icon }) => (
+            <div
+              key={label}
+              className="rounded-2xl p-3.5 text-center border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              style={{
+                backgroundColor: isDarkMode ? 'rgb(30 41 59 / 0.85)' : 'rgba(255,255,255,0.88)',
+                borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`
+              }}
+            >
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Icon className="w-3 h-3" style={{ color: isDarkMode ? '#5eead4' : accentColor }} />
+                <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: isDarkMode ? '#94a3b8' : bodyColor }}>{label}</p>
+              </div>
+              <p className="text-lg font-bold tabular-nums" style={{ color: isDarkMode ? '#f1f5f9' : headingColor }}>{value}</p>
+            </div>
+          ))}
         </div>
 
         {/* ─── Tabs ─── */}
@@ -876,43 +869,60 @@ const RewardsStore = () => {
                     {filteredRewards.map((reward) => {
                       const stockStatus = getStockStatus(reward.stock_quantity);
                       const isOutOfStock = reward.stock_quantity !== undefined && reward.stock_quantity <= 0;
-                      
-                      return (
-                        <div
-                          key={reward.id}
-                          onClick={() => !isOutOfStock && setSelectedReward(reward) && setShowDialog(true)}
-                          className={`group rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer border ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:-translate-y-1'}`}
-                          style={{
-                            backgroundColor: isDarkMode ? 'rgb(15 23 42 / 0.75)' : 'rgba(255,255,255,0.94)',
-                            borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`,
-                          }}
-                        >
-                          <div className="p-3.5 flex flex-col h-full">
-                            <div className="w-full aspect-square rounded-xl overflow-hidden flex items-center justify-center mb-3 border" style={{
-                              backgroundColor: isDarkMode ? 'rgb(15 23 42)' : `${accentColor}16`,
-                              borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}30`
-                            }}>
-                              {renderRewardImage(reward, 'w-full h-full object-contain p-2')}
-                            </div>
-                            
-                            <p className="text-sm font-bold text-center leading-tight min-h-[36px]" style={{ color: isDarkMode ? '#e2e8f0' : '#0f172a' }}>
-                              {reward.name}
-                            </p>
-                            
-                            <div className="mt-2 inline-flex items-center justify-center gap-1 self-center rounded-full px-3 py-1 text-xs font-semibold" style={{
-                              backgroundColor: isDarkMode ? 'rgb(45 212 191 / 0.16)' : `${accentColor}18`,
-                              color: isDarkMode ? '#5eead4' : '#0f766e'
-                            }}>
-                              {reward.points_required} points
-                            </div>
+                        const canAfford = points.current >= reward.points_required;
 
-                            <div className="mt-2 text-[11px] text-center font-medium" style={{ color: stockStatus.color }}>
-                              {stockStatus.label}
+                        return (
+                          <div
+                            key={reward.id}
+                            onClick={() => {
+                              if (isOutOfStock) return;
+                              setSelectedReward(reward);
+                              setShowDialog(true);
+                          }}
+                            className={`group rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer border ${isOutOfStock ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl hover:-translate-y-1'}`}
+                            style={{
+                              backgroundColor: isDarkMode ? 'rgb(15 23 42 / 0.75)' : 'rgba(255,255,255,0.94)',
+                              borderColor: !isOutOfStock && canAfford
+                                ? `${accentColor}60`
+                                : isDarkMode ? 'rgb(51 65 85)' : `${accentColor}35`,
+                            }}
+                          >
+                            <div className="p-3.5 flex flex-col h-full">
+                              <div className="relative w-full aspect-square rounded-xl overflow-hidden flex items-center justify-center mb-3 border" style={{
+                                backgroundColor: isDarkMode ? 'rgb(15 23 42)' : `${accentColor}16`,
+                                borderColor: isDarkMode ? 'rgb(51 65 85)' : `${accentColor}30`
+                              }}>
+                                <div className="w-full h-full flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                                  {renderRewardImage(reward, 'w-full h-full object-contain p-2')}
+                                </div>
+                                {!isOutOfStock && canAfford && (
+                                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" title="You can afford this" />
+                                )}
+                              </div>
+
+                              <p className="text-sm font-bold text-center leading-tight min-h-[36px]" style={{ color: isDarkMode ? '#e2e8f0' : '#0f172a' }}>
+                                {reward.name}
+                              </p>
+
+                              <div className="mt-2 inline-flex items-center justify-center gap-1 self-center rounded-full px-3 py-1 text-xs font-semibold" style={{
+                                backgroundColor: canAfford
+                                  ? (isDarkMode ? 'rgb(45 212 191 / 0.16)' : `${accentColor}18`)
+                                  : (isDarkMode ? 'rgb(248 113 113 / 0.12)' : '#fef2f2'),
+                                color: canAfford
+                                  ? (isDarkMode ? '#5eead4' : '#0f766e')
+                                  : (isDarkMode ? '#fca5a5' : '#dc2626')
+                              }}>
+                                <Star className="w-3 h-3" />
+                                {reward.points_required.toLocaleString()} points
+                              </div>
+
+                              <div className="mt-2 text-[11px] text-center font-medium" style={{ color: stockStatus.color }}>
+                                {stockStatus.icon} {stockStatus.label}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 )}
               </div>
