@@ -18,8 +18,8 @@ const renderFormattedText = (text) => {
 
 const normalizeSentenceCase = (text) => {
   if (!text) return '';
-  const lower = String(text).toLowerCase();
-  return lower.replace(/(^\s*[a-z])|([.!?]\s+[a-z])/g, (match) => match.toUpperCase());
+  // Convert to lowercase
+  return String(text).toLowerCase();
 };
 
 const shuffleArray = (array) => {
@@ -40,15 +40,15 @@ const LEVEL_COLORS = {
 };
 
 const DISTRICT_CATEGORY_LABELS = {
-  all: 'Mixed Challenge',
-  'capitals-major-towns': 'Capitals and Major Towns',
-  'borders-neighbors': 'Borders and Neighbors',
-  'physical-features': 'Physical Features',
-  'parks-wildlife': 'National Parks and Wildlife',
-  'economic-activities': 'Economic Activities',
-  'transport-border-posts': 'Transport and Border Posts',
-  'history-culture': 'History and Cultural Landmarks',
-  'region-classification': 'Region Classification',
+  all: 'mixed challenge',
+  'capitals-major-towns': 'capitals and major towns',
+  'borders-neighbors': 'borders and neighbors',
+  'physical-features': 'physical features',
+  'parks-wildlife': 'national parks and wildlife',
+  'economic-activities': 'economic activities',
+  'transport-border-posts': 'transport and border posts',
+  'history-culture': 'history and cultural landmarks',
+  'region-classification': 'region classification',
 };
 
 const TakeQuiz = () => {
@@ -84,9 +84,9 @@ const TakeQuiz = () => {
   // Level / access
   const [learnerClass, setLearnerClass] = useState(null);
   const [learnerCurrentLevel, setLearnerCurrentLevel] = useState(null);
-  const [quizLevel, setQuizLevel] = useState(null);       // class-level (standard-X)
-  const [quizGameLevel, setQuizGameLevel] = useState(1);   // numeric 1-10
-  const [userGameLevel, setUserGameLevel] = useState(1);   // learner's current game level
+  const [quizLevel, setQuizLevel] = useState(null);
+  const [quizGameLevel, setQuizGameLevel] = useState(1);
+  const [userGameLevel, setUserGameLevel] = useState(1);
   const [accessDenied, setAccessDenied] = useState(false);
   const [accessError, setAccessError] = useState('');
   const [isRandomQuiz, setIsRandomQuiz] = useState(false);
@@ -112,7 +112,7 @@ const TakeQuiz = () => {
   };
   const normalizeValue = (v) => sanitizeValue(v).toLowerCase();
   const formatLevelName = (l) => {
-    if (!l) return 'Unknown';
+    if (!l) return 'unknown';
     return l.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
   };
   const pageStyles = {
@@ -256,14 +256,13 @@ const TakeQuiz = () => {
         setDistrictCategories(available);
       }
 
-      // Access check is done here to avoid extra network round-trips.
       if (
         quizId !== 'malawi-districts' &&
         quizData.class_level &&
         learnerCurrentLevel &&
         quizData.class_level !== learnerCurrentLevel
       ) {
-        setAccessError(`❌ Access Denied: This quiz is for ${formatLevelName(quizData.class_level)} learners only.`);
+        setAccessError(`❌ access denied: this quiz is for ${formatLevelName(quizData.class_level)} learners only.`);
         setAccessDenied(true);
         setLoading(false);
         return;
@@ -285,7 +284,7 @@ const TakeQuiz = () => {
         return {
           ...q,
           id: q.id || idx,
-          question: normalizeSentenceCase(sanitizeValue(q.question)) || 'No question text',
+          question: normalizeSentenceCase(sanitizeValue(q.question)) || 'no question text',
           options: shuffled.map(o => o.text),
           correctAnswer: normalizeSentenceCase(sanitizeValue(shuffled.find(o => o.isCorrect)?.text || q.correctAnswer)),
           questionImage: q.questionImage && q.questionImage.trim() !== '' &&
@@ -317,13 +316,13 @@ const TakeQuiz = () => {
 
   useEffect(() => {
     if (learnerCurrentLevel !== null) fetchQuiz();
-  }, [quizId, learnerCurrentLevel]); // eslint-disable-line
+  }, [quizId, learnerCurrentLevel]);
 
   useEffect(() => {
     if (quizId === 'malawi-districts' && learnerCurrentLevel !== null) {
       fetchQuiz();
     }
-  }, [districtCategory]); // eslint-disable-line
+  }, [districtCategory]);
 
   // Timer
   useEffect(() => {
@@ -333,14 +332,14 @@ const TakeQuiz = () => {
       setTimeLeft(prev => { if (prev <= 1) { clearInterval(timer); return 0; } return prev - 1; });
     }, 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, quiz, loading, showFeedback, quizCompleted]); // eslint-disable-line
+  }, [timeLeft, quiz, loading, showFeedback, quizCompleted]);
 
   // Auto-submit on timeout
   useEffect(() => {
     if (timeLeft === 0 && !showFeedback && quiz && !loading && !quizCompleted) handleTimeout();
-  }, [timeLeft]); // eslint-disable-line
+  }, [timeLeft]);
 
-  // Read question aloud with cloned voice when question changes
+  // Read question aloud
   useEffect(() => {
     if (quiz && quiz.questions && quiz.questions[currentQuestion] && !showFeedback && !quizCompleted) {
       const q = quiz.questions[currentQuestion];
@@ -349,7 +348,7 @@ const TakeQuiz = () => {
         speak(questionText);
       }
     }
-  }, [currentQuestion, quiz]); // eslint-disable-line
+  }, [currentQuestion, quiz]);
 
   // Auto-advance after feedback
   useEffect(() => {
@@ -367,15 +366,15 @@ const TakeQuiz = () => {
       }
     }, 2000);
     return () => clearTimeout(t);
-  }, [showFeedback]); // eslint-disable-line
+  }, [showFeedback]);
 
   // ── interaction handlers ─────────────────────────────────────────────────
   const handleTimeout = () => {
     if (showFeedback || quizCompleted) return;
     const currentQ = quiz.questions[currentQuestion];
     playTimesUp();
-    setFeedbackMessage(`⏰ Time's up! Correct answer: ${sanitizeValue(currentQ.correctAnswer)}`);
-    speak(`Time is up. The answer is ${sanitizeValue(currentQ.correctAnswer)}`);
+    setFeedbackMessage(`⏰ time's up! correct answer: ${sanitizeValue(currentQ.correctAnswer)}`);
+    speak(`time is up. the answer is ${sanitizeValue(currentQ.correctAnswer)}`);
     setIsAnswerCorrect(false);
     setShowFeedback(true);
     const na = [...answers]; na[currentQuestion] = ''; setAnswers(na); answersRef.current = na;
@@ -389,14 +388,13 @@ const TakeQuiz = () => {
     const cleanOpt = sanitizeValue(option);
     const cleanAns = sanitizeValue(currentQ.correctAnswer);
     const correct  = normalizeValue(cleanOpt) === normalizeValue(cleanAns) && normalizeValue(cleanOpt) !== '';
-    if (correct) { playCorrect(); setCurrentScore(p => p + POINTS_PER_QUESTION); setFeedbackMessage(`✅ Correct! 🎉 +${POINTS_PER_QUESTION} Points!`); speak('Correct! Well done!'); }
-    else { playWrong(); setFeedbackMessage(`❌ Incorrect! Correct answer: ${cleanAns || 'N/A'}`); speak(`Wrong. The answer is ${cleanAns}`); }
+    if (correct) { playCorrect(); setCurrentScore(p => p + POINTS_PER_QUESTION); setFeedbackMessage(`✅ correct! 🎉 +${POINTS_PER_QUESTION} points!`); speak('correct! well done!'); }
+    else { playWrong(); setFeedbackMessage(`❌ incorrect! correct answer: ${cleanAns || 'n/a'}`); speak(`wrong. the answer is ${cleanAns}`); }
     setIsAnswerCorrect(correct);
     setShowFeedback(true);
     const na = [...answers]; na[currentQuestion] = cleanOpt; setAnswers(na); answersRef.current = na;
   };
 
-  // Manual navigation (prev/next without auto-advance)
   const goToQuestion = (idx) => {
     if (showFeedback) return;
     playNav();
@@ -415,7 +413,7 @@ const TakeQuiz = () => {
     const wrong = currentQ.options.filter(o => normalizeValue(o) !== normalizeValue(cleanAns) && o !== '');
     setFilteredOptions([cleanAns, wrong[Math.floor(Math.random() * wrong.length)] || currentQ.options[0]]);
     setFiftyFiftyUsed(true);
-    toast.success('🎯 Two options remaining!', { icon: '💡' });
+    toast.success('🎯 two options remaining!', { icon: '💡' });
     playSound(880, 0.2, 'sine', 0.1);
   };
 
@@ -441,7 +439,6 @@ const TakeQuiz = () => {
 
       let levelAdvanced = false, newQuizLevel = null, championBadgeEarned = false, currentQuizLevel = userGameLevel;
 
-      // Only submit to backend for real quizzes (not special ones like malawi-districts)
       if (quizId !== 'malawi-districts') {
         const submitRes = await axios.post(`${API_URL}/api/learner/quiz-submit-v2`, {
           quizId: parseInt(quizId),
@@ -459,7 +456,6 @@ const TakeQuiz = () => {
         championBadgeEarned = submitRes.data.championBadgeEarned || false;
         currentQuizLevel = submitRes.data.currentQuizLevel || userGameLevel;
       } else {
-        // For districts quiz, just award points directly
         if (passed && earnedPoints > 0) {
           try {
             await axios.post(`${API_URL}/api/learner/quiz-submit`, {
@@ -468,9 +464,7 @@ const TakeQuiz = () => {
               score: scorePercentage,
               pointsEarned: earnedPoints
             }, { headers: { Authorization: `Bearer ${token}` } });
-          } catch (e) {
-            // Silent fail — points might not be awarded but don't block results
-          }
+          } catch (e) {}
         }
       }
 
@@ -490,9 +484,9 @@ const TakeQuiz = () => {
       });
 
       if (levelAdvanced && championBadgeEarned) {
-        setTimeout(() => toast.success('🏆 CHAMPION BADGE EARNED! You completed all 10 levels!', { duration: 8000 }), 800);
+        setTimeout(() => toast.success('🏆 champion badge earned! you completed all 10 levels!', { duration: 8000 }), 800);
       } else if (levelAdvanced) {
-        setTimeout(() => toast.success(`🎉 Level Up! You reached Level ${newQuizLevel}!`, { duration: 5000 }), 800);
+        setTimeout(() => toast.success(`🎉 level up! you reached level ${newQuizLevel}!`, { duration: 5000 }), 800);
       }
 
       setShowResultsModal(true);
@@ -500,7 +494,7 @@ const TakeQuiz = () => {
 
     } catch (err) {
       console.error('Error submitting quiz:', err);
-      toast.error('Submission failed');
+      toast.error('submission failed');
     } finally {
       setSubmitting(false);
     }
@@ -513,21 +507,21 @@ const TakeQuiz = () => {
 
   const handleShareResults = () => {
     const { scorePercentage, correctCount, totalQuestions, passed, earnedPoints, championBadgeEarned } = quizResults;
-    const msg = `I scored ${scorePercentage}% (${correctCount}/${totalQuestions}) on a quiz! ${passed ? '🎉 Passed!' : '📚 Keep practicing!'} Earned ${earnedPoints} pts!${championBadgeEarned ? ' 🏆 Champion badge unlocked!' : ''}`;
+    const msg = `i scored ${scorePercentage}% (${correctCount}/${totalQuestions}) on a quiz! ${passed ? '🎉 passed!' : '📚 keep practicing!'} earned ${earnedPoints} pts!${championBadgeEarned ? ' 🏆 champion badge unlocked!' : ''}`;
     if (navigator.share) { navigator.share({ title: 'Quiz Results', text: msg }).catch(() => {}); }
-    else { navigator.clipboard.writeText(msg); toast.success('Results copied!'); }
+    else { navigator.clipboard.writeText(msg); toast.success('results copied!'); }
   };
 
   // ── early returns ────────────────────────────────────────────────────────
   if (accessDenied) {
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-sky-50 text-slate-800'}`}>
-        <div className={`w-full max-w-md rounded-3xl p-6 text-center shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-sky-50 text-slate-800">
+        <div className="w-full max-w-md rounded-3xl p-6 text-center shadow-2xl bg-white border border-slate-200">
           <div className="text-7xl mb-4">🚫</div>
-          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>Access Denied</h2>
-          <div className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-red-950/40 text-red-300 border border-red-900' : 'bg-red-50 text-red-700 border border-red-200'}`}><p className="text-sm">{accessError}</p></div>
+          <h2 className="text-2xl font-bold mb-4 text-slate-800">access denied</h2>
+          <div className="p-4 rounded-lg mb-6 bg-red-50 text-red-700 border border-red-200"><p className="text-sm">{accessError}</p></div>
           <button onClick={() => navigate('/quizzes')} className="w-full py-3 bg-teal-500 text-white rounded-xl font-semibold hover:bg-teal-600 transition">
-            Back to Quizzes
+            back to quizzes
           </button>
         </div>
       </div>
@@ -536,10 +530,10 @@ const TakeQuiz = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-sky-50 text-slate-800'}`}>
-        <div className={`w-full max-w-md rounded-3xl p-8 text-center shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-sky-50 text-slate-800">
+        <div className="w-full max-w-md rounded-3xl p-8 text-center shadow-2xl bg-white border border-slate-200">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-teal-600 border-t-transparent mx-auto mb-4"></div>
-          <p className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>Loading quiz...</p>
+          <p className="text-slate-600">loading quiz...</p>
         </div>
       </div>
     );
@@ -547,11 +541,11 @@ const TakeQuiz = () => {
 
   if (!quiz || !quiz.questions?.length) {
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-sky-50 text-slate-800'}`}>
-        <div className={`w-full max-w-md rounded-3xl p-8 text-center shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}>
-          <p className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>No questions found.</p>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-sky-50 text-slate-800">
+        <div className="w-full max-w-md rounded-3xl p-8 text-center shadow-2xl bg-white border border-slate-200">
+          <p className="text-slate-600">no questions found.</p>
           <button onClick={() => navigate('/quizzes')} className="mt-4 w-full py-3 bg-teal-500 text-white rounded-xl font-semibold hover:bg-teal-600 transition">
-            Back to Quizzes
+            back to quizzes
           </button>
         </div>
       </div>
@@ -579,79 +573,67 @@ const TakeQuiz = () => {
           ${highlighted
             ? 'bg-teal-500 text-white shadow-lg ring-2 ring-teal-400'
             : (!showFeedback && !selectedOption && !quizCompleted)
-              ? isDarkMode
-                ? 'bg-slate-800 hover:ring-2 hover:ring-teal-400 hover:bg-slate-700 text-slate-100 border border-slate-700'
-                : 'bg-white border border-slate-200 hover:ring-2 hover:ring-sky-300 hover:bg-sky-50 text-slate-700'
-              : isDarkMode
-                ? 'bg-slate-800/60 opacity-70 text-slate-400 border border-slate-700'
-                : 'bg-slate-100 opacity-70 text-slate-500 border border-slate-200'
+              ? 'bg-white border border-slate-200 hover:ring-2 hover:ring-sky-300 hover:bg-sky-50 text-slate-700'
+              : 'bg-slate-100 opacity-70 text-slate-500 border border-slate-200'
           } ${quizCompleted ? 'cursor-not-allowed' : ''}`}
       >
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${highlighted ? 'bg-white text-teal-600' : isDarkMode ? 'bg-slate-500 text-slate-100' : 'bg-slate-500 text-white'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${highlighted ? 'bg-white text-teal-600' : 'bg-slate-500 text-white'}`}>
           {letter}
         </div>
-        <span className={`font-semibold text-sm flex-1 ${highlighted ? 'text-white' : isDarkMode ? 'text-slate-100' : 'text-slate-700'}`}>{option}</span>
+        <span className={`font-semibold text-sm flex-1 ${highlighted ? 'text-white' : 'text-slate-700'}`}>{option}</span>
       </button>
     );
   });
 
   // ── action bar (prev / next / submit) ───────────────────────────────────
   const renderActionBar = () => (
-    <div className="flex gap-3 mt-6">
-      {/* Prev */}
+    <div className="flex gap-3 mt-4 sm:mt-6">
       <button
         onClick={() => currentQuestion > 0 && goToQuestion(currentQuestion - 1)}
         disabled={currentQuestion === 0 || showFeedback}
-        className={`px-5 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-1
+        className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-1
           ${currentQuestion === 0 || showFeedback
-            ? isDarkMode
-              ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500'
-              : 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400'
-            : isDarkMode
-              ? 'bg-slate-900 border-2 border-slate-600 text-slate-200 hover:bg-slate-800 shadow-sm'
-                    : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm'}`}
+            ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400'
+            : 'bg-white border-2 border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm'}`}
       >
-        ◀ Prev
+        ◀ prev
       </button>
 
-      {/* Next or Submit */}
       {!quizCompleted && currentQuestion < quiz.questions.length - 1 ? (
         <button
           onClick={() => goToQuestion(currentQuestion + 1)}
           disabled={showFeedback}
-          className="flex-1 py-3 rounded-xl font-semibold text-sm bg-teal-500 text-white hover:bg-teal-600 transition shadow-sm flex items-center justify-center gap-1"
+          className="flex-1 py-2.5 sm:py-3 rounded-xl font-semibold text-sm bg-teal-500 text-white hover:bg-teal-600 transition shadow-sm flex items-center justify-center gap-1"
         >
-          Next ▶
+          next ▶
         </button>
       ) : quizCompleted ? (
         <button
           onClick={handleSubmit}
           disabled={submitting}
-          className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all animate-pulse
+          className={`flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-sm transition-all animate-pulse
             ${submitting ? 'opacity-50 cursor-not-allowed bg-slate-300 text-white' : 'bg-green-500 text-white hover:bg-green-600 shadow-md'}`}
         >
-          {submitting ? 'Submitting…' : '📝 Submit Quiz'}
+          {submitting ? 'submitting…' : '📝 submit quiz'}
         </button>
       ) : (
-        <div className={`flex-1 py-3 rounded-xl text-sm text-center font-medium flex items-center justify-center ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-sky-50 text-slate-700 border border-sky-100'}`}>
-          {answeredCount}/{quiz.questions.length} Answered
+        <div className="flex-1 py-2.5 sm:py-3 rounded-xl text-sm text-center font-medium bg-sky-50 text-slate-700 border border-sky-100">
+          {answeredCount}/{quiz.questions.length} answered
         </div>
       )}
     </div>
   );
 
-  // ── question navigator sidebar ───────────────────────────────────────────
+  // ── question navigator sidebar (desktop only) ───────────────────────────
   const renderNavSidebar = () => (
-    <div className={`rounded-2xl shadow-lg p-4 flex flex-col gap-3 w-full ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}>
-      {/* Header */}
-      <div className={`flex items-center justify-between pb-3 ${isDarkMode ? 'border-b border-slate-700' : 'border-b border-slate-100'}`}>
-        <span className={`text-xs font-black uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Questions</span>
+    <div className="rounded-2xl shadow-lg p-4 flex flex-col gap-3 w-full bg-white border border-slate-200">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <span className="text-xs font-black uppercase tracking-wider text-slate-500">questions</span>
         <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
           {answeredCount}/{quiz.questions.length}
         </span>
       </div>
 
-      {/* Dot grid */}
       <div className="grid grid-cols-5 gap-1.5">
         {quiz.questions.map((_, idx) => {
           const answered  = answersRef.current[idx] !== '';
@@ -666,9 +648,7 @@ const TakeQuiz = () => {
                   ? 'bg-teal-500 text-white ring-2 ring-teal-300 ring-offset-1 scale-110 shadow'
                   : answered
                     ? 'bg-green-400 text-white hover:bg-green-500'
-                    : isDarkMode
-                      ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
             >
               {idx + 1}
             </button>
@@ -676,35 +656,31 @@ const TakeQuiz = () => {
         })}
       </div>
 
-      {/* Legend */}
-      <div className={`flex flex-col gap-1.5 pt-2 ${isDarkMode ? 'border-t border-slate-700' : 'border-t border-slate-100'}`}>
+      <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-teal-500 flex-shrink-0" />
-          <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Current</span>
+          <span className="text-[10px] text-slate-500">current</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded bg-green-400 flex-shrink-0" />
-          <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Answered</span>
+          <span className="text-[10px] text-slate-500">answered</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className={`w-3 h-3 rounded flex-shrink-0 ${isDarkMode ? 'bg-slate-700 border border-slate-500' : 'bg-slate-100 border border-slate-300'}`} />
-          <span className={`text-[10px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Unanswered</span>
+          <div className="w-3 h-3 rounded bg-slate-100 border border-slate-300 flex-shrink-0" />
+          <span className="text-[10px] text-slate-500">unanswered</span>
         </div>
       </div>
 
-      {/* Submit button pinned at bottom when quiz is complete */}
       {quizCompleted && (
         <button
           onClick={handleSubmit}
           disabled={submitting}
           className={`w-full mt-2 py-2.5 rounded-xl font-bold text-sm transition-all
             ${submitting
-              ? isDarkMode
-                ? 'opacity-50 cursor-not-allowed bg-slate-700 text-slate-400'
-                : 'opacity-50 cursor-not-allowed bg-slate-300 text-slate-600'
+              ? 'opacity-50 cursor-not-allowed bg-slate-300 text-slate-600'
               : 'bg-green-500 text-white hover:bg-green-600 shadow-md animate-pulse'}`}
         >
-          {submitting ? 'Submitting…' : '📝 Submit'}
+          {submitting ? 'submitting…' : '📝 submit'}
         </button>
       )}
     </div>
@@ -712,9 +688,7 @@ const TakeQuiz = () => {
 
   // ── main render ──────────────────────────────────────────────────────────
   return (
-    <div className={`learner-themed h-screen flex flex-col overflow-hidden ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}
-      style={pageStyles}
-    >
+    <div className="learner-themed h-screen flex flex-col overflow-hidden bg-sky-50 text-slate-800" style={pageStyles}>
       <QuizResultsModal
         isOpen={showResultsModal}
         onClose={() => setShowResultsModal(false)}
@@ -728,18 +702,18 @@ const TakeQuiz = () => {
       />
 
       {/* ── Top bar ── */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-3 max-w-6xl w-full mx-auto flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className={`${levelColor} text-white text-xs font-bold px-3 py-1.5 rounded-full shadow`}>
-            Level {quizGameLevel}
+      <div className="flex-shrink-0 px-3 sm:px-4 pt-2 sm:pt-4 pb-2 sm:pb-3 max-w-6xl w-full mx-auto flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <span className={`${levelColor} text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow`}>
+            lvl {quizGameLevel}
           </span>
           {quiz.title && (
-            <span className={`text-sm font-medium truncate max-w-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{quiz.title}</span>
+            <span className="text-[10px] sm:text-sm font-medium truncate max-w-[100px] sm:max-w-xs text-slate-600">{quiz.title}</span>
           )}
         </div>
         {quizId === 'malawi-districts' && (
-          <div className="flex items-center gap-2">
-            <label className={`text-xs font-semibold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Category</label>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <label className="text-[8px] sm:text-xs font-semibold text-slate-600">category</label>
             <select
               value={districtCategory}
               onChange={(e) => {
@@ -749,7 +723,7 @@ const TakeQuiz = () => {
                 params.set('districtCategory', nextCategory);
                 window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
               }}
-              className="text-xs px-2 py-1.5 rounded-lg border border-teal-300 bg-white text-slate-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none"
+              className="text-[8px] sm:text-xs px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border border-teal-300 bg-white text-slate-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none max-w-[120px] sm:max-w-none"
             >
               {(districtCategories.length > 0 ? districtCategories : Object.keys(DISTRICT_CATEGORY_LABELS).map(id => ({ id, label: DISTRICT_CATEGORY_LABELS[id] }))).map((c) => (
                 <option key={c.id} value={c.id}>{c.label || DISTRICT_CATEGORY_LABELS[c.id] || c.id}</option>
@@ -757,81 +731,78 @@ const TakeQuiz = () => {
             </select>
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           <button
             onClick={() => navigate('/quiz-history')}
-            className={`text-xs px-3 py-1.5 rounded-full transition font-medium ${isDarkMode ? 'text-teal-300 border border-teal-700 hover:bg-teal-900/40' : 'text-teal-600 border border-teal-300 hover:bg-teal-50'}`}
+            className="text-[8px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition font-medium text-teal-600 border border-teal-300 hover:bg-teal-50"
           >
-            📋 History
+            📋 history
           </button>
           <button
             onClick={() => setShowExitModal(true)}
-            className={`text-xs px-3 py-1.5 rounded-full transition ${isDarkMode ? 'text-slate-300 border border-slate-600 hover:bg-slate-800' : 'text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+            className="text-[8px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full transition text-slate-600 border border-slate-200 hover:bg-slate-100"
           >
-            ✕ Exit
+            ✕ exit
           </button>
         </div>
       </div>
 
       {/* ── Body: quiz card + right sidebar ── */}
-      <div className="flex-1 overflow-hidden px-4 pb-4 max-w-6xl w-full mx-auto flex gap-4 items-stretch min-h-0">
+      <div className="flex-1 overflow-hidden px-3 sm:px-4 pb-3 sm:pb-4 max-w-6xl w-full mx-auto flex gap-3 sm:gap-4 items-stretch min-h-0">
 
         {/* CENTER — Quiz card */}
         <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          <div className={`rounded-2xl shadow-2xl flex flex-col overflow-hidden h-full ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white/95 border border-slate-200'}`}>
+          <div className="rounded-2xl shadow-2xl flex flex-col overflow-hidden h-full bg-white/95 border border-slate-200">
 
-            {/* Card header — fixed, never scrolls */}
-            <div className="relative flex-shrink-0 bg-teal-600 px-6 py-4">
-              <div className={`absolute -bottom-7 left-1/2 -translate-x-1/2 w-14 h-14 rounded-full flex items-center justify-center font-bold text-white shadow-lg z-10 ring-4 ring-white text-lg
+            {/* Card header */}
+            <div className="relative flex-shrink-0 bg-teal-600 px-4 sm:px-6 py-3 sm:py-4">
+              <div className={`absolute -bottom-6 sm:-bottom-7 left-1/2 -translate-x-1/2 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center font-bold text-white shadow-lg z-10 ring-4 ring-white text-base sm:text-lg
                 ${timeLeft <= 5 ? 'bg-red-500 animate-pulse' : 'bg-teal-500'}`}>
                 {quizCompleted ? '✓' : timeLeft}
               </div>
               <div className="flex justify-between items-center">
-                <div className="text-white font-semibold text-sm">
-                  Q {currentQuestion + 1} / {quiz.questions.length}
-                  {quizCompleted && <span className="ml-2 text-green-300 text-xs">✓ Complete!</span>}
+                <div className="text-white font-semibold text-[10px] sm:text-sm">
+                  q {currentQuestion + 1} / {quiz.questions.length}
+                  {quizCompleted && <span className="ml-1 sm:ml-2 text-green-300 text-[8px] sm:text-xs">✓ complete!</span>}
                   {quizId === 'malawi-districts' && (
-                    <span className="ml-2 text-[11px] text-teal-100 font-medium">
-                      • {DISTRICT_CATEGORY_LABELS[districtCategory] || 'Mixed Challenge'}
+                    <span className="ml-1 sm:ml-2 text-[8px] sm:text-[11px] text-teal-100 font-medium">
+                      • {DISTRICT_CATEGORY_LABELS[districtCategory] || 'mixed challenge'}
                     </span>
                   )}
                 </div>
-                <div className="bg-white/20 px-4 py-1.5 rounded-full">
-                  <span className="text-white text-sm">Score: </span>
-                  <span className="text-white font-bold text-xl">{currentScore}</span>
+                <div className="bg-white/20 px-2 sm:px-4 py-1 sm:py-1.5 rounded-full">
+                  <span className="text-white text-[10px] sm:text-sm">score: </span>
+                  <span className="text-white font-bold text-base sm:text-xl">{currentScore}</span>
                 </div>
               </div>
             </div>
 
-            {/* Question + options — fills remaining card height, no scroll */}
+            {/* Question + options */}
             {hasImage ? (
-              <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden pt-8">
-                <div className={`md:w-1/2 p-5 flex items-center justify-center overflow-hidden ${isDarkMode ? 'bg-slate-800 border-r border-slate-700' : 'bg-sky-50 border-r border-slate-200'}`}>
+              <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden pt-6 sm:pt-8">
+                <div className="md:w-1/2 p-3 sm:p-5 flex items-center justify-center overflow-hidden bg-sky-50 border-r border-slate-200">
                   <div className="text-center">
-                    <div className={`rounded-xl p-3 shadow-md ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
-                      <img src={currentQ.questionImage} alt="Question" className="max-w-full max-h-56 object-contain mx-auto" />
+                    <div className="rounded-xl p-2 sm:p-3 shadow-md bg-white">
+                      <img src={currentQ.questionImage} alt="question" className="max-w-full max-h-40 sm:max-h-56 object-contain mx-auto" />
                     </div>
-                    <p className={`font-bold mt-3 text-sm px-2 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}
+                    <p className="font-bold mt-2 sm:mt-3 text-xs sm:text-sm px-2 text-slate-800"
                        dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQ.question) }} />
                   </div>
                 </div>
-                <div className="md:w-1/2 p-5 flex flex-col justify-between overflow-hidden">
-                  <div className="space-y-2 flex-1">{renderOptions()}</div>
+                <div className="md:w-1/2 p-3 sm:p-5 flex flex-col justify-between overflow-hidden">
+                  <div className="space-y-1.5 sm:space-y-2 flex-1">{renderOptions()}</div>
                   {renderActionBar()}
                 </div>
               </div>
             ) : (
-              <div className="flex-1 min-h-0 p-6 pt-8 flex flex-col justify-between overflow-hidden">
-                {/* Question text */}
-                <div className={`rounded-xl p-4 text-center flex-shrink-0 ${isDarkMode ? 'bg-slate-800 border border-slate-700' : 'bg-sky-50 border border-slate-200'}`}>
-                  <h2 className={`text-lg font-bold leading-relaxed ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}
+              <div className="flex-1 min-h-0 p-4 sm:p-6 pt-6 sm:pt-8 flex flex-col justify-between overflow-hidden">
+                <div className="rounded-xl p-3 sm:p-4 text-center flex-shrink-0 bg-sky-50 border border-slate-200">
+                  <h2 className="text-sm sm:text-lg font-bold leading-relaxed text-slate-800"
                       dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQ.question) }} />
                 </div>
-                {/* Options — grow to fill, no overflow */}
-                <div className="flex flex-col gap-2 flex-1 justify-center my-3">
+                <div className="flex flex-col gap-1.5 sm:gap-2 flex-1 justify-center my-2 sm:my-3">
                   {renderOptions()}
                 </div>
-                {/* Action bar — pinned to bottom */}
                 <div className="flex-shrink-0">
                   {renderActionBar()}
                 </div>
@@ -839,32 +810,26 @@ const TakeQuiz = () => {
             )}
           </div>
 
-          {/* Mobile navigator */}
-          <div className="lg:hidden mt-3 overflow-y-auto max-h-48">
+          {/* Mobile navigator - hidden on mobile */}
+          <div className="hidden lg:hidden mt-3 overflow-y-auto max-h-48">
             {renderNavSidebar()}
           </div>
         </div>
 
-        {/* RIGHT — 50:50 + Navigator (desktop only, scrollable if needed) */}
+        {/* RIGHT — 50:50 + Navigator (desktop only) */}
         <div className="hidden lg:flex w-56 flex-shrink-0 flex-col gap-3 overflow-y-auto">
 
-          {/* 50:50 lifeline */}
           <button
             onClick={handleFiftyFifty}
             disabled={fiftyFiftyUsed || showFeedback || quizCompleted}
             className={`flex-shrink-0 w-full py-3 rounded-xl font-bold text-sm transition-all
               ${fiftyFiftyUsed || showFeedback || quizCompleted
-                ? isDarkMode
-                  ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500'
-                  : 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400'
-                : isDarkMode
-                  ? 'bg-slate-900 border-2 border-teal-600 text-teal-300 hover:bg-teal-900/20 shadow-sm'
-                    : 'bg-white border-2 border-teal-500 text-teal-700 hover:bg-teal-50 shadow-sm'}`}
+                ? 'opacity-40 cursor-not-allowed bg-gray-100 text-gray-400'
+                : 'bg-white border-2 border-teal-500 text-teal-700 hover:bg-teal-50 shadow-sm'}`}
           >
             🎯 50:50
           </button>
 
-          {/* Question Navigator */}
           {renderNavSidebar()}
 
         </div>
@@ -874,22 +839,22 @@ const TakeQuiz = () => {
       {/* Exit confirmation modal */}
       {showExitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className={`rounded-2xl shadow-xl w-full max-w-xs p-6 text-center ${isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-200'}`}>
+          <div className="rounded-2xl shadow-xl w-full max-w-xs p-6 text-center bg-white border border-slate-200">
             <div className="text-3xl mb-3">🚪</div>
-            <h3 className={`text-base font-bold mb-1 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>Leave Quiz?</h3>
-            <p className={`text-sm mb-5 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Your progress will be lost.</p>
+            <h3 className="text-base font-bold mb-1 text-slate-800">leave quiz?</h3>
+            <p className="text-sm mb-5 text-slate-600">your progress will be lost.</p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowExitModal(false)}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition ${isDarkMode ? 'border border-slate-600 text-slate-200 hover:bg-slate-800' : 'border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                className="flex-1 py-2.5 text-sm font-semibold rounded-xl transition border border-slate-200 text-slate-700 hover:bg-slate-50"
               >
-                Stay
+                stay
               </button>
               <button
                 onClick={() => { setShowExitModal(false); navigate('/quizzes'); }}
                 className="flex-1 py-2.5 text-sm font-bold bg-red-500 text-white rounded-xl hover:bg-red-600 transition"
               >
-                Leave
+                leave
               </button>
             </div>
           </div>
@@ -899,9 +864,9 @@ const TakeQuiz = () => {
       {/* Feedback toast */}
       {showFeedback && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-          <div className={`rounded-xl shadow-2xl px-6 py-3 flex items-center gap-2 ${isAnswerCorrect ? 'bg-green-500' : 'bg-red-500'}`}>
-            <span className="text-white text-lg">{isAnswerCorrect ? '🎉' : '💡'}</span>
-            <p className="text-white font-semibold text-sm">{feedbackMessage}</p>
+          <div className={`rounded-xl shadow-2xl px-4 sm:px-6 py-2 sm:py-3 flex items-center gap-2 ${isAnswerCorrect ? 'bg-green-500' : 'bg-red-500'}`}>
+            <span className="text-white text-base sm:text-lg">{isAnswerCorrect ? '🎉' : '💡'}</span>
+            <p className="text-white font-semibold text-xs sm:text-sm">{feedbackMessage}</p>
           </div>
         </div>
       )}
@@ -935,6 +900,22 @@ const TakeQuiz = () => {
           to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
         .animate-slide-up { animation: slideUp 0.3s ease-out; }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+          .h-screen {
+            height: 100vh;
+            height: 100dvh;
+          }
+          .learner-themed .text-xs,
+          .learner-themed .text-sm,
+          .learner-themed .text-base {
+            font-size: 12pt !important;
+          }
+          .learner-themed .text-lg {
+            font-size: 14pt !important;
+          }
+        }
       `}</style>
     </div>
   );
