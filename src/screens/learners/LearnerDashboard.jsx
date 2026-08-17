@@ -1558,15 +1558,17 @@ const LearnerDashboard = () => {
         </div>
       </button>
 
-      {/* Sidebar */}
+      {/* Sidebar - Mobile Responsive, fits screen */}
       <aside className={`
         fixed lg:sticky top-0 h-screen
-        w-64 sm:w-56 lg:w-60
+        w-72 sm:w-64 lg:w-60
         transition-all duration-300 transform z-40
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         border-r border-teal-200/60
         flex flex-col shadow-xl overflow-hidden
       `} style={{ background: `linear-gradient(135deg, ${sidebarSurface}, rgba(214, 242, 221, 0.95))`, borderColor: `${accentColor}60` }}>
+        
+        {/* Logo Section - Fixed height */}
         <div className="px-3 py-3 border-b flex-shrink-0" style={{ backgroundColor: headerBg || '#003B46', borderColor: `${accentColor}60` }}>
           <div className="flex items-center gap-2.5">
             <img 
@@ -1588,6 +1590,7 @@ const LearnerDashboard = () => {
           </div>
         </div>
 
+        {/* User Info Section - Fixed height */}
         <div className="px-3 py-2.5 border-b flex-shrink-0 bg-white/50 backdrop-blur-sm" style={{ backgroundColor: `${cardBg}80`, borderColor: `${accentColor}60` }}>
           <div className="flex items-center gap-2.5">
             <img 
@@ -1612,6 +1615,7 @@ const LearnerDashboard = () => {
           </div>
         </div>
 
+        {/* Navigation - Takes remaining space, scrollable if needed */}
         <nav className="flex-1 overflow-y-auto p-2 space-y-0.5 bg-white/30 backdrop-blur-sm" style={{ backgroundColor: `${cardBg}30` }}>
           {SIDEBAR_ITEMS.map((item) => {
             const isActive = activeTab === item.id;
@@ -1654,7 +1658,7 @@ const LearnerDashboard = () => {
           })}
         </nav>
 
-        {/* Logout Button - White bordered with white font */}
+        {/* Logout Button - Fixed at bottom, visible always */}
         <div className="px-3 py-2.5 border-t flex-shrink-0 bg-white/50 backdrop-blur-sm" style={{ backgroundColor: `${cardBg}80`, borderColor: `${accentColor}60` }}>
           <button
             onClick={handleLogout}
