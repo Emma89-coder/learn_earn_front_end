@@ -798,40 +798,36 @@ const LearnerDashboard = () => {
     const isOutOfStock = reward.stock_quantity !== undefined && reward.stock_quantity <= 0;
     const canRedeem = !isOutOfStock && points.current >= reward.points_required;
 
-    // Theme colors
-    const teal = '#075351';
-    const iceWhite = '#f7fbff';
-    const lightTeal = '#ccf5eb';
-    const mutedTeal = '#2f6b64';
-
     return (
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xl" 
         onClick={closeRewardDialog}
       >
         <div 
-          className="relative max-w-md w-full overflow-hidden shadow-2xl"
+          className="relative max-w-md w-full overflow-hidden shadow-2xl border"
           style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '6px',
-            border: `1px solid ${lightTeal}`,
+            backgroundColor: isDarkMode ? '#0f172a' : '#f8fffd',
+            borderRadius: `${borderRadius}px`,
+            border: `1px solid ${isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'}`,
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: accentColor }} />
+
           {/* Header */}
           <div 
             className="p-5 border-b"
             style={{
-              backgroundColor: lightTeal,
-              borderColor: lightTeal,
+              backgroundColor: isDarkMode ? 'rgba(15,23,42,0.98)' : 'rgba(204,251,241,0.95)',
+              borderColor: isDarkMode ? 'rgba(45,212,191,0.14)' : 'rgba(20,184,166,0.16)',
             }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div 
-                  className="w-11 h-11 rounded flex items-center justify-center shadow-sm"
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md"
                   style={{
-                    backgroundColor: teal,
+                    backgroundColor: accentColor,
                   }}
                 >
                   <Gift className="w-5 h-5 text-white" />
@@ -840,23 +836,23 @@ const LearnerDashboard = () => {
                   <div 
                     className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-1"
                     style={{
-                      backgroundColor: 'rgba(7, 83, 81, 0.10)',
-                      color: teal,
-                      border: `1px solid rgba(7, 83, 81, 0.15)`,
+                      backgroundColor: isDarkMode ? 'rgba(45,212,191,0.12)' : 'rgba(20,184,166,0.10)',
+                      color: isDarkMode ? '#5eead4' : '#0f766e',
+                      border: `1px solid ${isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'}`,
                     }}
                   >
                     <Sparkles className="w-3 h-3" />
                     redeem reward
                   </div>
                   <h3 
-                    className="font-bold text-lg tracking-tight"
-                    style={{ color: teal }}
+                    className="font-black text-lg tracking-tight"
+                    style={{ color: headingColor }}
                   >
                     {reward.name}
                   </h3>
                   <p 
                     className="text-sm"
-                    style={{ color: mutedTeal }}
+                    style={{ color: bodyColor }}
                   >
                     {reward.description || 'Redeem your points for this reward!'}
                   </p>
@@ -864,12 +860,13 @@ const LearnerDashboard = () => {
               </div>
               <button
                 onClick={closeRewardDialog}
-                className="p-2 rounded transition hover:bg-black/5"
+                className="p-2 rounded-full transition border"
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.8)',
+                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.9)',
+                  borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.16)',
                 }}
               >
-                <X size={18} style={{ color: mutedTeal }} />
+                <X size={18} style={{ color: bodyColor }} />
               </button>
             </div>
           </div>
@@ -878,23 +875,24 @@ const LearnerDashboard = () => {
           <div className="p-5 space-y-4">
             {/* Image */}
             <div 
-              className="w-full h-44 overflow-hidden flex items-center justify-center relative"
+              className="w-full h-48 overflow-hidden flex items-center justify-center relative border"
               style={{
-                backgroundColor: lightTeal,
-                borderRadius: '6px',
+                backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(209,250,229,0.95)',
+                borderRadius: `${borderRadius}px`,
+                borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)',
               }}
             >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                {renderRewardImage(reward, 'w-full h-full object-contain p-4')}
+              <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
+                {renderRewardImage(reward, 'w-full h-full object-contain p-5')}
               </div>
               {reward.stock_quantity !== undefined && (
                 <div 
-                  className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white shadow-lg ${
+                  className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white shadow-lg border border-white/10 ${
                     isOutOfStock ? 'bg-red-600' : 
                     reward.stock_quantity < 10 ? 'bg-amber-600' : 
                     'bg-teal-600'
                   }`}
-                  style={!isOutOfStock && reward.stock_quantity >= 10 ? { backgroundColor: teal } : {}}
+                  style={!isOutOfStock && reward.stock_quantity >= 10 ? { backgroundColor: accentColor } : {}}
                 >
                   {isOutOfStock ? '❌ Out of Stock' : 
                    reward.stock_quantity < 10 ? `⚠️ ${reward.stock_quantity} left` : 
@@ -905,34 +903,34 @@ const LearnerDashboard = () => {
 
             {/* Points Info */}
             <div 
-              className="p-4 rounded"
+              className="p-4 rounded-2xl border"
               style={{
-                backgroundColor: iceWhite,
-                border: `1px solid ${lightTeal}`,
-                borderRadius: '6px',
+                backgroundColor: isDarkMode ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.92)',
+                border: `1px solid ${isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)'}`,
+                borderRadius: `${borderRadius}px`,
               }}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-10 h-10 rounded flex items-center justify-center"
+                    className="w-10 h-10 rounded-2xl flex items-center justify-center border"
                     style={{
-                      backgroundColor: 'rgba(7, 83, 81, 0.08)',
-                      border: `1px solid ${lightTeal}`,
+                      backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(236,253,245,0.95)',
+                      borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
                     }}
                   >
-                    <Wallet className="w-5 h-5" style={{ color: teal }} />
+                    <Wallet className="w-5 h-5" style={{ color: accentColor }} />
                   </div>
                   <div>
                     <p 
                       className="text-[10px] font-semibold uppercase tracking-widest"
-                      style={{ color: mutedTeal }}
+                      style={{ color: bodyColor }}
                     >
                       Points Required
                     </p>
                     <p 
-                      className="font-bold text-lg leading-none"
-                      style={{ color: teal }}
+                      className="font-black text-lg leading-none"
+                      style={{ color: accentColor }}
                     >
                       {reward.points_required.toLocaleString()}
                     </p>
@@ -941,14 +939,14 @@ const LearnerDashboard = () => {
                 <div className="text-right">
                   <p 
                     className="text-[10px] font-semibold uppercase tracking-widest"
-                    style={{ color: mutedTeal }}
+                    style={{ color: bodyColor }}
                   >
                     Your Balance
                   </p>
                   <p 
-                    className="font-bold text-lg leading-none"
+                    className="font-black text-lg leading-none"
                     style={{ 
-                      color: points.current >= reward.points_required ? teal : '#dc2626' 
+                      color: points.current >= reward.points_required ? accentColor : '#dc2626' 
                     }}
                   >
                     {points.current.toLocaleString()}
@@ -961,12 +959,12 @@ const LearnerDashboard = () => {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={closeRewardDialog}
-                className="flex-1 px-4 py-3 font-semibold text-sm transition border"
+                className="flex-1 px-4 py-3 font-semibold text-sm transition border hover:-translate-y-0.5 active:translate-y-0"
                 style={{
-                  borderColor: lightTeal,
-                  color: mutedTeal,
-                  backgroundColor: '#ffffff',
-                  borderRadius: '6px',
+                  borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
+                  color: bodyColor,
+                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(241,245,249,0.92)',
+                  borderRadius: `${borderRadius}px`,
                 }}
               >
                 Cancel
@@ -974,13 +972,14 @@ const LearnerDashboard = () => {
               <button
                 disabled={!canRedeem || redeemingId === reward.id}
                 onClick={() => handleRedeemItem(reward)}
-                className={`flex-1 px-4 py-3 font-bold text-sm transition text-white flex items-center justify-center gap-2 ${
+                className={`flex-1 px-4 py-3 font-bold text-sm transition text-white flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 ${
                   !canRedeem ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
                 }`}
                 style={{
-                  backgroundColor: canRedeem ? teal : '#9ca3af',
-                  borderRadius: '6px',
+                  backgroundColor: canRedeem ? accentColor : '#9ca3af',
+                  borderRadius: `${borderRadius}px`,
                   border: 'none',
+                  boxShadow: canRedeem ? `0 10px 24px ${accentColor}30` : 'none'
                 }}
               >
                 {redeemingId === reward.id ? (
