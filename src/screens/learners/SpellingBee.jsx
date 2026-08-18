@@ -83,7 +83,7 @@ const SpellingBee = () => {
   const [showDialog, setShowDialog] = useState(true);
   const [dialogMessage, setDialogMessage] = useState('');
 
-  const themeAccentColor = settings?.accentColor || '#14b8a6';
+  const themeAccentColor = settings?.accentColor || '#0d9488';
   const modalBackground = settings?.cardBg || settings?.containerBg || settings?.bgColor || (isDarkMode ? '#0f172a' : '#ffffff');
   const modalTextColor = getContrastTextColor(modalBackground, '#e2e8f0', '#19475B');
   const modalHeadingColor = getContrastTextColor(modalBackground, '#f8fafc', '#19475B');
@@ -122,10 +122,10 @@ const SpellingBee = () => {
     6: 'Reader', 7: 'Graduate', 8: 'Star', 9: 'Master', 10: 'Legend'
   };
   const levelColors = {
-    1: 'text-green-600', 2: 'text-green-700', 3: 'text-blue-600', 
-    4: 'text-blue-700', 5: 'text-indigo-600', 6: 'text-indigo-700',
-    7: 'text-purple-600', 8: 'text-purple-700', 9: 'text-amber-600', 
-    10: 'text-amber-700'
+    1: 'text-teal-600', 2: 'text-teal-700', 3: 'text-cyan-600', 
+    4: 'text-cyan-700', 5: 'text-sky-600', 6: 'text-sky-700',
+    7: 'text-indigo-600', 8: 'text-indigo-700', 9: 'text-emerald-600', 
+    10: 'text-emerald-700'
   };
 
   // Theme toggle effect
@@ -1201,15 +1201,15 @@ const SpellingBee = () => {
 
   // Get letter color
   const getLetterColor = (index) => {
-    if (!letterBoxes[index]) return 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600';
-    if (isCorrect === true) return 'bg-green-100 dark:bg-green-900/30 border-green-500 dark:border-green-500 text-green-700 dark:text-green-400';
+    if (!letterBoxes[index]) return 'bg-white dark:bg-slate-800 border-teal-200 dark:border-teal-700';
+    if (isCorrect === true) return 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300';
     if (isCorrect === false) {
       if (letterBoxes[index] && currentWord && letterBoxes[index].toLowerCase() === currentWord.word[index]?.toLowerCase()) {
-        return 'bg-green-100 dark:bg-green-900/30 border-green-500 dark:border-green-500 text-green-700 dark:text-green-400';
+        return 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300';
       }
-      return 'bg-red-100 dark:bg-red-900/30 border-red-500 dark:border-red-500 text-red-700 dark:text-red-400';
+      return 'bg-rose-50 dark:bg-rose-900/30 border-rose-500 dark:border-rose-400 text-rose-700 dark:text-rose-300';
     }
-    return 'bg-white dark:bg-slate-800 border-gray-300 dark:border-slate-600';
+    return 'bg-white dark:bg-slate-800 border-teal-200 dark:border-teal-700';
   };
 
   // Format time
@@ -1221,29 +1221,27 @@ const SpellingBee = () => {
 
   // Get timer color
   const getTimerColor = () => {
-    if (timeLeft > 20) return 'text-green-600 dark:text-green-400';
-    if (timeLeft > 10) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400 animate-pulse';
+    if (timeLeft > 20) return 'text-teal-600 dark:text-teal-400';
+    if (timeLeft > 10) return 'text-amber-600 dark:text-amber-400';
+    return 'text-rose-600 dark:text-rose-400 animate-pulse';
   };
 
   // Get level timer color
   const getLevelTimerColor = () => {
-    if (levelTimeLeft > 120) return 'text-green-600 dark:text-green-400';
-    if (levelTimeLeft > 60) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400 animate-pulse';
+    if (levelTimeLeft > 120) return 'text-teal-600 dark:text-teal-400';
+    if (levelTimeLeft > 60) return 'text-amber-600 dark:text-amber-400';
+    return 'text-rose-600 dark:text-rose-400 animate-pulse';
   };
 
   if (loading || isLoadingTimer || isLoadingVoiceSettings) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
-      }`}>
-        <div className="flex flex-col items-center gap-3">
+      <div className={`min-h-screen flex items-center justify-center bg-teal-50 dark:bg-slate-900`}>
+        <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="absolute inset-0 bg-teal-500 rounded-full blur-xl opacity-30 animate-pulse"></div>
-            <Brain className="text-teal-600 dark:text-teal-400 animate-bounce relative z-10" size={40} />
+            <div className="absolute inset-0 bg-teal-500 rounded-full blur-2xl opacity-20"></div>
+            <Brain className="text-teal-600 dark:text-teal-400 animate-bounce relative z-10" size={48} />
           </div>
-          <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-teal-600'}`}>
+          <p className="text-sm text-teal-600 dark:text-teal-400 font-medium">
             {isLoadingTimer ? 'Loading timer settings...' : 
              isLoadingVoiceSettings ? 'Loading voice settings...' : 
              'Loading spelling words...'}
@@ -1254,15 +1252,13 @@ const SpellingBee = () => {
   }
 
   return (
-    <div className={`learner-themed min-h-screen w-full max-w-full transition-all duration-500 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-        : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+    <div className={`min-h-screen w-full max-w-full transition-colors duration-300 ${
+      isDarkMode ? 'bg-slate-900' : 'bg-teal-50'
     }`}>
       <Toaster position="top-center" />
       
-      {/* Header - AdminRewards Style */}
-      <header className="shadow-2xl border-b border-black/10 sticky top-0 z-50" style={{ backgroundColor: 'var(--learner-header-bg, #19475F)' }}>
+      {/* Header */}
+      <header className="bg-teal-700 dark:bg-teal-800 border-b border-teal-600 dark:border-teal-700 sticky top-0 z-50 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
@@ -1270,28 +1266,28 @@ const SpellingBee = () => {
                 <img 
                   src="/logo.png" 
                   alt="Logo" 
-                  className="w-12 h-12 object-contain drop-shadow-lg"
+                  className="w-10 h-10 object-contain"
                   loading="eager"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/48x48?text=LE';
+                    e.target.src = 'https://via.placeholder.com/40x40?text=LE';
                   }}
                 />
                 <div>
-                  <h1 className="text-xl font-black tracking-tighter text-white" style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
+                  <h1 className="text-xl font-bold tracking-tight text-white" style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
                     LearnEarn
                   </h1>
-                  <p className="text-[10px] text-white/80 font-semibold uppercase tracking-wider">Spelling Bee</p>
+                  <p className="text-[10px] text-teal-100 font-semibold uppercase tracking-wider">Spelling Bee</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <button
                 onClick={toggleSound}
                 className={`p-2 rounded-lg transition-all ${
                   soundEnabled 
-                    ? 'bg-teal-500 text-white shadow-lg' 
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    ? 'bg-teal-600 text-white shadow-sm' 
+                    : 'bg-teal-800/50 text-teal-300 hover:bg-teal-800'
                 }`}
                 title={soundEnabled ? 'Sound On' : 'Sound Off'}
               >
@@ -1299,41 +1295,37 @@ const SpellingBee = () => {
               </button>
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-all ${
-                  isDarkMode 
-                    ? 'bg-white/20 text-yellow-400' 
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
+                className="p-2 rounded-lg bg-teal-800/50 text-teal-300 hover:bg-teal-800 transition-all"
                 title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
                 {isDarkMode ? '☀️' : '🌙'}
               </button>
               <button
                 onClick={goToDashboard}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-500 text-white hover:bg-teal-600 transition shadow-md"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-600 text-white hover:bg-teal-500 transition shadow-sm"
               >
                 Exit
               </button>
             </div>
           </div>
 
-          {/* Stats Bar - AdminRewards Style */}
-          <div className="grid grid-cols-4 gap-2 py-2 border-t border-white/20">
+          {/* Stats Bar */}
+          <div className="grid grid-cols-4 gap-2 py-2 border-t border-teal-600/50">
             <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Score</p>
+              <p className="text-[8px] font-medium text-teal-200 uppercase tracking-wider">Score</p>
               <p className="text-sm font-bold text-white">{score}</p>
             </div>
             <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Streak</p>
+              <p className="text-[8px] font-medium text-teal-200 uppercase tracking-wider">Streak</p>
               <p className="text-sm font-bold text-white">{streak}🔥</p>
             </div>
             <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Level</p>
+              <p className="text-[8px] font-medium text-teal-200 uppercase tracking-wider">Level</p>
               <p className="text-sm font-bold text-white">{currentLevel}/10</p>
             </div>
             <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Time</p>
-              <p className={`text-sm font-bold text-white ${getLevelTimerColor()}`}>
+              <p className="text-[8px] font-medium text-teal-200 uppercase tracking-wider">Time</p>
+              <p className={`text-sm font-bold ${getLevelTimerColor()}`}>
                 {formatTimeDisplay(levelTimeLeft)}
               </p>
             </div>
@@ -1342,26 +1334,31 @@ const SpellingBee = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col items-center justify-center">
           {!gameStarted ? (
-            <div className="text-center">
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
-                Spelling Bee
-              </h2>
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
-                Listen to the word, then type it correctly!
-              </p>
+            <div className="text-center w-full max-w-md">
+              <div className="mb-6">
+                <div className="inline-flex p-4 bg-teal-100 dark:bg-teal-900/30 rounded-full mb-4">
+                  <BookOpen className="w-12 h-12 text-teal-600 dark:text-teal-400" />
+                </div>
+                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-teal-800'}`}>
+                  Spelling Bee
+                </h2>
+                <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-teal-600'}`}>
+                  Listen to the word, then type it correctly!
+                </p>
+              </div>
               
-              {/* Level Info - AdminRewards Style */}
-              <div className={`mt-4 p-4 rounded-xl border-2 max-w-sm mx-auto ${
+              {/* Level Info */}
+              <div className={`p-6 rounded-xl border-2 ${
                 isDarkMode 
-                  ? 'bg-slate-800/50 border-teal-400' 
-                  : 'bg-white shadow-sm border-teal-500'
+                  ? 'bg-slate-800 border-teal-700' 
+                  : 'bg-white border-teal-200 shadow-sm'
               }`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-teal-500'}`}>
                       Level {currentLevel}
                     </p>
                     <p className={`text-lg font-bold ${levelColors[currentLevel]}`}>
@@ -1369,40 +1366,40 @@ const SpellingBee = () => {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-teal-500'}`}>
                       Progress
                     </p>
-                    <p className={`text-lg font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+                    <p className={`text-lg font-bold text-teal-600 dark:text-teal-400`}>
                       {maxUnlockedLevel}/10
                     </p>
                   </div>
                 </div>
-                <div className="mt-2 w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
+                <div className="mt-3 w-full bg-teal-100 dark:bg-slate-700 rounded-full h-2.5">
                   <div 
-                    className="bg-gradient-to-r from-teal-500 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                    className="bg-teal-600 h-2.5 rounded-full transition-all duration-500"
                     style={{ width: `${(maxUnlockedLevel / 10) * 100}%` }}
                   />
                 </div>
-                <div className="flex justify-between mt-1">
-                  <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                <div className="flex justify-between mt-1.5">
+                  <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-teal-400'}`}>
                     Level 1
                   </span>
-                  <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>
+                  <span className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-teal-400'}`}>
                     Level 10
                   </span>
                 </div>
               </div>
 
               {/* Level Progress Indicators */}
-              <div className="flex items-center gap-1 mt-4 justify-center">
+              <div className="flex items-center gap-1.5 mt-4 justify-center">
                 {LEVELS.map(level => (
                   <div
                     key={level}
-                    className={`w-6 h-1.5 rounded-full transition-all ${
-                      level <= maxUnlockedLevel ? 'bg-teal-500' :
+                    className={`w-6 h-2 rounded-full transition-all ${
+                      level <= maxUnlockedLevel ? 'bg-teal-600' :
                       level === maxUnlockedLevel + 1 ? 'bg-teal-300 animate-pulse' :
-                      'bg-gray-200 dark:bg-slate-700'
-                    } ${level === currentLevel ? 'ring-1 ring-teal-500' : ''}`}
+                      'bg-teal-200 dark:bg-slate-700'
+                    } ${level === currentLevel ? 'ring-2 ring-teal-400' : ''}`}
                     title={`Level ${level} ${level <= maxUnlockedLevel ? 'Completed' : level === maxUnlockedLevel + 1 ? 'Unlocked' : 'Locked'}`}
                   />
                 ))}
@@ -1410,76 +1407,68 @@ const SpellingBee = () => {
               
               {/* Voice Status */}
               {voiceSettings.enabled && (
-                <div className="mt-3 text-xs">
-                  <span className="text-green-600 dark:text-green-400 flex items-center gap-1 justify-center">
-                    <Volume2 size={14} className="text-green-500" />
+                <div className="mt-4 text-xs">
+                  <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1.5 justify-center">
+                    <Volume2 size={14} className="text-teal-500" />
                     Voice enabled
                   </span>
                 </div>
               )}
               
               {!voiceSettings.enabled && (
-                <p className={`text-xs text-amber-600 dark:text-amber-400 mt-2`}>
+                <p className={`text-xs text-amber-600 dark:text-amber-400 mt-3`}>
                   Voice is currently disabled by the administrator.
                 </p>
               )}
               
-              <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+              <p className={`text-sm mt-3 ${isDarkMode ? 'text-slate-400' : 'text-teal-500'}`}>
                 {totalWords} words in this level
               </p>
             </div>
           ) : gameWon ? (
             // Game Won Screen
-            <div className={`rounded-xl border-2 p-6 max-w-md w-full text-center ${
+            <div className={`rounded-xl border-2 p-8 max-w-md w-full text-center ${
               isDarkMode 
-                ? 'bg-slate-800/50 border-teal-400' 
-                : 'bg-white shadow-sm border-teal-500'
+                ? 'bg-slate-800 border-teal-700' 
+                : 'bg-white border-teal-200 shadow-sm'
             }`}>
               <div className="text-6xl mb-4">🎉</div>
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-teal-700'}`}>
+              <h2 className={`text-2xl font-bold text-teal-700 dark:text-teal-300`}>
                 Level {currentLevel} Complete!
               </h2>
-              <p className={`mt-2 ${isDarkMode ? 'text-slate-400' : 'text-gray-600'}`}>
+              <p className={`mt-2 ${isDarkMode ? 'text-slate-400' : 'text-teal-600'}`}>
                 You completed {Math.min(wordList.length, WORDS_PER_LEVEL)} words!
               </p>
               <div className="grid grid-cols-2 gap-3 mt-6">
-                <div className={`rounded-xl p-3 ${
-                  isDarkMode ? 'bg-teal-900/30' : 'bg-teal-50'
-                }`}>
-                  <p className={`text-xs ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+                <div className={`rounded-xl p-3 bg-teal-50 dark:bg-teal-900/20`}>
+                  <p className={`text-xs text-teal-500 dark:text-teal-400`}>
                     Score
                   </p>
-                  <p className={`text-xl font-bold ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+                  <p className={`text-xl font-bold text-teal-700 dark:text-teal-300`}>
                     {levelScore}
                   </p>
                 </div>
-                <div className={`rounded-xl p-3 ${
-                  isDarkMode ? 'bg-teal-900/30' : 'bg-teal-50'
-                }`}>
-                  <p className={`text-xs ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+                <div className={`rounded-xl p-3 bg-teal-50 dark:bg-teal-900/20`}>
+                  <p className={`text-xs text-teal-500 dark:text-teal-400`}>
                     Accuracy
                   </p>
-                  <p className={`text-xl font-bold ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+                  <p className={`text-xl font-bold text-teal-700 dark:text-teal-300`}>
                     {attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : 0}%
                   </p>
                 </div>
-                <div className={`rounded-xl p-3 ${
-                  isDarkMode ? 'bg-teal-900/30' : 'bg-teal-50'
-                }`}>
-                  <p className={`text-xs ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+                <div className={`rounded-xl p-3 bg-teal-50 dark:bg-teal-900/20`}>
+                  <p className={`text-xs text-teal-500 dark:text-teal-400`}>
                     Best Streak
                   </p>
-                  <p className={`text-xl font-bold ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+                  <p className={`text-xl font-bold text-teal-700 dark:text-teal-300`}>
                     {maxStreak}
                   </p>
                 </div>
-                <div className={`rounded-xl p-3 ${
-                  isDarkMode ? 'bg-teal-900/30' : 'bg-teal-50'
-                }`}>
-                  <p className={`text-xs ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+                <div className={`rounded-xl p-3 bg-teal-50 dark:bg-teal-900/20`}>
+                  <p className={`text-xs text-teal-500 dark:text-teal-400`}>
                     Bonus
                   </p>
-                  <p className={`text-xl font-bold ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+                  <p className={`text-xl font-bold text-teal-700 dark:text-teal-300`}>
                     +{bonusEarned}
                   </p>
                 </div>
@@ -1493,17 +1482,17 @@ const SpellingBee = () => {
                       setShowDialog(true);
                       setDialogMessage(`Ready to start Level ${currentLevel + 1}? You have 5 minutes to spell 10 words. Each word has 30 seconds to answer.`);
                     }}
-                    className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition shadow-md"
+                    className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition shadow-sm"
                   >
                     Next Level →
                   </button>
                 )}
                 <button
                   onClick={goToDashboard}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition ${
+                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition ${
                     isDarkMode 
                       ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   Dashboard
@@ -1514,19 +1503,19 @@ const SpellingBee = () => {
             // Game Play Area
             <div className="w-full max-w-2xl">
               {/* Level Timer and Progress */}
-              <div className={`flex justify-between items-center mb-4 p-2 rounded-lg ${
-                isDarkMode ? 'bg-slate-800/50' : 'bg-white/80'
+              <div className={`flex justify-between items-center mb-4 p-3 rounded-xl ${
+                isDarkMode ? 'bg-slate-800/80' : 'bg-white shadow-sm'
               }`}>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-semibold ${isDarkMode ? 'text-slate-300' : 'text-teal-700'}`}>
                     Level {currentLevel}
                   </span>
                   <span className={`text-xs font-medium ${levelColors[currentLevel]}`}>
                     {levelLabels[currentLevel]}
                   </span>
                   {consecutiveCorrect > 0 && (
-                    <span className={`text-xs font-bold bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full ${
-                      isDarkMode ? 'text-green-400' : 'text-green-600'
+                    <span className={`text-xs font-bold bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-0.5 rounded-full ${
+                      isDarkMode ? 'text-emerald-400' : 'text-emerald-600'
                     }`}>
                       🔥 {consecutiveCorrect} streak
                     </span>
@@ -1534,16 +1523,16 @@ const SpellingBee = () => {
                 </div>
                 <div className="flex items-center gap-4">
                   <div className={`flex items-center gap-2 font-bold ${getLevelTimerColor()}`}>
-                    <Timer size={20} />
-                    <span className="text-lg">{formatTimeDisplay(levelTimeLeft)}</span>
+                    <Timer size={18} />
+                    <span className="text-base">{formatTimeDisplay(levelTimeLeft)}</span>
                   </div>
                   <div className="flex gap-1">
                     {Array.from({ length: Math.min(wordList.length, WORDS_PER_LEVEL) }, (_, idx) => (
                       <div
                         key={idx}
-                        className={`h-1 w-6 rounded-full transition-all ${
-                          idx < wordIndex ? 'bg-teal-500' :
-                          idx === wordIndex ? 'bg-teal-300' : 'bg-gray-200 dark:bg-slate-700'
+                        className={`h-1.5 w-5 rounded-full transition-all ${
+                          idx < wordIndex ? 'bg-teal-600' :
+                          idx === wordIndex ? 'bg-teal-400' : 'bg-teal-200 dark:bg-teal-800'
                         }`}
                       />
                     ))}
@@ -1551,44 +1540,44 @@ const SpellingBee = () => {
                 </div>
               </div>
 
-              {/* Speaker Button - Cleaned up */}
+              {/* Speaker Button */}
               <div className="flex flex-col items-center mb-6">
                 <button
                   onClick={replayWord}
                   disabled={isCorrect !== null || showNextButton || !voiceSettings.enabled || isDictating || levelTimeUp}
                   className={`relative p-6 rounded-full transition-all transform hover:scale-105 ${
-                    !voiceSettings.enabled || levelTimeUp ? 'opacity-50 cursor-not-allowed bg-gray-300 dark:bg-slate-700' :
+                    !voiceSettings.enabled || levelTimeUp ? 'opacity-50 cursor-not-allowed bg-teal-200 dark:bg-slate-700' :
                     isPlaying || isDictating 
-                      ? 'bg-purple-200 dark:bg-purple-900/30 shadow-lg shadow-purple-200/50 dark:shadow-purple-900/30' 
-                      : 'bg-purple-100 dark:bg-purple-900/20 hover:bg-purple-200 dark:hover:bg-purple-900/30 shadow-md hover:shadow-lg'
+                      ? 'bg-teal-200 dark:bg-teal-900/50 shadow-lg shadow-teal-200/50 dark:shadow-teal-900/30' 
+                      : 'bg-teal-100 dark:bg-teal-900/30 hover:bg-teal-200 dark:hover:bg-teal-900/50 shadow-md hover:shadow-lg'
                   } ${(isCorrect !== null || showNextButton) ? 'opacity-50 cursor-not-allowed' : ''}`}
                   title={!voiceSettings.enabled ? 'Voice is disabled by admin' : 'Click to hear the word again'}
                 >
                   {isPlaying || isDictating ? (
                     <div className="relative">
-                      <Pause size={36} className="text-purple-600 dark:text-purple-400" />
+                      <Pause size={32} className="text-teal-700 dark:text-teal-300" />
                       <div className="absolute -top-1 -right-1">
                         <span className="flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <Volume1 size={36} className={!voiceSettings.enabled ? 'text-gray-400' : 'text-purple-600 dark:text-purple-400'} />
+                    <Volume2 size={32} className={!voiceSettings.enabled ? 'text-teal-400' : 'text-teal-700 dark:text-teal-300'} />
                   )}
                 </button>
-                <p className={`text-sm mt-3 font-medium ${isDarkMode ? 'text-slate-400' : 'text-gray-600'}`}>
+                <p className={`text-sm mt-3 font-medium ${isDarkMode ? 'text-slate-400' : 'text-teal-600'}`}>
                   {levelTimeUp ? (
-                    <span className="text-red-600 dark:text-red-400">⏰ Level time is up!</span>
+                    <span className="text-rose-600 dark:text-rose-400">⏰ Level time is up!</span>
                   ) : !voiceSettings.enabled ? (
                     <span className="text-amber-600 dark:text-amber-400">Voice is disabled</span>
                   ) : isPlaying || isDictating ? (
-                    <span className="text-purple-600 dark:text-purple-400 animate-pulse">
+                    <span className="text-teal-600 dark:text-teal-400 animate-pulse">
                       {isDictating ? 'Speaking...' : 'Listening...'}
                     </span>
                   ) : (
-                    <span className="text-gray-400">Click to hear the word again</span>
+                    <span className="text-teal-400">Click to hear the word again</span>
                   )}
                 </p>
                 {!wordSpoken && !isPlaying && !isDictating && !showNextButton && voiceSettings.enabled && !levelTimeUp && (
@@ -1597,7 +1586,7 @@ const SpellingBee = () => {
                   </p>
                 )}
                 {wordSpoken && !isPlaying && !isDictating && !showNextButton && voiceSettings.enabled && !levelTimeUp && (
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
                     ✓ Now type the word
                   </p>
                 )}
@@ -1606,8 +1595,8 @@ const SpellingBee = () => {
               {/* Word Display */}
               <div className={`rounded-xl border-2 p-6 ${
                 isDarkMode 
-                  ? 'bg-slate-800/50 border-teal-400' 
-                  : 'bg-white shadow-sm border-teal-500'
+                  ? 'bg-slate-800 border-teal-700' 
+                  : 'bg-white border-teal-200 shadow-sm'
               }`}>
                 {/* Letter Boxes */}
                 <div className="flex justify-center gap-2 mb-6">
@@ -1643,7 +1632,7 @@ const SpellingBee = () => {
                             disabled={isCorrect !== null || gameWon || !isTimerRunning}
                             className={`w-8 h-10 rounded-lg font-bold text-sm transition-all ${
                               isCorrect !== null || gameWon || !isTimerRunning
-                                ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
+                                ? 'bg-teal-100 dark:bg-slate-700 text-teal-400 dark:text-slate-500 cursor-not-allowed'
                                 : 'bg-teal-100 dark:bg-teal-900/30 hover:bg-teal-200 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300 hover:scale-105 shadow-sm active:bg-teal-300 dark:active:bg-teal-800'
                             }`}
                           >
@@ -1659,8 +1648,8 @@ const SpellingBee = () => {
                           disabled={isCorrect !== null || gameWon || !isTimerRunning}
                           className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
                             isCorrect !== null || gameWon || !isTimerRunning
-                              ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
-                              : 'bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400'
+                              ? 'bg-teal-100 dark:bg-slate-700 text-teal-400 dark:text-slate-500 cursor-not-allowed'
+                              : 'bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400'
                           }`}
                         >
                           <Trash2 size={16} />
@@ -1675,15 +1664,15 @@ const SpellingBee = () => {
                 {isCorrect !== null && currentWord && (
                   <div className={`mt-4 p-3 rounded-xl text-center font-medium ${
                     isCorrect 
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                      : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
+                      : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
                   }`}>
                     {isCorrect ? '✅ Correct!' : `❌ Incorrect. Correct spelling: ${currentWord.word}`}
                   </div>
                 )}
 
                 {showAnswer && currentWord && (
-                  <div className={`mt-2 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>
+                  <div className={`mt-2 text-center text-sm ${isDarkMode ? 'text-slate-400' : 'text-teal-500'}`}>
                     The word was: <span className="font-bold text-teal-600 dark:text-teal-400">{currentWord.word}</span>
                   </div>
                 )}
@@ -1694,7 +1683,7 @@ const SpellingBee = () => {
                     {!isCorrect && (
                       <button
                         onClick={handleRetry}
-                        className="px-5 py-2.5 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 text-white shadow-md transition-all flex items-center gap-2"
+                        className="px-5 py-2.5 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-2"
                       >
                         <RefreshCw size={16} />
                         Try Again
@@ -1702,7 +1691,7 @@ const SpellingBee = () => {
                     )}
                     <button
                       onClick={handleNextWord}
-                      className="px-5 py-2.5 rounded-xl font-bold text-sm bg-teal-500 hover:bg-teal-600 text-white shadow-md transition-all flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-xl font-bold text-sm bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition-all flex items-center gap-2"
                     >
                       Next Word
                       <SkipForward size={16} />
@@ -1712,15 +1701,15 @@ const SpellingBee = () => {
 
                 {/* Level Time Up Message */}
                 {levelTimeUp && (
-                  <div className="mt-4 p-4 bg-red-100 dark:bg-red-900/30 border-2 border-red-300 dark:border-red-700 rounded-xl text-center">
-                    <AlertCircle className="w-8 h-8 text-red-500 dark:text-red-400 mx-auto mb-2" />
-                    <p className="font-bold text-red-700 dark:text-red-400">⏰ Level Time is Up!</p>
-                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-red-300' : 'text-red-600'}`}>
+                  <div className="mt-4 p-4 bg-rose-100 dark:bg-rose-900/30 border-2 border-rose-300 dark:border-rose-700 rounded-xl text-center">
+                    <AlertCircle className="w-8 h-8 text-rose-500 dark:text-rose-400 mx-auto mb-2" />
+                    <p className="font-bold text-rose-700 dark:text-rose-400">⏰ Level Time is Up!</p>
+                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-rose-300' : 'text-rose-600'}`}>
                       Your progress has been saved.
                     </p>
                     <button
                       onClick={goToDashboard}
-                      className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow-md"
+                      className="mt-3 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition shadow-sm"
                     >
                       Go to Dashboard
                     </button>
@@ -1734,7 +1723,7 @@ const SpellingBee = () => {
                   <button
                     onClick={replayWord}
                     disabled={isCorrect !== null || showNextButton || !voiceSettings.enabled || isDictating}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition disabled:opacity-50 flex items-center gap-2 shadow-md"
+                    className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition disabled:opacity-50 flex items-center gap-2 shadow-sm"
                   >
                     <Repeat size={18} />
                     Listen Again
@@ -1743,7 +1732,7 @@ const SpellingBee = () => {
                   <button
                     onClick={skipWord}
                     disabled={isCorrect !== null || !currentWord || showNextButton}
-                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition disabled:opacity-50 flex items-center gap-2 shadow-md"
+                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition disabled:opacity-50 flex items-center gap-2 shadow-sm"
                   >
                     <SkipForward size={18} />
                     Skip
@@ -1754,7 +1743,7 @@ const SpellingBee = () => {
                     className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
                       isDarkMode 
                         ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
                     }`}
                   >
                     <RefreshCw size={18} />
@@ -1769,16 +1758,16 @@ const SpellingBee = () => {
 
       {/* Start Dialog - Play/Cancel */}
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => {}}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div
-            className="rounded-2xl max-w-md w-full p-8 shadow-2xl border-2"
+            className="rounded-2xl max-w-md w-full p-8 shadow-xl border-2"
             style={{
               backgroundColor: modalBackground,
               borderColor: modalBorderColor,
             }}
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-xl" style={{ backgroundColor: `${themeAccentColor}18` }}>
+              <div className="p-3 rounded-xl" style={{ backgroundColor: `${themeAccentColor}15` }}>
                 <BookOpen size={28} style={{ color: themeAccentColor }} />
               </div>
               <div>
@@ -1798,7 +1787,7 @@ const SpellingBee = () => {
             <div
               className="mt-6 p-3 rounded-xl border"
               style={{
-                backgroundColor: isDarkMode ? `${themeAccentColor}20` : `${themeAccentColor}12`,
+                backgroundColor: isDarkMode ? `${themeAccentColor}20` : `${themeAccentColor}10`,
                 borderColor: `${themeAccentColor}33`,
               }}
             >
@@ -1839,7 +1828,7 @@ const SpellingBee = () => {
               </button>
               <button
                 onClick={() => startGame(wordList)}
-                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 text-white rounded-lg font-bold hover:from-teal-600 hover:to-cyan-600 transition shadow-lg shadow-teal-500/30 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700 transition shadow-sm flex items-center justify-center gap-2"
               >
                 <Play size={18} />
                 Play
@@ -1851,40 +1840,40 @@ const SpellingBee = () => {
 
       {/* Level Up Animation */}
       {showLevelUp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`bg-gradient-to-br from-amber-400 via-yellow-400 to-orange-400 rounded-2xl max-w-md w-full p-8 text-center shadow-2xl transform transition-all duration-500 ${levelUpAnimation ? 'scale-100' : 'scale-0'}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-teal-600 rounded-2xl max-w-md w-full p-8 text-center shadow-2xl transform transition-all duration-500 scale-100">
             <div className="text-6xl mb-4 animate-bounce">🎉</div>
             <h2 className="text-3xl font-bold text-white mb-2">Level Up!</h2>
-            <p className="text-xl font-bold text-white">Level {currentLevel} Complete!</p>
+            <p className="text-xl font-bold text-teal-100">Level {currentLevel} Complete!</p>
             <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-white font-semibold">{levelLabels[currentLevel]}</span>
+              <span className="text-teal-100 font-semibold">{levelLabels[currentLevel]}</span>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="bg-white/20 rounded-xl p-3">
-                <p className="text-white/80 text-xs">Score</p>
+              <div className="bg-teal-700/30 rounded-xl p-3">
+                <p className="text-teal-100 text-xs">Score</p>
                 <p className="text-white font-bold text-xl">{levelScore}</p>
               </div>
-              <div className="bg-white/20 rounded-xl p-3">
-                <p className="text-white/80 text-xs">Accuracy</p>
+              <div className="bg-teal-700/30 rounded-xl p-3">
+                <p className="text-teal-100 text-xs">Accuracy</p>
                 <p className="text-white font-bold text-xl">
                   {attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : 0}%
                 </p>
               </div>
-              <div className="bg-white/20 rounded-xl p-3">
-                <p className="text-white/80 text-xs">Best Streak</p>
+              <div className="bg-teal-700/30 rounded-xl p-3">
+                <p className="text-teal-100 text-xs">Best Streak</p>
                 <p className="text-white font-bold text-xl">{maxStreak}</p>
               </div>
-              <div className="bg-white/20 rounded-xl p-3">
-                <p className="text-white/80 text-xs">Bonus Earned</p>
+              <div className="bg-teal-700/30 rounded-xl p-3">
+                <p className="text-teal-100 text-xs">Bonus Earned</p>
                 <p className="text-white font-bold text-xl">+{bonusEarned}</p>
               </div>
             </div>
             {currentLevel < 10 && (
-              <p className="text-white/90 text-sm mt-4">
+              <p className="text-teal-100 text-sm mt-4">
                 Next: Level {currentLevel + 1} {levelLabels[currentLevel + 1]}
               </p>
             )}
-            <div className="mt-4 w-full bg-white/20 rounded-full h-2">
+            <div className="mt-4 w-full bg-teal-700/30 rounded-full h-2">
               <div 
                 className="bg-white h-2 rounded-full transition-all duration-1000"
                 style={{ width: `${(currentLevel / 10) * 100}%` }}

@@ -340,19 +340,17 @@ const TakeQuiz = () => {
   }, []);
 
   useEffect(() => {
-    // Load profile and level in parallel, then fetch quiz
+    // Start the quiz fetch immediately so the screen appears without waiting for
+    // profile/level requests to finish. Those requests still complete in the
+    // background and update access data when available.
     const loadData = async () => {
-      const [profile, level] = await Promise.all([
+      Promise.allSettled([
         getLearnerProfile(),
         getUserGameLevel()
       ]);
-      
-      // Once we have the learner level, fetch the quiz
-      if (profile || level) {
-        await fetchQuiz();
-      }
+      await fetchQuiz();
     };
-    
+
     loadData();
   }, [quizId]);
 
