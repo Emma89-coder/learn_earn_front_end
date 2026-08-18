@@ -55,6 +55,18 @@ body {
 .learner-themed h2 { font-size: 0.75rem; font-weight: 900; text-transform: none; letter-spacing: 0.05em; }
 .learner-themed h3 { font-size: 0.875rem; font-weight: 600; text-transform: none; }
 
+.learner-themed h1,
+.learner-themed h2,
+.learner-themed h3,
+.learner-themed p,
+.learner-themed span,
+.learner-themed label,
+.learner-themed div,
+.learner-themed .lowercase,
+.learner-themed .uppercase {
+  text-transform: lowercase !important;
+}
+
 .lowercase { text-transform: lowercase !important; }
 
 .learner-themed a,
