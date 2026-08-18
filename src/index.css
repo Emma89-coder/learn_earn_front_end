@@ -52,8 +52,10 @@ body {
 }
 
 .learner-themed h1 { font-size: 1.25rem; }
-.learner-themed h2 { font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
-.learner-themed h3 { font-size: 0.875rem; font-weight: 600; }
+.learner-themed h2 { font-size: 0.75rem; font-weight: 900; text-transform: none; letter-spacing: 0.05em; }
+.learner-themed h3 { font-size: 0.875rem; font-weight: 600; text-transform: none; }
+
+.lowercase { text-transform: lowercase !important; }
 
 .learner-themed a,
 .learner-themed .btn-primary {
