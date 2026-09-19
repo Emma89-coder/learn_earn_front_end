@@ -1250,623 +1250,583 @@ const SpellingBee = () => {
     );
   }
 
+  // Letter box size: shrink for long words on mobile
+  const getBoxSize = () => {
+    if (!currentWord) return 'w-10 h-12 text-lg';
+    const len = currentWord.word.length;
+    if (len <= 5)  return 'w-11 h-14 text-xl';
+    if (len <= 7)  return 'w-9 h-11 text-base';
+    if (len <= 10) return 'w-7 h-9 text-sm';
+    return 'w-6 h-8 text-xs';
+  };
+
   return (
-    <div className={`min-h-screen w-full max-w-full transition-colors duration-300 ${
+    <div className={`min-h-screen w-full flex flex-col transition-colors duration-300 ${
       isDarkMode ? 'bg-slate-900' : 'bg-teal-50'
     }`}>
-      <Toaster position="top-center" />
-      
-      {/* Header */}
-      <header className={`sticky top-0 z-50 shadow-md border-b ${
-        isDarkMode
-          ? 'bg-teal-900 border-teal-800'
-          : 'bg-teal-700 border-teal-600'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/logo.png" 
-                  alt="Logo" 
-                  className="w-10 h-10 object-contain"
-                  loading="eager"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/40x40?text=LE';
-                  }}
-                />
-                <div>
-                  <h1 className="text-xl font-bold tracking-tight text-white" style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
-                    LearnEarn
-                  </h1>
-                  <p className="text-[10px] text-teal-100 font-semibold uppercase tracking-wider">Spelling Bee</p>
-                </div>
+      <Toaster position="top-center" toastOptions={{ style: { fontSize: '13px', maxWidth: '90vw' } }} />
+
+      {/* ── HEADER ── */}
+      <header className={`sticky top-0 z-50 ${
+        isDarkMode ? 'bg-teal-900 border-teal-800' : 'bg-teal-700 border-teal-600'
+      } border-b shadow-lg`}>
+        <div className="px-3 sm:px-6">
+
+          {/* Top row */}
+          <div className="flex items-center justify-between h-12 sm:h-14">
+            {/* Brand */}
+            <div className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-7 h-7 sm:w-9 sm:h-9 object-contain rounded"
+                loading="eager"
+                onError={(e) => { e.target.src = 'https://via.placeholder.com/36x36?text=LE'; }}
+              />
+              <div className="leading-tight">
+                <p className="text-xs sm:text-sm font-bold text-white tracking-tight">LearnEarn</p>
+                <p className="text-[9px] text-teal-200 uppercase tracking-widest font-semibold hidden xs:block">Spelling Bee 🐝</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            {/* Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={toggleSound}
-                className={`p-2 rounded-lg transition-all ${
-                  soundEnabled 
-                    ? 'bg-white/20 text-white shadow-sm hover:bg-white/30' 
-                    : 'bg-teal-800/40 text-teal-200 hover:bg-teal-800/60'
+                className={`p-1.5 sm:p-2 rounded-lg transition-all ${
+                  soundEnabled ? 'bg-white/20 text-white' : 'bg-teal-800/40 text-teal-300'
                 }`}
-                title={soundEnabled ? 'Sound On' : 'Sound Off'}
+                aria-label={soundEnabled ? 'Sound On' : 'Sound Off'}
               >
-                {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
               </button>
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-all"
-                title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 text-white"
+                aria-label="Toggle theme"
               >
                 {isDarkMode ? '☀️' : '🌙'}
               </button>
               <button
                 onClick={goToDashboard}
-                className="px-4 py-2 rounded-lg text-sm font-semibold bg-white text-teal-700 hover:bg-teal-50 transition shadow-sm"
+                className="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold bg-white text-teal-700 hover:bg-teal-50 transition shadow-sm"
               >
                 Exit
               </button>
             </div>
           </div>
 
-          {/* Stats Bar */}
-          <div className="grid grid-cols-4 gap-2 py-2 border-t border-white/20">
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-teal-100 uppercase tracking-wider">Score</p>
-              <p className="text-sm font-bold text-white">{score}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-teal-100 uppercase tracking-wider">Streak</p>
-              <p className="text-sm font-bold text-white">{streak}🔥</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-teal-100 uppercase tracking-wider">Level</p>
-              <p className="text-sm font-bold text-white">{currentLevel}/10</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-teal-100 uppercase tracking-wider">Time</p>
-              <p className={`text-sm font-bold ${getLevelTimerColor()}`}>
-                {formatTimeDisplay(levelTimeLeft)}
-              </p>
-            </div>
+          {/* Stats strip */}
+          <div className="grid grid-cols-4 border-t border-white/15 py-1">
+            {[
+              { label: 'Score',  value: score },
+              { label: 'Streak', value: `${streak}🔥` },
+              { label: 'Level',  value: `${currentLevel}/10` },
+              { label: 'Time',   value: formatTimeDisplay(levelTimeLeft), colored: true },
+            ].map(({ label, value, colored }) => (
+              <div key={label} className="text-center py-0.5">
+                <p className="text-[7px] sm:text-[9px] font-semibold text-teal-200 uppercase tracking-wider">{label}</p>
+                <p className={`text-xs sm:text-sm font-bold ${colored ? getLevelTimerColor() : 'text-white'}`}>{value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col items-center justify-center">
-          {!gameStarted ? (
-            <div className="text-center w-full max-w-md">
-              <div className="mb-6">
-                <div className={`inline-flex p-4 rounded-full mb-4 ${isDarkMode ? 'bg-teal-900/50' : 'bg-white shadow-md'}`}>
-                  <BookOpen className="w-12 h-12 text-teal-600 dark:text-teal-400" />
+      {/* ── MAIN ── */}
+      <main className="flex-1 w-full max-w-2xl mx-auto px-3 sm:px-5 py-4 sm:py-6 pb-24">
+
+        {/* ── LOBBY ── */}
+        {!gameStarted && (
+          <div className="flex flex-col items-center gap-4">
+
+            {/* Hero icon */}
+            <div className={`mt-2 p-5 rounded-3xl shadow-lg ${
+              isDarkMode ? 'bg-teal-900/60' : 'bg-white'
+            }`}>
+              <BookOpen className="w-14 h-14 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div className="text-center">
+              <h2 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-teal-800'}`}>
+                Spelling Bee 🐝
+              </h2>
+              <p className={`text-sm mt-1 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
+                Listen · Spell · Win
+              </p>
+            </div>
+
+            {/* Level card */}
+            <div className={`w-full rounded-2xl border-2 p-5 ${
+              isDarkMode ? 'bg-slate-800 border-teal-700' : 'bg-white border-teal-200 shadow-sm'
+            }`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className={`text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+                    Current Level
+                  </p>
+                  <p className={`text-2xl font-extrabold ${levelColors[currentLevel]}`}>
+                    {levelLabels[currentLevel]}
+                  </p>
                 </div>
-                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-teal-800'}`}>
-                  Spelling Bee
-                </h2>
-                <p className={`text-sm mt-1 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
-                  Listen to the word, then type it correctly!
-                </p>
-              </div>
-              
-              {/* Level Info */}
-              <div className={`p-6 rounded-xl border-2 ${
-                isDarkMode 
-                  ? 'bg-slate-800 border-teal-700' 
-                  : 'bg-white border-teal-200 shadow-sm'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-xs font-medium ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
-                      Level {currentLevel}
-                    </p>
-                    <p className={`text-lg font-bold ${levelColors[currentLevel]}`}>
-                      {levelLabels[currentLevel]}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-xs font-medium ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
-                      Progress
-                    </p>
-                    <p className="text-lg font-bold text-teal-600 dark:text-teal-400">
-                      {maxUnlockedLevel}/10
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 w-full bg-teal-100 dark:bg-teal-900/40 rounded-full h-2.5">
-                  <div 
-                    className="bg-teal-600 h-2.5 rounded-full transition-all duration-500"
-                    style={{ width: `${(maxUnlockedLevel / 10) * 100}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1.5">
-                  <span className={`text-xs ${isDarkMode ? 'text-teal-500' : 'text-teal-400'}`}>
-                    Level 1
-                  </span>
-                  <span className={`text-xs ${isDarkMode ? 'text-teal-500' : 'text-teal-400'}`}>
-                    Level 10
-                  </span>
+                <div className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center font-extrabold ${
+                  isDarkMode ? 'bg-teal-900/50 text-teal-300' : 'bg-teal-50 text-teal-700'
+                }`}>
+                  <span className="text-xl leading-none">{currentLevel}</span>
+                  <span className="text-[9px] uppercase tracking-wider opacity-60">/ 10</span>
                 </div>
               </div>
 
-              {/* Level Progress Indicators */}
-              <div className="flex items-center gap-1.5 mt-4 justify-center">
+              {/* Progress bar */}
+              <div className="w-full bg-teal-100 dark:bg-teal-900/40 rounded-full h-2 mt-1">
+                <div
+                  className="bg-teal-600 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(maxUnlockedLevel / 10) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className={`text-[10px] ${isDarkMode ? 'text-teal-500' : 'text-teal-400'}`}>Lvl 1</span>
+                <span className={`text-[10px] font-semibold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>{maxUnlockedLevel} unlocked</span>
+                <span className={`text-[10px] ${isDarkMode ? 'text-teal-500' : 'text-teal-400'}`}>Lvl 10</span>
+              </div>
+
+              {/* Pip indicators */}
+              <div className="flex items-center gap-1 mt-3 justify-center flex-wrap">
                 {LEVELS.map(level => (
                   <div
                     key={level}
-                    className={`w-6 h-2 rounded-full transition-all ${
+                    className={`h-2 rounded-full transition-all ${
+                      level === currentLevel ? 'w-6 ring-2 ring-teal-400' : 'w-4'
+                    } ${
                       level <= maxUnlockedLevel ? 'bg-teal-600' :
                       level === maxUnlockedLevel + 1 ? 'bg-teal-300 animate-pulse' :
                       isDarkMode ? 'bg-slate-700' : 'bg-teal-100'
-                    } ${level === currentLevel ? 'ring-2 ring-teal-400' : ''}`}
-                    title={`Level ${level} ${level <= maxUnlockedLevel ? 'Completed' : level === maxUnlockedLevel + 1 ? 'Unlocked' : 'Locked'}`}
+                    }`}
+                    title={`Level ${level}`}
                   />
                 ))}
               </div>
-              
-              {/* Voice Status */}
-              {voiceSettings.enabled && (
-                <div className="mt-4 text-xs">
-                  <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1.5 justify-center">
-                    <Volume2 size={14} />
-                    Voice enabled
-                  </span>
-                </div>
-              )}
-              
-              {!voiceSettings.enabled && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
-                  Voice is currently disabled by the administrator.
-                </p>
-              )}
-              
-              <p className={`text-sm mt-3 ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
-                {totalWords} words in this level
-              </p>
             </div>
-          ) : gameWon ? (
-            // Game Won Screen
-            <div className={`rounded-xl border-2 p-8 max-w-md w-full text-center ${
-              isDarkMode 
-                ? 'bg-slate-800 border-teal-700' 
-                : 'bg-white border-teal-200 shadow-md'
+
+            {/* Meta info */}
+            <div className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm ${
+              isDarkMode ? 'bg-slate-800 text-teal-300' : 'bg-white text-teal-600 shadow-sm'
             }`}>
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold text-teal-700 dark:text-teal-300">
-                Level {currentLevel} Complete!
-              </h2>
-              <p className={`mt-2 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
-                You completed {Math.min(wordList.length, WORDS_PER_LEVEL)} words!
-              </p>
-              <div className="grid grid-cols-2 gap-3 mt-6">
-                <div className={`rounded-xl p-3 ${isDarkMode ? 'bg-teal-900/40' : 'bg-teal-50'}`}>
-                  <p className="text-xs text-teal-500 dark:text-teal-400">Score</p>
-                  <p className="text-xl font-bold text-teal-700 dark:text-teal-300">{levelScore}</p>
-                </div>
-                <div className={`rounded-xl p-3 ${isDarkMode ? 'bg-teal-900/40' : 'bg-teal-50'}`}>
-                  <p className="text-xs text-teal-500 dark:text-teal-400">Accuracy</p>
-                  <p className="text-xl font-bold text-teal-700 dark:text-teal-300">
-                    {attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : 0}%
-                  </p>
-                </div>
-                <div className={`rounded-xl p-3 ${isDarkMode ? 'bg-teal-900/40' : 'bg-teal-50'}`}>
-                  <p className="text-xs text-teal-500 dark:text-teal-400">Best Streak</p>
-                  <p className="text-xl font-bold text-teal-700 dark:text-teal-300">{maxStreak}</p>
-                </div>
-                <div className={`rounded-xl p-3 ${isDarkMode ? 'bg-teal-900/40' : 'bg-teal-50'}`}>
-                  <p className="text-xs text-teal-500 dark:text-teal-400">Bonus</p>
-                  <p className="text-xl font-bold text-teal-700 dark:text-teal-300">+{bonusEarned}</p>
-                </div>
-              </div>
-              <div className="flex gap-3 mt-6">
-                {currentLevel < 10 && canAccessLevel(currentLevel + 1) && (
-                  <button
-                    onClick={() => {
-                      setCurrentLevel(currentLevel + 1);
-                      setGameStarted(false);
-                      setShowDialog(true);
-                      setDialogMessage(`Ready to start Level ${currentLevel + 1}? You have 5 minutes to spell 10 words. Each word has 30 seconds to answer.`);
-                    }}
-                    className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition shadow-sm"
-                  >
-                    Next Level →
-                  </button>
-                )}
-                <button
-                  onClick={goToDashboard}
-                  className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition border-2 ${
-                    isDarkMode 
-                      ? 'border-teal-700 text-teal-300 hover:bg-teal-900/30' 
-                      : 'border-teal-200 text-teal-700 hover:bg-teal-50'
-                  }`}
-                >
-                  Dashboard
-                </button>
-              </div>
+              <span className="flex items-center gap-1.5">
+                <BookOpen size={14} />
+                {totalWords} words
+              </span>
+              {voiceSettings.enabled ? (
+                <span className="flex items-center gap-1.5 text-teal-500">
+                  <Volume2 size={14} />
+                  Voice on
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-amber-500">
+                  <VolumeX size={14} />
+                  Voice off
+                </span>
+              )}
             </div>
-          ) : (
-            // Game Play Area
-            <div className="w-full max-w-2xl">
-              {/* Level Timer and Progress */}
-              <div className={`flex justify-between items-center mb-4 p-3 rounded-xl border ${
-                isDarkMode ? 'bg-slate-800 border-teal-800' : 'bg-white border-teal-100 shadow-sm'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-semibold ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
-                    Level {currentLevel}
-                  </span>
-                  <span className={`text-xs font-medium ${levelColors[currentLevel]}`}>
-                    {levelLabels[currentLevel]}
-                  </span>
-                  {consecutiveCorrect > 0 && (
-                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                      isDarkMode ? 'bg-teal-900/50 text-teal-300' : 'bg-teal-100 text-teal-700'
-                    }`}>
-                      🔥 {consecutiveCorrect} streak
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className={`flex items-center gap-2 font-bold ${getLevelTimerColor()}`}>
-                    <Timer size={18} />
-                    <span className="text-base">{formatTimeDisplay(levelTimeLeft)}</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {Array.from({ length: Math.min(wordList.length, WORDS_PER_LEVEL) }, (_, idx) => (
-                      <div
-                        key={idx}
-                        className={`h-1.5 w-5 rounded-full transition-all ${
-                          idx < wordIndex ? 'bg-teal-600' :
-                          idx === wordIndex ? 'bg-teal-400' :
-                          isDarkMode ? 'bg-teal-800' : 'bg-teal-100'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
+          </div>
+        )}
 
-              {/* Speaker Button */}
-              <div className="flex flex-col items-center mb-6">
+        {/* ── GAME WON ── */}
+        {gameStarted && gameWon && (
+          <div className={`rounded-2xl border-2 p-6 sm:p-8 w-full text-center animate-fadeIn ${
+            isDarkMode ? 'bg-slate-800 border-teal-700' : 'bg-white border-teal-200 shadow-lg'
+          }`}>
+            <div className="text-5xl sm:text-6xl mb-3">🎉</div>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-teal-700 dark:text-teal-300">
+              Level {currentLevel} Complete!
+            </h2>
+            <p className={`mt-1 text-sm ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
+              {Math.min(wordList.length, WORDS_PER_LEVEL)} words done
+            </p>
+
+            <div className="grid grid-cols-2 gap-2.5 mt-5">
+              {[
+                { label: 'Score',      value: levelScore },
+                { label: 'Accuracy',   value: `${attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : 0}%` },
+                { label: 'Best Streak',value: maxStreak },
+                { label: 'Bonus',      value: `+${bonusEarned}` },
+              ].map(({ label, value }) => (
+                <div key={label} className={`rounded-xl p-3 ${isDarkMode ? 'bg-teal-900/40' : 'bg-teal-50'}`}>
+                  <p className="text-[10px] uppercase tracking-wider text-teal-500 dark:text-teal-400 font-semibold">{label}</p>
+                  <p className="text-xl font-extrabold text-teal-700 dark:text-teal-300 mt-0.5">{value}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-2.5 mt-5">
+              {currentLevel < 10 && canAccessLevel(currentLevel + 1) && (
                 <button
-                  onClick={replayWord}
-                  disabled={isCorrect !== null || showNextButton || !voiceSettings.enabled || isDictating || levelTimeUp}
-                  className={`relative p-6 rounded-full transition-all transform hover:scale-105 ${
-                    !voiceSettings.enabled || levelTimeUp
-                      ? 'opacity-50 cursor-not-allowed bg-teal-100 dark:bg-slate-700'
-                      : isPlaying || isDictating
-                        ? 'bg-teal-200 dark:bg-teal-900/60 shadow-lg shadow-teal-200/60 dark:shadow-teal-900/40'
-                        : 'bg-white dark:bg-teal-900/30 hover:bg-teal-50 dark:hover:bg-teal-900/50 shadow-md hover:shadow-xl border-2 border-teal-100 dark:border-teal-800'
-                  } ${(isCorrect !== null || showNextButton) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  title={!voiceSettings.enabled ? 'Voice is disabled by admin' : 'Click to hear the word again'}
+                  onClick={() => {
+                    setCurrentLevel(currentLevel + 1);
+                    setGameStarted(false);
+                    setShowDialog(true);
+                    setDialogMessage(`Ready to start Level ${currentLevel + 1}? You have 5 minutes to spell 10 words. Each word has 30 seconds to answer.`);
+                  }}
+                  className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-bold hover:bg-teal-700 active:scale-95 transition shadow-sm text-sm"
                 >
-                  {isPlaying || isDictating ? (
-                    <div className="relative">
-                      <Pause size={32} className="text-teal-700 dark:text-teal-300" />
-                      <div className="absolute -top-1 -right-1">
-                        <span className="flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <Volume2 size={32} className={!voiceSettings.enabled ? 'text-teal-300' : 'text-teal-600 dark:text-teal-300'} />
-                  )}
+                  Next Level →
                 </button>
-                <p className={`text-sm mt-3 font-medium ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
-                  {levelTimeUp ? (
-                    <span className="text-rose-600 dark:text-rose-400">⏰ Level time is up!</span>
-                  ) : !voiceSettings.enabled ? (
-                    <span className="text-amber-600 dark:text-amber-400">Voice is disabled</span>
-                  ) : isPlaying || isDictating ? (
-                    <span className="text-teal-600 dark:text-teal-400 animate-pulse">
-                      {isDictating ? 'Speaking...' : 'Listening...'}
-                    </span>
-                  ) : (
-                    <span className="text-teal-400">Click to hear the word again</span>
-                  )}
-                </p>
-                {!wordSpoken && !isPlaying && !isDictating && !showNextButton && voiceSettings.enabled && !levelTimeUp && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 animate-pulse">
-                    🔄 Speaking the word...
-                  </p>
-                )}
-                {wordSpoken && !isPlaying && !isDictating && !showNextButton && voiceSettings.enabled && !levelTimeUp && (
-                  <p className="text-xs text-teal-600 dark:text-teal-400 mt-1 font-medium">
-                    ✓ Now type the word
-                  </p>
+              )}
+              <button
+                onClick={goToDashboard}
+                className={`flex-1 py-3 rounded-xl font-semibold text-sm border-2 active:scale-95 transition ${
+                  isDarkMode ? 'border-teal-700 text-teal-300' : 'border-teal-200 text-teal-700 hover:bg-teal-50'
+                }`}
+              >
+                Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── GAME PLAY ── */}
+        {gameStarted && !gameWon && (
+          <div className="flex flex-col gap-3">
+
+            {/* Progress bar row */}
+            <div className={`flex items-center justify-between px-3 py-2 rounded-xl border ${
+              isDarkMode ? 'bg-slate-800 border-teal-800' : 'bg-white border-teal-100 shadow-sm'
+            }`}>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`text-xs font-bold ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
+                  Lvl {currentLevel}
+                </span>
+                <span className={`text-[11px] font-medium truncate ${levelColors[currentLevel]}`}>
+                  {levelLabels[currentLevel]}
+                </span>
+                {consecutiveCorrect > 0 && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    isDarkMode ? 'bg-teal-900/60 text-teal-300' : 'bg-teal-100 text-teal-700'
+                  }`}>
+                    🔥 {consecutiveCorrect}
+                  </span>
                 )}
               </div>
-
-              {/* Word Display */}
-              <div className={`rounded-xl border-2 p-6 ${
-                isDarkMode 
-                  ? 'bg-slate-800 border-teal-800' 
-                  : 'bg-white border-teal-100 shadow-md'
-              }`}>
-                {/* Letter Boxes */}
-                <div className="flex justify-center gap-2 mb-6">
-                  {currentWord && currentWord.word.split('').map((letter, index) => (
+              <div className="flex items-center gap-2 shrink-0">
+                <div className={`flex items-center gap-1 text-xs font-bold ${getLevelTimerColor()}`}>
+                  <Timer size={13} />
+                  {formatTimeDisplay(levelTimeLeft)}
+                </div>
+                {/* Word dots */}
+                <div className="flex gap-0.5">
+                  {Array.from({ length: Math.min(wordList.length, WORDS_PER_LEVEL) }, (_, idx) => (
                     <div
-                      key={index}
-                      className={`w-10 h-12 rounded-lg border-2 flex items-center justify-center font-bold text-lg transition-all ${getLetterColor(index)}`}
-                    >
-                      {letterBoxes[index] || ''}
-                    </div>
+                      key={idx}
+                      className={`h-1.5 rounded-full transition-all ${
+                        idx < wordIndex ? 'w-3 bg-teal-600' :
+                        idx === wordIndex ? 'w-3 bg-teal-400' :
+                        `w-3 ${isDarkMode ? 'bg-teal-800' : 'bg-teal-100'}`
+                      }`}
+                    />
                   ))}
                 </div>
+              </div>
+            </div>
 
-                {/* Word Timer - 30 seconds */}
-                {!showNextButton && !levelTimeUp && (
-                  <div className="flex justify-center mb-4">
-                    <div className={`flex items-center gap-2 font-bold ${getTimerColor()}`}>
-                      <Clock size={18} />
-                      <span className="text-sm">{timeLeft}s remaining</span>
-                    </div>
+            {/* Speaker button */}
+            <div className="flex flex-col items-center py-2">
+              <button
+                onClick={replayWord}
+                disabled={isCorrect !== null || showNextButton || !voiceSettings.enabled || isDictating || levelTimeUp}
+                className={`relative p-5 sm:p-6 rounded-full transition-all active:scale-95 ${
+                  !voiceSettings.enabled || levelTimeUp
+                    ? 'opacity-40 cursor-not-allowed bg-teal-100 dark:bg-slate-700'
+                    : isPlaying || isDictating
+                      ? 'bg-teal-200 dark:bg-teal-900/60 shadow-lg'
+                      : 'bg-white dark:bg-teal-900/30 shadow-xl border-2 border-teal-100 dark:border-teal-800 hover:bg-teal-50'
+                } ${(isCorrect !== null || showNextButton) ? 'opacity-40 cursor-not-allowed' : ''}`}
+              >
+                {isPlaying || isDictating ? (
+                  <div className="relative">
+                    <Pause size={30} className="text-teal-700 dark:text-teal-300" />
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                    </span>
                   </div>
+                ) : (
+                  <Volume2 size={30} className={!voiceSettings.enabled ? 'text-teal-300' : 'text-teal-600 dark:text-teal-300'} />
                 )}
+              </button>
+              <p className={`text-xs mt-2 font-medium ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+                {levelTimeUp ? (
+                  <span className="text-rose-500">⏰ Time is up!</span>
+                ) : !voiceSettings.enabled ? (
+                  <span className="text-amber-500">Voice disabled</span>
+                ) : isPlaying || isDictating ? (
+                  <span className="animate-pulse">{isDictating ? 'Speaking...' : 'Listening...'}</span>
+                ) : wordSpoken ? (
+                  <span className="text-teal-500">✓ Now type the word</span>
+                ) : (
+                  <span className="animate-pulse text-amber-500">🔄 Speaking the word…</span>
+                )}
+              </p>
+            </div>
 
-                {/* Keyboard */}
-                {!showNextButton && !levelTimeUp && (
-                  <>
-                    <div className="mt-4">
-                      <div className="flex flex-wrap justify-center gap-1 max-w-lg mx-auto">
-                        {alphabet.map((letter) => (
-                          <button
-                            key={letter}
-                            onClick={() => handleKeyPress(letter)}
-                            disabled={isCorrect !== null || gameWon || !isTimerRunning}
-                            className={`w-8 h-10 rounded-lg font-bold text-sm transition-all ${
-                              isCorrect !== null || gameWon || !isTimerRunning
-                                ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-300 dark:text-teal-600 cursor-not-allowed'
-                                : 'bg-teal-50 dark:bg-teal-900/30 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-700 dark:text-teal-300 hover:scale-105 shadow-sm active:bg-teal-200 dark:active:bg-teal-800 border border-teal-100 dark:border-teal-800'
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        ))}
-                      </div>
-                      
-                      {/* Special Keys */}
-                      <div className="flex justify-center gap-2 mt-2">
+            {/* Word + keyboard card */}
+            <div className={`rounded-2xl border-2 overflow-hidden ${
+              isDarkMode ? 'bg-slate-800 border-teal-800' : 'bg-white border-teal-100 shadow-lg'
+            }`}>
+
+              {/* Letter boxes */}
+              <div className={`flex justify-center gap-1.5 sm:gap-2 px-3 pt-5 pb-3 ${
+                isDarkMode ? 'bg-slate-800' : 'bg-teal-50/60'
+              }`}>
+                {currentWord && currentWord.word.split('').map((_, index) => (
+                  <div
+                    key={index}
+                    className={`${getBoxSize()} rounded-lg border-2 flex items-center justify-center font-extrabold transition-all ${getLetterColor(index)}`}
+                  >
+                    {letterBoxes[index] || ''}
+                  </div>
+                ))}
+              </div>
+
+              {/* Word countdown */}
+              {!showNextButton && !levelTimeUp && (
+                <div className="flex justify-center py-2">
+                  <div className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full ${
+                    timeLeft > 20 ? (isDarkMode ? 'bg-teal-900/40 text-teal-300' : 'bg-teal-100 text-teal-700') :
+                    timeLeft > 10 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
+                    'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 animate-pulse'
+                  }`}>
+                    <Clock size={12} />
+                    {timeLeft}s
+                  </div>
+                </div>
+              )}
+
+              {/* Keyboard — QWERTY-style rows */}
+              {!showNextButton && !levelTimeUp && (
+                <div className="px-2 pb-3 pt-1">
+                  {[
+                    'QWERTYUIOP'.split(''),
+                    'ASDFGHJKL'.split(''),
+                    'ZXCVBNM'.split(''),
+                  ].map((row, rowIdx) => (
+                    <div key={rowIdx} className="flex justify-center gap-1 mb-1">
+                      {row.map((letter) => (
+                        <button
+                          key={letter}
+                          onClick={() => handleKeyPress(letter)}
+                          disabled={isCorrect !== null || gameWon || !isTimerRunning}
+                          className={`
+                            h-10 sm:h-11 rounded-lg font-bold text-sm transition-all select-none
+                            ${row.length === 10 ? 'flex-1 max-w-[38px]' : row.length === 9 ? 'flex-1 max-w-[40px]' : 'flex-1 max-w-[44px]'}
+                            ${isCorrect !== null || gameWon || !isTimerRunning
+                              ? 'bg-teal-50 dark:bg-teal-900/10 text-teal-300 dark:text-teal-700 cursor-not-allowed'
+                              : 'bg-white dark:bg-teal-900/40 text-teal-800 dark:text-teal-200 shadow-sm border border-teal-100 dark:border-teal-800 active:scale-95 active:bg-teal-100 dark:active:bg-teal-800'
+                            }
+                          `}
+                        >
+                          {letter}
+                        </button>
+                      ))}
+                      {/* Backspace on last row */}
+                      {rowIdx === 2 && (
                         <button
                           onClick={handleBackspace}
                           disabled={isCorrect !== null || gameWon || !isTimerRunning}
-                          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                            isCorrect !== null || gameWon || !isTimerRunning
-                              ? 'bg-teal-50 dark:bg-teal-900/20 text-teal-300 dark:text-teal-600 cursor-not-allowed'
-                              : 'bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800'
-                          }`}
+                          className={`h-10 sm:h-11 px-3 rounded-lg font-medium transition-all select-none flex items-center gap-1 text-xs
+                            ${isCorrect !== null || gameWon || !isTimerRunning
+                              ? 'bg-teal-50 dark:bg-teal-900/10 text-teal-300 dark:text-teal-700 cursor-not-allowed'
+                              : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-800 active:scale-95 active:bg-rose-100'
+                            }`}
                         >
-                          <Trash2 size={16} />
-                          Backspace
+                          <Trash2 size={14} />
+                          <span className="hidden sm:inline">Del</span>
                         </button>
-                      </div>
+                      )}
                     </div>
-                  </>
-                )}
+                  ))}
+                </div>
+              )}
 
-                {/* Status Message */}
-                {isCorrect !== null && currentWord && (
-                  <div className={`mt-4 p-3 rounded-xl text-center font-medium ${
-                    isCorrect 
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' 
-                      : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
-                  }`}>
-                    {isCorrect ? '✅ Correct!' : `❌ Incorrect. Correct spelling: ${currentWord.word}`}
-                  </div>
-                )}
+              {/* Status feedback */}
+              {isCorrect !== null && currentWord && (
+                <div className={`mx-3 mb-3 p-3 rounded-xl text-center font-semibold text-sm ${
+                  isCorrect
+                    ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300'
+                    : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'
+                }`}>
+                  {isCorrect ? '✅ Correct!' : `❌ Correct spelling: ${currentWord.word}`}
+                </div>
+              )}
 
-                {showAnswer && currentWord && (
-                  <div className={`mt-2 text-center text-sm ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
-                    The word was: <span className="font-bold text-teal-700 dark:text-teal-300">{currentWord.word}</span>
-                  </div>
-                )}
-
-                {/* Next / Retry Buttons */}
-                {showNextButton && !levelTimeUp && !gameWon && (
-                  <div className="flex justify-center gap-3 mt-4">
-                    {!isCorrect && (
-                      <button
-                        onClick={handleRetry}
-                        className="px-5 py-2.5 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-2"
-                      >
-                        <RefreshCw size={16} />
-                        Try Again
-                      </button>
-                    )}
+              {/* Next / Retry */}
+              {showNextButton && !levelTimeUp && !gameWon && (
+                <div className="flex gap-2.5 px-3 pb-4">
+                  {!isCorrect && (
                     <button
-                      onClick={handleNextWord}
-                      className="px-5 py-2.5 rounded-xl font-bold text-sm bg-teal-600 hover:bg-teal-700 text-white shadow-sm transition-all flex items-center gap-2"
+                      onClick={handleRetry}
+                      className="flex-1 py-3 rounded-xl font-bold text-sm bg-amber-500 hover:bg-amber-600 active:scale-95 text-white shadow-sm transition-all flex items-center justify-center gap-2"
                     >
-                      Next Word
-                      <SkipForward size={16} />
+                      <RefreshCw size={15} />
+                      Try Again
                     </button>
-                  </div>
-                )}
-
-                {/* Level Time Up Message */}
-                {levelTimeUp && (
-                  <div className="mt-4 p-4 bg-rose-100 dark:bg-rose-900/30 border-2 border-rose-300 dark:border-rose-700 rounded-xl text-center">
-                    <AlertCircle className="w-8 h-8 text-rose-500 dark:text-rose-400 mx-auto mb-2" />
-                    <p className="font-bold text-rose-700 dark:text-rose-400">⏰ Level Time is Up!</p>
-                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-rose-300' : 'text-rose-600'}`}>
-                      Your progress has been saved.
-                    </p>
-                    <button
-                      onClick={goToDashboard}
-                      className="mt-3 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition shadow-sm"
-                    >
-                      Go to Dashboard
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Controls */}
-              {!levelTimeUp && (
-                <div className="flex flex-wrap gap-2 justify-center mt-4">
+                  )}
                   <button
-                    onClick={replayWord}
-                    disabled={isCorrect !== null || showNextButton || !voiceSettings.enabled || isDictating}
-                    className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                    onClick={handleNextWord}
+                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-teal-600 hover:bg-teal-700 active:scale-95 text-white shadow-sm transition-all flex items-center justify-center gap-2"
                   >
-                    <Repeat size={18} />
-                    Listen Again
+                    Next
+                    <SkipForward size={15} />
                   </button>
+                </div>
+              )}
 
+              {/* Level Time Up */}
+              {levelTimeUp && (
+                <div className="mx-3 mb-3 p-4 bg-rose-100 dark:bg-rose-900/30 border-2 border-rose-200 dark:border-rose-800 rounded-xl text-center">
+                  <AlertCircle className="w-7 h-7 text-rose-500 mx-auto mb-1.5" />
+                  <p className="font-bold text-rose-700 dark:text-rose-400 text-sm">⏰ Level Time is Up!</p>
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-rose-300' : 'text-rose-500'}`}>
+                    Your progress has been saved.
+                  </p>
                   <button
-                    onClick={skipWord}
-                    disabled={isCorrect !== null || !currentWord || showNextButton}
-                    className="px-4 py-2 bg-cyan-600 text-white rounded-lg font-medium hover:bg-cyan-700 transition disabled:opacity-50 flex items-center gap-2 shadow-sm"
+                    onClick={goToDashboard}
+                    className="mt-3 w-full py-2.5 bg-rose-600 text-white rounded-lg text-sm font-semibold hover:bg-rose-700 active:scale-95 transition"
                   >
-                    <SkipForward size={18} />
-                    Skip
-                  </button>
-
-                  <button
-                    onClick={resetGame}
-                    className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 border-2 ${
-                      isDarkMode 
-                        ? 'border-teal-700 text-teal-300 hover:bg-teal-900/30' 
-                        : 'border-teal-200 text-teal-700 hover:bg-teal-50'
-                    }`}
-                  >
-                    <RefreshCw size={18} />
-                    Restart Level
+                    Go to Dashboard
                   </button>
                 </div>
               )}
             </div>
-          )}
-        </div>
+
+            {/* Bottom controls */}
+            {!levelTimeUp && (
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={replayWord}
+                  disabled={isCorrect !== null || showNextButton || !voiceSettings.enabled || isDictating}
+                  className="flex flex-col items-center gap-1 py-2.5 bg-teal-600 text-white rounded-xl font-medium text-xs hover:bg-teal-700 active:scale-95 transition disabled:opacity-40 shadow-sm"
+                >
+                  <Repeat size={16} />
+                  Listen
+                </button>
+                <button
+                  onClick={skipWord}
+                  disabled={isCorrect !== null || !currentWord || showNextButton}
+                  className="flex flex-col items-center gap-1 py-2.5 rounded-xl font-medium text-xs active:scale-95 transition disabled:opacity-40 shadow-sm border-2 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 bg-white dark:bg-transparent"
+                >
+                  <SkipForward size={16} />
+                  Skip
+                </button>
+                <button
+                  onClick={resetGame}
+                  className={`flex flex-col items-center gap-1 py-2.5 rounded-xl font-medium text-xs active:scale-95 transition shadow-sm border-2 ${
+                    isDarkMode ? 'border-teal-700 text-teal-300' : 'border-teal-200 text-teal-700 bg-white'
+                  }`}
+                >
+                  <RefreshCw size={16} />
+                  Restart
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
-      {/* Start Dialog - Play/Cancel */}
+      {/* ── START DIALOG ── */}
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
           <div
-            className="rounded-2xl max-w-md w-full p-8 shadow-xl border-2"
-            style={{
-              backgroundColor: modalBackground,
-              borderColor: modalBorderColor,
-            }}
+            className="w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-5 sm:p-7 shadow-2xl border-t-2 sm:border-2 max-h-[92vh] overflow-y-auto"
+            style={{ backgroundColor: modalBackground, borderColor: modalBorderColor }}
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-xl" style={{ backgroundColor: `${themeAccentColor}15` }}>
-                <BookOpen size={28} style={{ color: themeAccentColor }} />
+            {/* Handle bar (mobile) */}
+            <div className="flex justify-center mb-4 sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-teal-200 dark:bg-teal-700" />
+            </div>
+
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${themeAccentColor}18` }}>
+                <BookOpen size={24} style={{ color: themeAccentColor }} />
               </div>
               <div>
-                <h2 className="text-2xl font-bold" style={{ color: modalHeadingColor }}>
+                <h2 className="text-xl font-extrabold" style={{ color: modalHeadingColor }}>
                   Ready to Play?
                 </h2>
-                <p className="text-sm" style={{ color: modalAccentTextColor }}>
-                  Level {currentLevel}
+                <p className="text-xs" style={{ color: modalAccentTextColor }}>
+                  Level {currentLevel} · {levelLabels[currentLevel]}
                 </p>
               </div>
             </div>
-            
-            <p className="text-sm leading-relaxed" style={{ color: modalTextColor }}>
-              {dialogMessage || `Ready to start Level ${currentLevel}? You'll hear each word and type it correctly.`}
+
+            <p className="text-sm leading-relaxed mb-4" style={{ color: modalTextColor }}>
+              {dialogMessage || `Spell ${Math.min(totalWords, WORDS_PER_LEVEL)} words in 5 minutes. 30 seconds per word.`}
             </p>
-            
+
             <div
-              className="mt-6 p-3 rounded-xl border"
-              style={{
-                backgroundColor: isDarkMode ? `${themeAccentColor}20` : `${themeAccentColor}10`,
-                borderColor: `${themeAccentColor}33`,
-              }}
+              className="grid grid-cols-1 gap-2 p-3 rounded-xl border mb-5"
+              style={{ backgroundColor: isDarkMode ? `${themeAccentColor}18` : `${themeAccentColor}0d`, borderColor: `${themeAccentColor}30` }}
             >
-              <div className="flex items-center gap-2 text-xs mt-1" style={{ color: modalTextColor }}>
-                <Volume2 size={14} />
-                <span>Words will be spoken automatically</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs mt-1" style={{ color: modalTextColor }}>
-                <Keyboard size={14} />
-                <span>Type using the on-screen keyboard</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs mt-1" style={{ color: modalTextColor }}>
-                <Timer size={14} />
-                <span>You have 5 minutes to complete the level</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs mt-1" style={{ color: modalTextColor }}>
-                <Clock size={14} />
-                <span>30 seconds per word to spell correctly</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs mt-1" style={{ color: modalTextColor }}>
-                <Trophy size={14} />
-                <span>+2 points per word, +2 bonus every 5 correct!</span>
-              </div>
+              {[
+                [<Volume2 size={13} />, 'Words spoken aloud automatically'],
+                [<Keyboard size={13} />, 'On-screen keyboard to spell'],
+                [<Timer size={13} />, '5-minute level timer'],
+                [<Clock size={13} />, '30 seconds per word'],
+                [<Trophy size={13} />, '+2 pts/word · bonus every 5 correct'],
+              ].map(([icon, text], i) => (
+                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: modalTextColor }}>
+                  {icon}<span>{text}</span>
+                </div>
+              ))}
             </div>
 
-            <div className="flex gap-3 mt-6 pt-4 border-t-2" style={{ borderColor: isDarkMode ? '#334155' : '#e5e7eb' }}>
+            <div className="flex gap-2.5">
               <button
                 onClick={goToDashboard}
-                className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition flex items-center justify-center gap-2 border-2 ${
-                  isDarkMode 
-                    ? 'border-teal-700 text-teal-300 hover:bg-teal-900/30' 
-                    : 'border-teal-200 text-teal-700 hover:bg-teal-50'
+                className={`flex-1 py-3 rounded-xl font-semibold text-sm border-2 active:scale-95 transition ${
+                  isDarkMode ? 'border-teal-700 text-teal-300' : 'border-teal-200 text-teal-700 hover:bg-teal-50'
                 }`}
-                style={{ color: modalTextColor }}
               >
-                <XCircle size={18} />
                 Cancel
               </button>
               <button
                 onClick={() => startGame(wordList)}
-                className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-bold hover:bg-teal-700 transition shadow-sm flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-extrabold text-sm hover:bg-teal-700 active:scale-95 transition shadow-md flex items-center justify-center gap-2"
               >
-                <Play size={18} />
-                Play
+                <Play size={16} />
+                Play Now
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Level Up Animation */}
+      {/* ── LEVEL UP ── */}
       {showLevelUp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-teal-600 rounded-2xl max-w-md w-full p-8 text-center shadow-2xl transform transition-all duration-500 scale-100">
-            <div className="text-6xl mb-4 animate-bounce">🎉</div>
-            <h2 className="text-3xl font-bold text-white mb-2">Level Up!</h2>
-            <p className="text-xl font-bold text-teal-100">Level {currentLevel} Complete!</p>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="text-teal-100 font-semibold">{levelLabels[currentLevel]}</span>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="bg-teal-700/30 rounded-xl p-3">
-                <p className="text-teal-100 text-xs">Score</p>
-                <p className="text-white font-bold text-xl">{levelScore}</p>
-              </div>
-              <div className="bg-teal-700/30 rounded-xl p-3">
-                <p className="text-teal-100 text-xs">Accuracy</p>
-                <p className="text-white font-bold text-xl">
-                  {attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : 0}%
-                </p>
-              </div>
-              <div className="bg-teal-700/30 rounded-xl p-3">
-                <p className="text-teal-100 text-xs">Best Streak</p>
-                <p className="text-white font-bold text-xl">{maxStreak}</p>
-              </div>
-              <div className="bg-teal-700/30 rounded-xl p-3">
-                <p className="text-teal-100 text-xs">Bonus Earned</p>
-                <p className="text-white font-bold text-xl">+{bonusEarned}</p>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-teal-600 rounded-3xl w-full max-w-sm p-6 sm:p-8 text-center shadow-2xl animate-fadeIn">
+            <div className="text-5xl sm:text-6xl mb-3 animate-bounce">🎉</div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-1">Level Up!</h2>
+            <p className="text-base font-bold text-teal-100">Level {currentLevel} · {levelLabels[currentLevel]}</p>
+            <div className="grid grid-cols-2 gap-2.5 mt-4">
+              {[
+                { label: 'Score',      value: levelScore },
+                { label: 'Accuracy',   value: `${attempts > 0 ? Math.round((correctAttempts / attempts) * 100) : 0}%` },
+                { label: 'Best Streak',value: maxStreak },
+                { label: 'Bonus',      value: `+${bonusEarned}` },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-white/10 rounded-xl p-3">
+                  <p className="text-teal-200 text-[10px] uppercase tracking-wider font-semibold">{label}</p>
+                  <p className="text-white font-extrabold text-xl mt-0.5">{value}</p>
+                </div>
+              ))}
             </div>
             {currentLevel < 10 && (
-              <p className="text-teal-100 text-sm mt-4">
-                Next: Level {currentLevel + 1} {levelLabels[currentLevel + 1]}
+              <p className="text-teal-100 text-xs mt-3">
+                Next → Level {currentLevel + 1}: {levelLabels[currentLevel + 1]}
               </p>
             )}
-            <div className="mt-4 w-full bg-teal-700/30 rounded-full h-2">
-              <div 
-                className="bg-white h-2 rounded-full transition-all duration-1000"
+            <div className="mt-3 w-full bg-white/20 rounded-full h-1.5">
+              <div
+                className="bg-white h-1.5 rounded-full transition-all duration-1000"
                 style={{ width: `${(currentLevel / 10) * 100}%` }}
               />
             </div>
@@ -1876,12 +1836,10 @@ const SpellingBee = () => {
 
       <style>{`
         @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.95) translateY(10px); }
-          to { opacity: 1; transform: scale(1) translateY(0); }
+          from { opacity: 0; transform: scale(0.96) translateY(12px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
         }
-        .animate-fadeIn {
-          animation: fadeIn 0.25s ease-out forwards;
-        }
+        .animate-fadeIn { animation: fadeIn 0.22s ease-out forwards; }
       `}</style>
     </div>
   );
