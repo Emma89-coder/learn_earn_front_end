@@ -305,16 +305,16 @@ const TakeQuiz = () => {
 
       const randomizedQuestions = questions.map((q, idx) => {
         const opts = (q.options || []).map(o => ({
-          text: normalizeLowerCase(sanitizeValue(o)),
+          text: sanitizeValue(o),
           isCorrect: normalizeValue(o) === normalizeValue(q.correctAnswer),
         }));
         const shuffled = shuffleArray(opts);
         return {
           ...q,
           id: q.id || idx,
-          question: normalizeLowerCase(sanitizeValue(q.question)) || 'no question text',
+          question: sanitizeValue(q.question) || 'No question text',
           options: shuffled.map(o => o.text),
-          correctAnswer: normalizeLowerCase(sanitizeValue(shuffled.find(o => o.isCorrect)?.text || q.correctAnswer)),
+          correctAnswer: sanitizeValue(shuffled.find(o => o.isCorrect)?.text || q.correctAnswer),
           questionImage: q.questionImage && q.questionImage.trim() !== '' &&
             q.questionImage !== 'null' && q.questionImage !== 'NULL' ? q.questionImage : null,
         };
@@ -592,7 +592,7 @@ const TakeQuiz = () => {
   const currentQ     = quiz.questions[currentQuestion];
   const optionsToShow = filteredOptions || currentQ.options;
   const hasImage     = !!currentQ.questionImage;
-  const currentQuestionText = normalizeLowerCase(currentQ.question);
+  const currentQuestionText = sanitizeValue(currentQ.question);
   const answeredCount = answersRef.current.filter(a => a !== '').length;
   const levelColor   = LEVEL_COLORS[quizGameLevel] || 'bg-teal-500';
 
@@ -821,7 +821,7 @@ const TakeQuiz = () => {
                     <div className="rounded-xl p-2 sm:p-3 shadow-md bg-white">
                       <img src={currentQ.questionImage} alt="question" className="max-w-full max-h-40 sm:max-h-56 object-contain mx-auto" />
                     </div>
-                    <p className="font-bold mt-2 sm:mt-3 text-xs sm:text-sm px-2 text-slate-800 lowercase"
+                    <p className="font-bold mt-2 sm:mt-3 text-xs sm:text-sm px-2 text-slate-800"
                         dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQuestionText) }} />
                   </div>
                 </div>
@@ -833,7 +833,7 @@ const TakeQuiz = () => {
             ) : (
               <div className="flex-1 min-h-0 p-4 sm:p-6 pt-6 sm:pt-8 flex flex-col justify-between overflow-hidden">
                 <div className="rounded-xl p-3 sm:p-4 text-center flex-shrink-0 bg-sky-50 border border-slate-200">
-                  <h2 className="text-sm sm:text-lg font-bold leading-relaxed text-slate-800 lowercase"
+                  <h2 className="text-sm sm:text-lg font-bold leading-relaxed text-slate-800"
                       dangerouslySetInnerHTML={{ __html: renderFormattedText(currentQuestionText) }} />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:gap-2 flex-1 justify-center my-2 sm:my-3">
