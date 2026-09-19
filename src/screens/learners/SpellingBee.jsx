@@ -1266,79 +1266,76 @@ const SpellingBee = () => {
     }`}>
       <Toaster position="top-center" toastOptions={{ style: { fontSize: '13px', maxWidth: '480px' } }} />
 
-      {/* ── OUTER CENTERING WRAPPER ── */}
-      {/* Everything lives in this single centred column — header included */}
-      <div className="flex flex-col flex-1 w-full max-w-lg mx-auto">
+      {/* ── HEADER ── sticky to viewport, content pinned to same 512 px column as the game ── */}
+      <header className={`sticky top-0 z-50 w-full shadow-lg border-b ${
+        isDarkMode ? 'bg-teal-900 border-teal-800' : 'bg-teal-700 border-teal-600'
+      }`}>
+        {/* ↓ same max-w as main content so header aligns perfectly */}
+        <div className="w-full max-w-lg mx-auto px-4">
 
-        {/* ── HEADER ── */}
-        <header className={`sticky top-0 z-50 rounded-b-2xl shadow-lg border-b ${
-          isDarkMode ? 'bg-teal-900 border-teal-800' : 'bg-teal-700 border-teal-600'
-        }`}>
-          <div className="px-4">
-
-            {/* Top row */}
-            <div className="flex items-center justify-between h-12">
-              {/* Brand */}
-              <div className="flex items-center gap-2">
-                <img
-                  src="/logo.png"
-                  alt="Logo"
-                  className="w-8 h-8 object-contain rounded"
-                  loading="eager"
-                  onError={(e) => { e.target.src = 'https://via.placeholder.com/32x32?text=LE'; }}
-                />
-                <div className="leading-tight">
-                  <p className="text-sm font-bold text-white tracking-tight">LearnEarn</p>
-                  <p className="text-[9px] text-teal-200 uppercase tracking-widest font-semibold">Spelling Bee 🐝</p>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={toggleSound}
-                  className={`p-2 rounded-lg transition-all ${
-                    soundEnabled ? 'bg-white/20 text-white' : 'bg-teal-800/40 text-teal-300'
-                  }`}
-                  aria-label={soundEnabled ? 'Sound On' : 'Sound Off'}
-                >
-                  {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                </button>
-                <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-lg bg-white/10 text-white"
-                  aria-label="Toggle theme"
-                >
-                  {isDarkMode ? '☀️' : '🌙'}
-                </button>
-                <button
-                  onClick={goToDashboard}
-                  className="px-3 py-1.5 rounded-lg text-sm font-bold bg-white text-teal-700 hover:bg-teal-50 transition shadow-sm"
-                >
-                  Exit
-                </button>
+          {/* Top row */}
+          <div className="flex items-center justify-between h-12">
+            {/* Brand */}
+            <div className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-8 h-8 object-contain rounded"
+                loading="eager"
+                onError={(e) => { e.target.src = 'https://via.placeholder.com/32x32?text=LE'; }}
+              />
+              <div className="leading-tight">
+                <p className="text-sm font-bold text-teal-50 tracking-tight">LearnEarn</p>
+                <p className="text-[9px] text-teal-100 uppercase tracking-widest font-semibold">Spelling Bee 🐝</p>
               </div>
             </div>
 
-            {/* Stats strip */}
-            <div className="grid grid-cols-4 border-t border-white/15 py-1">
-              {[
-                { label: 'Score',  value: score },
-                { label: 'Streak', value: `${streak}🔥` },
-                { label: 'Level',  value: `${currentLevel}/10` },
-                { label: 'Time',   value: formatTimeDisplay(levelTimeLeft), colored: true },
-              ].map(({ label, value, colored }) => (
-                <div key={label} className="text-center py-0.5">
-                  <p className="text-[9px] font-semibold text-teal-200 uppercase tracking-wider">{label}</p>
-                  <p className={`text-sm font-bold ${colored ? getLevelTimerColor() : 'text-white'}`}>{value}</p>
-                </div>
-              ))}
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleSound}
+                className={`p-2 rounded-lg transition-all ${
+                  soundEnabled ? 'bg-white/20 text-teal-50' : 'bg-teal-800/40 text-teal-100'
+                }`}
+                aria-label={soundEnabled ? 'Sound On' : 'Sound Off'}
+              >
+                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg bg-white/10 text-teal-50"
+                aria-label="Toggle theme"
+              >
+                {isDarkMode ? '☀️' : '🌙'}
+              </button>
+              <button
+                onClick={goToDashboard}
+                className="px-3 py-1.5 rounded-lg text-sm font-bold bg-teal-50 text-teal-700 hover:bg-white transition shadow-sm"
+              >
+                Exit
+              </button>
             </div>
           </div>
-        </header>
 
-        {/* ── MAIN ── */}
-        <main className="flex-1 px-4 py-5 pb-24">
+          {/* Stats strip */}
+          <div className="grid grid-cols-4 border-t border-white/15 py-1">
+            {[
+              { label: 'Score',  value: score },
+              { label: 'Streak', value: `${streak}🔥` },
+              { label: 'Level',  value: `${currentLevel}/10` },
+              { label: 'Time',   value: formatTimeDisplay(levelTimeLeft), colored: true },
+            ].map(({ label, value, colored }) => (
+              <div key={label} className="text-center py-0.5">
+                <p className="text-[9px] font-semibold text-teal-100 uppercase tracking-wider">{label}</p>
+                <p className={`text-sm font-bold ${colored ? getLevelTimerColor() : 'text-teal-50'}`}>{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      {/* ── MAIN — centred narrow column, same width as header inner content ── */}
+      <main className="flex-1 w-full max-w-lg mx-auto px-4 py-5 pb-24">
 
         {/* ── LOBBY ── */}
         {!gameStarted && (
@@ -1739,36 +1736,32 @@ const SpellingBee = () => {
       {showDialog && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
           <div
-            className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl border-t-2 sm:border-2 max-h-[92vh] overflow-y-auto"
-            style={{ backgroundColor: modalBackground, borderColor: modalBorderColor }}
+            className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl border-t-2 sm:border-2 max-h-[92vh] overflow-y-auto bg-white border-teal-200"
           >
             {/* Handle bar (mobile) */}
             <div className="flex justify-center mb-4 sm:hidden">
-              <div className="w-10 h-1 rounded-full bg-teal-200 dark:bg-teal-700" />
+              <div className="w-10 h-1 rounded-full bg-teal-200" />
             </div>
 
             <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 rounded-xl" style={{ backgroundColor: `${themeAccentColor}18` }}>
-                <BookOpen size={24} style={{ color: themeAccentColor }} />
+              <div className="p-2.5 rounded-xl bg-teal-100">
+                <BookOpen size={24} className="text-teal-600" />
               </div>
               <div>
-                <h2 className="text-xl font-extrabold" style={{ color: modalHeadingColor }}>
+                <h2 className="text-xl font-extrabold text-teal-800">
                   Ready to Play?
                 </h2>
-                <p className="text-xs" style={{ color: modalAccentTextColor }}>
+                <p className="text-xs text-teal-500">
                   Level {currentLevel} · {levelLabels[currentLevel]}
                 </p>
               </div>
             </div>
 
-            <p className="text-sm leading-relaxed mb-4" style={{ color: modalTextColor }}>
+            <p className="text-sm leading-relaxed mb-4 text-teal-700">
               {dialogMessage || `Spell ${Math.min(totalWords, WORDS_PER_LEVEL)} words in 5 minutes. 30 seconds per word.`}
             </p>
 
-            <div
-              className="grid grid-cols-1 gap-2 p-3 rounded-xl border mb-5"
-              style={{ backgroundColor: isDarkMode ? `${themeAccentColor}18` : `${themeAccentColor}0d`, borderColor: `${themeAccentColor}30` }}
-            >
+            <div className="grid grid-cols-1 gap-2 p-3 rounded-xl border border-teal-100 bg-teal-50 mb-5">
               {[
                 [<Volume2 size={13} />, 'Words spoken aloud automatically'],
                 [<Keyboard size={13} />, 'On-screen keyboard to spell'],
@@ -1776,7 +1769,7 @@ const SpellingBee = () => {
                 [<Clock size={13} />, '30 seconds per word'],
                 [<Trophy size={13} />, '+2 pts/word · bonus every 5 correct'],
               ].map(([icon, text], i) => (
-                <div key={i} className="flex items-center gap-2 text-xs" style={{ color: modalTextColor }}>
+                <div key={i} className="flex items-center gap-2 text-xs text-teal-600">
                   {icon}<span>{text}</span>
                 </div>
               ))}
@@ -1785,15 +1778,13 @@ const SpellingBee = () => {
             <div className="flex gap-2.5">
               <button
                 onClick={goToDashboard}
-                className={`flex-1 py-3 rounded-xl font-semibold text-sm border-2 active:scale-95 transition ${
-                  isDarkMode ? 'border-teal-700 text-teal-300' : 'border-teal-200 text-teal-700 hover:bg-teal-50'
-                }`}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm border-2 border-teal-200 text-teal-700 hover:bg-teal-50 active:scale-95 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={() => startGame(wordList)}
-                className="flex-1 py-3 bg-teal-600 text-white rounded-xl font-extrabold text-sm hover:bg-teal-700 active:scale-95 transition shadow-md flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-teal-600 text-teal-50 rounded-xl font-extrabold text-sm hover:bg-teal-700 active:scale-95 transition shadow-md flex items-center justify-center gap-2"
               >
                 <Play size={16} />
                 Play Now
@@ -1845,7 +1836,6 @@ const SpellingBee = () => {
         }
         .animate-fadeIn { animation: fadeIn 0.22s ease-out forwards; }
       `}</style>
-      </div>{/* end centering wrapper */}
     </div>
   );
 };
