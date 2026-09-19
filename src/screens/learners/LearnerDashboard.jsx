@@ -806,9 +806,9 @@ const LearnerDashboard = () => {
         <div 
           className="relative max-w-md w-full overflow-hidden shadow-2xl border"
           style={{
-            backgroundColor: isDarkMode ? '#0f172a' : '#f8fffd',
+            backgroundColor: '#f8fffd',
             borderRadius: `${borderRadius}px`,
-            border: `1px solid ${isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'}`,
+            border: `1px solid rgba(20,184,166,0.18)`,
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -818,17 +818,15 @@ const LearnerDashboard = () => {
           <div 
             className="p-5 border-b"
             style={{
-              backgroundColor: isDarkMode ? 'rgba(15,23,42,0.98)' : 'rgba(204,251,241,0.95)',
-              borderColor: isDarkMode ? 'rgba(45,212,191,0.14)' : 'rgba(20,184,166,0.16)',
+              backgroundColor: 'rgba(204,251,241,0.95)',
+              borderColor: 'rgba(20,184,166,0.16)',
             }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div 
                   className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md"
-                  style={{
-                    backgroundColor: accentColor,
-                  }}
+                  style={{ backgroundColor: accentColor }}
                 >
                   <Gift className="w-5 h-5 text-white" />
                 </div>
@@ -836,9 +834,9 @@ const LearnerDashboard = () => {
                   <div 
                     className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-1"
                     style={{
-                      backgroundColor: isDarkMode ? 'rgba(45,212,191,0.12)' : 'rgba(20,184,166,0.10)',
-                      color: isDarkMode ? '#5eead4' : '#0f766e',
-                      border: `1px solid ${isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)'}`,
+                      backgroundColor: 'rgba(20,184,166,0.10)',
+                      color: '#0f766e',
+                      border: `1px solid rgba(20,184,166,0.18)`,
                     }}
                   >
                     <Sparkles className="w-3 h-3" />
@@ -862,8 +860,8 @@ const LearnerDashboard = () => {
                 onClick={closeRewardDialog}
                 className="p-2 rounded-full transition border"
                 style={{
-                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.9)',
-                  borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.16)',
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  borderColor: 'rgba(20,184,166,0.16)',
                 }}
               >
                 <X size={18} style={{ color: bodyColor }} />
@@ -877,9 +875,9 @@ const LearnerDashboard = () => {
             <div 
               className="w-full h-48 overflow-hidden flex items-center justify-center relative border"
               style={{
-                backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(209,250,229,0.95)',
+                backgroundColor: 'rgba(209,250,229,0.95)',
                 borderRadius: `${borderRadius}px`,
-                borderColor: isDarkMode ? 'rgba(45,212,191,0.18)' : 'rgba(20,184,166,0.18)',
+                borderColor: 'rgba(20,184,166,0.18)',
               }}
             >
               <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
@@ -905,8 +903,8 @@ const LearnerDashboard = () => {
             <div 
               className="p-4 rounded-2xl border"
               style={{
-                backgroundColor: isDarkMode ? 'rgba(15,23,42,0.92)' : 'rgba(255,255,255,0.92)',
-                border: `1px solid ${isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)'}`,
+                backgroundColor: 'rgba(255,255,255,0.92)',
+                border: `1px solid rgba(20,184,166,0.18)`,
                 borderRadius: `${borderRadius}px`,
               }}
             >
@@ -915,8 +913,8 @@ const LearnerDashboard = () => {
                   <div 
                     className="w-10 h-10 rounded-2xl flex items-center justify-center border"
                     style={{
-                      backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(236,253,245,0.95)',
-                      borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
+                      backgroundColor: 'rgba(236,253,245,0.95)',
+                      borderColor: 'rgba(20,184,166,0.18)',
                     }}
                   >
                     <Wallet className="w-5 h-5" style={{ color: accentColor }} />
@@ -961,9 +959,9 @@ const LearnerDashboard = () => {
                 onClick={closeRewardDialog}
                 className="flex-1 px-4 py-3 font-semibold text-sm transition border hover:-translate-y-0.5 active:translate-y-0"
                 style={{
-                  borderColor: isDarkMode ? 'rgba(51,65,85,0.95)' : 'rgba(20,184,166,0.18)',
+                  borderColor: 'rgba(20,184,166,0.18)',
                   color: bodyColor,
-                  backgroundColor: isDarkMode ? 'rgba(15,23,42,0.95)' : 'rgba(241,245,249,0.92)',
+                  backgroundColor: 'rgba(241,245,249,0.92)',
                   borderRadius: `${borderRadius}px`,
                 }}
               >
