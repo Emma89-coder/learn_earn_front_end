@@ -42,7 +42,8 @@ const QUESTION_LAYOUTS = [
 
 const renderFormattedText = (text) => {
   if (!text) return '';
-  return text
+  return String(text)
+    .replace(/_{2,}/g, '<span class="inline-block min-w-[1.8em] border-b-[2px] border-slate-400 align-middle mx-1 my-0.5"></span>')
     .replace(/__(.*?)__/g, '<u class="underline decoration-teal-500">$1</u>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
     .replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');

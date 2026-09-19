@@ -90,17 +90,29 @@ const useVoice = () => {
     }
   }, []);
 
+  const normalizeSpeechText = useCallback((text) => {
+    if (!text) return '';
+
+    return String(text)
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/_{2,}/g, ' dash ')
+      .replace(/_/g, ' dash ')
+      .replace(/[🎉✅❌⏰💡🎯📝✓🔄🟢🟡🔴]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }, []);
+
   const speak = useCallback((text, { fallbackToBrowser = true } = {}) => {
     if (!text || text.trim().length === 0) return Promise.resolve();
 
-    const cleanText = text.replace(/[🎉✅❌⏰💡🎯📝✓🔄🟢🟡🔴]/g, '').trim();
+    const cleanText = normalizeSpeechText(text);
     if (!cleanText) return Promise.resolve();
 
     return new Promise((resolve) => {
       queueRef.current.push({ text: cleanText, resolve, fallbackToBrowser });
       processQueue();
     });
-  }, [processQueue]);
+  }, [normalizeSpeechText, processQueue]);
 
   const stop = useCallback(() => {
     // Clear queue

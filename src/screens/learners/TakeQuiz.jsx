@@ -10,7 +10,9 @@ import QuizResultsModal from './QuizResultsModal';
 
 const renderFormattedText = (text) => {
   if (!text) return '';
-  return text
+
+  return String(text)
+    .replace(/_{2,}/g, '<span class="inline-block min-w-[1.8em] border-b-[2px] border-slate-400 align-middle mx-1 my-0.5"></span>')
     .replace(/__(.*?)__/g, '<u class="underline decoration-2 decoration-teal-500">$1</u>')
     .replace(/<u>(.*?)<\/u>/g, '<u class="underline decoration-2 decoration-teal-500">$1</u>')
     .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>')
