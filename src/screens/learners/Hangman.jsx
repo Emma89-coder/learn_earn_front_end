@@ -14,13 +14,13 @@ import {
 
 // Subject-based categories with icons and colors
 const categoryMetadata = {
-  'mathematics': { name: 'Mathematics', icon: <Brain size={18} />, color: '#6366f1', bgColor: 'bg-indigo-50' },
-  'english': { name: 'English', icon: <BookOpen size={18} />, color: '#3b82f6', bgColor: 'bg-blue-50' },
-  'primary-science': { name: 'Science', icon: <Activity size={18} />, color: '#8b5cf6', bgColor: 'bg-purple-50' },
-  'social-studies': { name: 'Social Studies', icon: <Globe size={18} />, color: '#10b981', bgColor: 'bg-emerald-50' },
-  'bible-knowledge': { name: 'Bible Knowledge', icon: <BookOpen size={18} />, color: '#f59e0b', bgColor: 'bg-amber-50' },
-  'arts-life-skills': { name: 'Arts & Life Skills', icon: <Music size={18} />, color: '#f97316', bgColor: 'bg-orange-50' },
-  'chichewa': { name: 'Chichewa', icon: <GraduationCap size={18} />, color: '#ef4444', bgColor: 'bg-red-50' }
+  'mathematics':    { name: 'Mathematics',     icon: <Brain size={18} />,       color: '#0d9488', bgColor: 'bg-teal-50' },
+  'english':        { name: 'English',          icon: <BookOpen size={18} />,    color: '#0f766e', bgColor: 'bg-teal-50' },
+  'primary-science':{ name: 'Science',          icon: <Activity size={18} />,    color: '#115e59', bgColor: 'bg-teal-50' },
+  'social-studies': { name: 'Social Studies',   icon: <Globe size={18} />,       color: '#14b8a6', bgColor: 'bg-teal-50' },
+  'bible-knowledge':{ name: 'Bible Knowledge',  icon: <BookOpen size={18} />,    color: '#0d9488', bgColor: 'bg-teal-50' },
+  'arts-life-skills':{ name: 'Arts & Life Skills', icon: <Music size={18} />,   color: '#0f766e', bgColor: 'bg-teal-50' },
+  'chichewa':       { name: 'Chichewa',         icon: <GraduationCap size={18} />, color: '#115e59', bgColor: 'bg-teal-50' }
 };
 
 const Hangman = () => {
@@ -707,11 +707,11 @@ const Hangman = () => {
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${
-        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+        isDarkMode ? 'bg-slate-900' : 'bg-teal-50'
       }`}>
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+          <p className={`text-sm ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
             Loading hangman words...
           </p>
         </div>
@@ -722,19 +722,19 @@ const Hangman = () => {
   if (categories.length === 0 && !loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${
-        isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+        isDarkMode ? 'bg-slate-900' : 'bg-teal-50'
       }`}>
         <div className="text-center max-w-md px-4">
           <div className="text-6xl mb-4">📝</div>
-          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#19475F]'}`}>
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-teal-800'}`}>
             No Subjects Available
           </h2>
-          <p className={`mt-2 ${isDarkMode ? 'text-slate-400' : 'text-[#19475F]/70'}`}>
+          <p className={`mt-2 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
             Unable to load subjects. Please check your connection and try again.
           </p>
           <button
             onClick={() => navigate('/learner-dashboard')}
-            className="mt-4 px-4 py-2 bg-teal-500 text-white rounded-lg font-bold hover:bg-teal-600 transition shadow-md"
+            className="mt-4 px-4 py-2 bg-teal-600 text-teal-50 rounded-lg font-bold hover:bg-teal-700 transition shadow-md"
           >
             Go Back to Dashboard
           </button>
@@ -745,116 +745,101 @@ const Hangman = () => {
 
   return (
     <div className={`learner-themed min-h-screen w-full max-w-full transition-all duration-500 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' 
-        : 'bg-gradient-to-br from-slate-50 via-white to-slate-50'
+      isDarkMode ? 'bg-slate-900' : 'bg-teal-50'
     }`}>
       <Toaster position="top-center" />
       
-      {/* Header - AdminRewards Style */}
-      <header className="shadow-2xl border-b border-black/10 sticky top-0 z-50" style={{ backgroundColor: 'var(--learner-header-bg, #19475F)' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/logo.png" 
-                  alt="Logo" 
-                  className="w-12 h-12 object-contain drop-shadow-lg"
-                  loading="eager"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/48x48?text=LE';
-                  }}
-                />
-                <div>
-                  <h1 className="text-xl font-black tracking-tighter text-white" style={{ fontFamily: "'Poppins', system-ui, sans-serif" }}>
-                    LearnEarn
-                  </h1>
-                  <p className="text-[10px] text-white/80 font-semibold uppercase tracking-wider">Hangman</p>
-                </div>
+      {/* ── HEADER — matches Spelling Bee style ── */}
+      <header className={`sticky top-0 z-50 w-full shadow-lg border-b ${
+        isDarkMode ? 'bg-teal-900 border-teal-800' : 'bg-teal-700 border-teal-600'
+      }`}>
+        <div className="w-full max-w-lg mx-auto px-4">
+
+          {/* Top row */}
+          <div className="flex items-center justify-between h-12">
+            {/* Brand */}
+            <div className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Logo"
+                className="w-8 h-8 object-contain rounded"
+                loading="eager"
+                onError={(e) => { e.target.src = 'https://via.placeholder.com/32x32?text=LE'; }}
+              />
+              <div className="leading-tight">
+                <p className="text-sm font-bold text-teal-50 tracking-tight">LearnEarn</p>
+                <p className="text-[9px] text-teal-100 uppercase tracking-widest font-semibold">Hangman 🪓</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* Actions */}
+            <div className="flex items-center gap-2">
               <button
                 onClick={toggleVoice}
                 className={`p-2 rounded-lg transition-all ${
-                  voiceEnabled 
-                    ? 'bg-teal-500 text-white shadow-lg' 
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  voiceEnabled ? 'bg-white/20 text-teal-50' : 'bg-teal-800/40 text-teal-100'
                 }`}
-                title={voiceEnabled ? 'Voice On' : 'Voice Off'}
+                aria-label={voiceEnabled ? 'Voice On' : 'Voice Off'}
               >
-                {voiceEnabled ? <Mic size={18} /> : <MicOff size={18} />}
+                {voiceEnabled ? <Mic size={16} /> : <MicOff size={16} />}
               </button>
               <button
                 onClick={toggleSound}
                 className={`p-2 rounded-lg transition-all ${
-                  soundEnabled 
-                    ? 'bg-teal-500 text-white shadow-lg' 
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  soundEnabled ? 'bg-white/20 text-teal-50' : 'bg-teal-800/40 text-teal-100'
                 }`}
-                title={soundEnabled ? 'Sound On' : 'Sound Off'}
+                aria-label={soundEnabled ? 'Sound On' : 'Sound Off'}
               >
-                {soundEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
               </button>
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-all ${
-                  isDarkMode 
-                    ? 'bg-white/20 text-yellow-400' 
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-                title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                className="p-2 rounded-lg bg-white/10 text-teal-50"
+                aria-label="Toggle theme"
               >
                 {isDarkMode ? '☀️' : '🌙'}
               </button>
               <button
                 onClick={() => navigate('/learner-dashboard')}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-teal-500 text-white hover:bg-teal-600 transition shadow-md"
+                className="px-3 py-1.5 rounded-lg text-sm font-bold bg-teal-50 text-teal-700 hover:bg-white transition shadow-sm"
               >
                 Exit
               </button>
             </div>
           </div>
 
-          {/* Stats Bar - AdminRewards Style */}
-          <div className="grid grid-cols-4 gap-2 py-2 border-t border-white/20">
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Score</p>
-              <p className="text-sm font-bold text-white">{score}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Streak</p>
-              <p className="text-sm font-bold text-white">{streak}🔥</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Attempts</p>
-              <p className="text-sm font-bold text-white">{wrongAttempts}/{maxAttempts}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[8px] font-medium text-white/80 uppercase tracking-wider">Time</p>
-              <p className="text-sm font-bold text-white">{formatTime(timeElapsed)}</p>
-            </div>
+          {/* Stats strip */}
+          <div className="grid grid-cols-4 border-t border-white/15 py-1">
+            {[
+              { label: 'Score',    value: score },
+              { label: 'Streak',   value: `${streak}🔥` },
+              { label: 'Attempts', value: `${wrongAttempts}/${maxAttempts}` },
+              { label: 'Time',     value: formatTime(timeElapsed) },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center py-0.5">
+                <p className="text-[9px] font-semibold text-teal-100 uppercase tracking-wider">{label}</p>
+                <p className="text-sm font-bold text-teal-50">{value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <main className="w-full max-w-lg mx-auto px-4 py-4">
         {!selectedCategory ? (
           <div className="text-center">
-            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+            <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-teal-800'}`}>
               Choose a Subject
             </h2>
-            <p className={`text-sm mt-1 ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+            <p className={`text-sm mt-1 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
               Select a subject to start playing
             </p>
-            <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-[#19475B]/50'}`}>
-              Earn <span className="font-bold text-teal-500">2-5 points</span> for each word!
+            <p className={`text-xs mt-1 ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
+              Earn <span className="font-bold text-teal-600 dark:text-teal-400">2-5 points</span> for each word!
             </p>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-6">
               {categories.map((categoryKey) => {
                 const meta = categoryMetadata[categoryKey];
                 const wordCount = getWordCount(categoryKey);
@@ -866,21 +851,21 @@ const Hangman = () => {
                       playSound('click');
                     }}
                     className={`p-4 rounded-xl transition-all duration-300 border-2 hover:shadow-lg hover:scale-[1.02] ${
-                      isDarkMode 
-                        ? 'bg-slate-800/50 border-slate-700 hover:border-teal-400/50 hover:bg-slate-700/50' 
-                        : 'bg-white border-gray-200 hover:border-teal-500 hover:shadow-md'
+                      isDarkMode
+                        ? 'bg-teal-900/30 border-teal-800 hover:border-teal-500 hover:bg-teal-900/50'
+                        : 'bg-white border-teal-100 hover:border-teal-500 hover:shadow-md'
                     }`}
                   >
-                    <div 
+                    <div
                       className="w-12 h-12 rounded-lg flex items-center justify-center text-white mb-2 mx-auto"
-                      style={{ backgroundColor: meta?.color || '#6b7280' }}
+                      style={{ backgroundColor: meta?.color || '#0d9488' }}
                     >
                       {meta?.icon || <BookOpen size={20} />}
                     </div>
-                    <h3 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+                    <h3 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-teal-800'}`}>
                       {meta?.name || categoryKey}
                     </h3>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/50'}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
                       {wordCount > 0 ? `${wordCount} words` : 'Dynamic'}
                     </p>
                   </button>
@@ -901,11 +886,11 @@ const Hangman = () => {
                         revealed && !gameOver
                           ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
                           : gameOver && !guessedLetters.includes(letter)
-                          ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                          : 'border-teal-500 bg-white dark:bg-slate-800'
+                          ? 'border-teal-700 bg-teal-100 dark:bg-teal-900/30'
+                          : 'border-teal-300 bg-white dark:bg-teal-900/10'
                       } transition-all duration-300`}>
                         <span className={`text-xl sm:text-2xl font-bold uppercase ${
-                          revealed ? 'text-[#19475F] dark:text-white' : 'text-transparent'
+                          revealed ? 'text-teal-800 dark:text-teal-200' : 'text-transparent'
                         }`}>
                           {letter}
                         </span>
@@ -927,20 +912,24 @@ const Hangman = () => {
                 {/* Game Over / Win Overlay */}
                 {(gameOver || gameWon) && (
                   <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center ${
-                    isDarkMode ? 'bg-slate-900/95' : 'bg-white/95'
+                    isDarkMode ? 'bg-teal-950/95' : 'bg-teal-50/95'
                   } p-4 text-center`}>
-                    <h3 className={`text-2xl font-bold ${gameWon ? 'text-teal-500' : 'text-red-500'}`}>
+                    <h3 className={`text-2xl font-bold ${gameWon ? 'text-teal-600' : 'text-teal-800'}`}>
                       {gameWon ? '🎉 Level Cleared!' : '💥 Game Over'}
                     </h3>
-                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-slate-300' : 'text-gray-600'}`}>
-                      {gameWon 
-                        ? `Excellent! You earned +${currentWordData?.points || 2} points!` 
+                    <p className={`text-sm mt-2 ${isDarkMode ? 'text-teal-300' : 'text-teal-600'}`}>
+                      {gameWon
+                        ? `Excellent! You earned +${currentWordData?.points || 2} points!`
                         : `The word was: ${currentWord}`}
                     </p>
                     <div className="flex gap-3 mt-4">
                       <button
                         onClick={resetGame}
-                        className="px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 rounded-lg text-sm font-bold hover:bg-gray-300 dark:hover:bg-slate-600 transition"
+                        className={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition active:scale-95 ${
+                          isDarkMode
+                            ? 'border-teal-700 text-teal-300 hover:bg-teal-900/40'
+                            : 'border-teal-200 text-teal-700 hover:bg-teal-100'
+                        }`}
                       >
                         Replay
                       </button>
@@ -949,7 +938,7 @@ const Hangman = () => {
                           selectNewWord(categoryWords, usedWords);
                           playSound('click');
                         }}
-                        className="px-4 py-2 bg-teal-500 text-white rounded-lg text-sm font-bold hover:bg-teal-600 transition shadow-md"
+                        className="px-4 py-2 bg-teal-600 text-teal-50 rounded-lg text-sm font-bold hover:bg-teal-700 active:scale-95 transition shadow-md"
                       >
                         Next
                       </button>
@@ -958,13 +947,11 @@ const Hangman = () => {
                 )}
               </div>
 
-              {/* Right Column - Keyboard and Hint Panel (Same Width, Right Aligned) */}
+              {/* Right Column - Keyboard and Hint Panel */}
               <div className="flex flex-col space-y-3">
-                {/* Keyboard - Larger Size with rounded top corners only */}
-                <div className={`border-2 border-teal-500 p-3 w-full rounded-t-xl ${
-                  isDarkMode 
-                    ? 'bg-slate-800/50 border-teal-400' 
-                    : 'bg-white shadow-sm border-teal-500'
+                {/* Keyboard */}
+                <div className={`border-2 border-teal-400 p-3 w-full rounded-t-xl ${
+                  isDarkMode ? 'bg-teal-900/30' : 'bg-white shadow-sm'
                 }`}>
                   {keyboardRows.map((row, rowIndex) => (
                     <div key={rowIndex} className="flex justify-center items-center gap-1 mb-1 last:mb-0">
@@ -974,10 +961,12 @@ const Hangman = () => {
                         const isEliminated = removedLetters.includes(char);
                         const isCorrect = isGuessed && currentWord.includes(char);
 
-                        let btnStyle = "bg-teal-50 text-[#19475F] dark:bg-slate-700 dark:text-white border-b border-[#19475F]/20 dark:border-slate-600 hover:bg-teal-100 dark:hover:bg-slate-600";
-                        if (isCorrect) btnStyle = "bg-teal-500 text-white border-b border-teal-600 font-bold";
-                        if (isIncorrect) btnStyle = "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 border-b border-red-300 line-through opacity-70";
-                        if (isEliminated) btnStyle = "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed opacity-40 border-none pointer-events-none";
+                        let btnStyle = isDarkMode
+                          ? "bg-teal-900/40 text-teal-200 border-b border-teal-700 hover:bg-teal-800/60"
+                          : "bg-teal-50 text-teal-800 border-b border-teal-200 hover:bg-teal-100";
+                        if (isCorrect)    btnStyle = "bg-teal-600 text-white border-b border-teal-700 font-bold";
+                        if (isIncorrect)  btnStyle = "bg-teal-200 text-teal-500 dark:bg-teal-900/20 dark:text-teal-600 border-b border-teal-300 line-through opacity-60";
+                        if (isEliminated) btnStyle = "bg-teal-100 text-teal-300 dark:bg-teal-900/10 dark:text-teal-700 cursor-not-allowed opacity-40 border-none pointer-events-none";
 
                         return (
                           <button
@@ -989,7 +978,7 @@ const Hangman = () => {
                               }
                             }}
                             disabled={isGuessed || isIncorrect || isEliminated || gameOver || gameWon}
-                            className={`flex-1 min-w-[32px] max-w-[52px] h-11 sm:h-14 rounded-lg flex items-center justify-center font-bold text-sm sm:text-base shadow-sm transition-all uppercase ${btnStyle}`}
+                            className={`flex-1 min-w-[32px] max-w-[52px] h-11 sm:h-14 rounded-lg flex items-center justify-center font-bold text-sm sm:text-base shadow-sm transition-all uppercase active:scale-95 ${btnStyle}`}
                           >
                             {char}
                           </button>
@@ -999,27 +988,25 @@ const Hangman = () => {
                   ))}
                 </div>
 
-                {/* Hint Panel - Teal Outline, No Radius */}
-                <div className={`border-2 border-teal-500 w-full flex items-center justify-between gap-3 p-2.5 ${
-                  isDarkMode 
-                    ? 'bg-slate-800/50 border-teal-400' 
-                    : 'bg-white border-teal-500'
+                {/* Hint Panel */}
+                <div className={`border-2 border-teal-400 w-full flex items-center justify-between gap-3 p-2.5 rounded-b-xl ${
+                  isDarkMode ? 'bg-teal-900/30' : 'bg-white'
                 }`}>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-[10px] font-semibold ${isDarkMode ? 'text-slate-400' : 'text-[#19475B]/70'}`}>
+                    <p className={`text-[10px] font-semibold ${isDarkMode ? 'text-teal-400' : 'text-teal-500'}`}>
                       💡 Clue:
                     </p>
-                    <p className={`text-xs sm:text-sm font-medium truncate ${isDarkMode ? 'text-white' : 'text-[#19475B]'}`}>
+                    <p className={`text-xs sm:text-sm font-medium truncate ${isDarkMode ? 'text-teal-200' : 'text-teal-800'}`}>
                       {showHint ? currentHint : 'Click "Hint" to reveal'}
                     </p>
                   </div>
                   <button
                     onClick={handleRemoveFourLetters}
                     disabled={lifelineUsed || gameOver || gameWon}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
                       (lifelineUsed || gameOver || gameWon)
-                        ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
-                        : 'bg-purple-500 text-white hover:bg-purple-600 shadow-md'
+                        ? 'bg-teal-100 dark:bg-teal-900/20 text-teal-400 dark:text-teal-600 cursor-not-allowed'
+                        : 'bg-teal-600 text-teal-50 hover:bg-teal-700 shadow-md'
                     }`}
                   >
                     {lifelineUsed ? '✓ Used' : '🎯 Remove 4'}
@@ -1029,22 +1016,24 @@ const Hangman = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-center gap-2">
+            <div className="grid grid-cols-3 gap-2 mt-1">
               <button
                 onClick={getHint}
                 disabled={hintUsed || gameOver || gameWon}
-                className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg font-bold hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+                className="flex flex-col items-center gap-1 py-2.5 bg-teal-600 text-teal-50 rounded-xl font-medium text-xs hover:bg-teal-700 active:scale-95 transition disabled:opacity-40 shadow-sm"
               >
-                <Sparkles size={14} />
-                {hintUsed ? 'Hint Used' : 'Hint'}
+                <Sparkles size={15} />
+                {hintUsed ? 'Used' : 'Hint'}
               </button>
 
               <button
                 onClick={skipWord}
                 disabled={gameOver || gameWon}
-                className="px-3 py-1.5 bg-cyan-600 text-white text-xs rounded-lg font-bold hover:bg-cyan-700 transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+                className={`flex flex-col items-center gap-1 py-2.5 rounded-xl font-medium text-xs active:scale-95 transition disabled:opacity-40 shadow-sm border-2 ${
+                  isDarkMode ? 'border-teal-700 text-teal-300' : 'border-teal-200 text-teal-700 bg-white'
+                }`}
               >
-                <RefreshCw size={14} />
+                <RefreshCw size={15} />
                 Skip
               </button>
 
@@ -1054,9 +1043,11 @@ const Hangman = () => {
                   setGamesPlayed(0);
                   playSound('click');
                 }}
-                className="px-3 py-1.5 bg-purple-600 text-white text-xs rounded-lg font-bold hover:bg-purple-700 transition-all flex items-center gap-1.5 shadow-md"
+                className={`flex flex-col items-center gap-1 py-2.5 rounded-xl font-medium text-xs active:scale-95 transition shadow-sm border-2 ${
+                  isDarkMode ? 'border-teal-700 text-teal-300' : 'border-teal-200 text-teal-700 bg-white'
+                }`}
               >
-                <BookOpen size={14} />
+                <BookOpen size={15} />
                 Subjects
               </button>
             </div>
